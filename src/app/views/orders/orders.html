@@ -1,0 +1,232 @@
+<main class="orders-page" [class.sidebar-collapsed]="isSidebarCollapsed">
+  <aside class="sidebar" aria-label="Main navigation" [class.collapsed]="isSidebarCollapsed">
+    <div class="logo-wrap">
+      <img src="/gourmet-logo.svg" alt="Borcelle logo" />
+    </div>
+    <button
+      class="collapse-dot"
+      type="button"
+      [attr.aria-label]="isSidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'"
+      [attr.aria-expanded]="!isSidebarCollapsed"
+      (click)="toggleSidebar()"
+    >
+      {{ isSidebarCollapsed ? '›' : '‹' }}
+    </button>
+
+    <nav class="nav-list">
+      @for (item of navItems; track item.label) {
+        <a
+          class="nav-item"
+          [class.active]="item.active"
+          href="/orders"
+          [attr.aria-current]="item.active ? 'page' : null"
+          (click)="$event.preventDefault(); setActiveNav(item.label)"
+        >
+          <img class="nav-icon" [src]="item.icon" [alt]="item.label + ' icon'" />
+          <span>{{ item.label }}</span>
+        </a>
+      }
+    </nav>
+
+    <div class="sidebar-footer">
+      <div class="profile">
+        <span class="avatar">AP</span>
+        <span>
+          <strong>Alexander Pierce</strong>
+          <small>Administrator</small>
+        </span>
+      </div>
+      <a href="/">
+        <img class="sidebar-link-icon" src="/ui-icons/support.png" alt="Support icon" />
+        <span>Support</span>
+      </a>
+      <a href="/">
+        <img class="sidebar-link-icon" src="/ui-icons/logout.png" alt="Logout icon" />
+        <span>Logout</span>
+      </a>
+    </div>
+  </aside>
+
+  <section class="orders-content" aria-labelledby="orders-title">
+    <header class="topbar">
+      <div>
+        <h1 id="orders-title">Orders</h1>
+        <p>TODAY IS THURSDAY, MARCH 12, 2026</p>
+      </div>
+      <div class="top-actions">
+        <button class="new-booking" type="button">+ New Booking</button>
+        <button class="refresh" type="button"><span aria-hidden="true">&#8635;</span> Refresh</button>
+      </div>
+    </header>
+
+    <div class="status-tabs" aria-label="Order status filters">
+      @for (filter of filters; track filter.label) {
+        <button type="button" [class.active]="filter.active">
+          <span>{{ filter.label }}</span>
+          <strong>{{ filter.count }}</strong>
+        </button>
+      }
+    </div>
+
+    <section class="filters-card" aria-label="Order search filters">
+      <div class="filter-grid top">
+        <label>
+          <span>Reseller</span>
+          <select aria-label="Reseller">
+            <option>Reseller</option>
+          </select>
+        </label>
+        <label>
+          <span>Ref</span>
+          <select aria-label="Ref">
+            <option>Ref</option>
+          </select>
+        </label>
+        <label>
+          <span>Person In Charge</span>
+          <select aria-label="Person In Charge">
+            <option>Person In Charge</option>
+          </select>
+        </label>
+        <label>
+          <span>Service</span>
+          <select aria-label="Service">
+            <option>Service</option>
+          </select>
+        </label>
+        <label>
+          <span>All Statuses</span>
+          <select aria-label="All Statuses">
+            <option>All Statuses</option>
+          </select>
+        </label>
+      </div>
+
+      <div class="filter-grid bottom">
+        <label class="date-field">
+          <span>Requested Date</span>
+          <input type="text" placeholder="Requested Date" aria-label="Requested Date" />
+          <img class="date-icon" src="/ui-icons/date.png" alt="Date icon" />
+        </label>
+        <label class="date-field">
+          <span>Offered Date</span>
+          <input type="text" placeholder="Offered Date" aria-label="Offered Date" />
+          <img class="date-icon" src="/ui-icons/date.png" alt="Date icon" />
+        </label>
+        <div class="filter-toggles">
+          <button class="private-toggle" type="button">Private</button>
+          <button class="allotment-toggle" type="button" aria-label="Allotment Only">
+            <span class="checkbox-indicator" aria-hidden="true"></span>
+            <span>Allotment Only</span>
+          </button>
+          <button class="apply" type="button">Apply</button>
+          <button class="clear" type="button">Clear Filters</button>
+        </div>
+      </div>
+    </section>
+
+    <section class="table-card" aria-label="Orders table">
+      <div class="table-scroll">
+        <table>
+          <thead>
+            <tr>
+              <th>Reseller</th>
+              <th>PIC</th>
+              <th>Ref 1</th>
+              <th>Ref 2</th>
+              <th>Requested Dates</th>
+              <th>Area</th>
+              <th>Target Service</th>
+              <th>P/S</th>
+              <th>Target Dates</th>
+              <th>PU/DO</th>
+              <th>#Guests</th>
+              <th>Special</th>
+              <th>TR</th>
+              <th>Fee (Inc.Tax)</th>
+              <th>Status</th>
+              <th>Guide</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (order of orders; track order.ref1) {
+              <tr>
+                <td class="reseller">{{ order.reseller }}</td>
+                <td>{{ order.pic }}</td>
+                <td><strong>{{ order.ref1 }}</strong></td>
+                <td>{{ order.ref2 }}</td>
+                <td><strong>{{ order.requestedDate }}</strong></td>
+                <td><span class="area">{{ order.area }}</span></td>
+                <td>
+                  <span class="stacked-pills service-stack">
+                    @for (service of order.service; track service) {
+                      <span class="service">{{ service }}</span>
+                    }
+                  </span>
+                </td>
+                <td><strong>{{ order.type }}</strong></td>
+                <td>
+                  <span class="stacked-pills">
+                    @for (targetDate of order.targetDate; track targetDate) {
+                      <span class="target-date">{{ targetDate }}</span>
+                    }
+                  </span>
+                </td>
+                <td>{{ order.pickup }}</td>
+                <td>{{ order.guests }}</td>
+                <td>
+                  <span class="specials">
+                    @for (special of order.special; track special) {
+                      <span class="special-item {{ special }}">{{ special === 'vip' ? 'VIP' : special }}</span>
+                    }
+                  </span>
+                </td>
+                <td><span class="tr {{ order.tr }}" aria-label="{{ order.tr }}"></span></td>
+                <td><strong>&yen;{{ order.fee }}</strong></td>
+                <td><span class="status {{ order.statusTone }}">{{ order.status }}</span></td>
+                <td>
+                  <span class="guide">
+                    <span class="guide-icon"></span>
+                    <strong>{{ order.guide }}</strong>
+                  </span>
+                </td>
+                <td>
+                  <span class="actions-cell">
+                    <a class="view-action" href="/">View Reminder</a>
+                    <button class="more-action" type="button" aria-label="More actions"></button>
+                  </span>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+
+      <footer class="table-footer">
+        <div class="rows-control">
+          <span>Show:</span>
+          <strong>100 rows</strong>
+          <span class="chevron">&#8964;</span>
+        </div>
+        <div class="pagination" aria-label="Pagination">
+          <button class="page-edge first" type="button" aria-label="First page"></button>
+          <button class="page-edge previous" type="button" aria-label="Previous page"></button>
+          <button class="active" type="button">1</button>
+          <button type="button">2</button>
+          <button class="page-edge next" type="button" aria-label="Next page"></button>
+          <button class="page-edge last" type="button" aria-label="Last page"></button>
+          <span>5 records</span>
+        </div>
+        <div class="summary guests">
+          <span>Total Guests</span>
+          <strong>18 / 11</strong>
+        </div>
+        <div class="summary value">
+          <span>Total Volumes</span>
+          <strong>&yen;360,582</strong>
+        </div>
+      </footer>
+    </section>
+  </section>
+</main>

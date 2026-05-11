@@ -10,7 +10,11 @@
       [attr.aria-expanded]="!isSidebarCollapsed"
       (click)="toggleSidebar()"
     >
-      {{ isSidebarCollapsed ? '›' : '‹' }}
+      @if (isSidebarCollapsed) {
+        <span aria-hidden="true">&rsaquo;</span>
+      } @else {
+        <span aria-hidden="true">&lsaquo;</span>
+      }
     </button>
 
     <nav class="nav-list">
@@ -54,7 +58,15 @@
         <p>TODAY IS THURSDAY, MARCH 12, 2026</p>
       </div>
       <div class="top-actions">
-        <button class="new-booking" type="button">+ New Booking</button>
+        <button
+          class="new-booking"
+          type="button"
+          aria-haspopup="dialog"
+          [attr.aria-expanded]="isNewOrderOpen"
+          (click)="openNewOrderModal()"
+        >
+          + New Booking
+        </button>
         <button class="refresh" type="button"><span aria-hidden="true">&#8635;</span> Refresh</button>
       </div>
     </header>
@@ -229,4 +241,264 @@
       </footer>
     </section>
   </section>
+
+  @if (isNewOrderOpen) {
+    <div class="new-order-overlay">
+      <section
+        class="new-order-dialog"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="new-order-title"
+      >
+        <header class="new-order-header">
+          <h2 id="new-order-title">New Order</h2>
+        </header>
+
+        <ol class="order-stepper step-{{ currentNewOrderStep }}" aria-label="New order progress">
+          <li [class.active]="currentNewOrderStep === 1" [class.completed]="currentNewOrderStep > 1">
+            <button type="button" (click)="setNewOrderStep(1)">1</button>
+          </li>
+          <li [class.active]="currentNewOrderStep === 2" [class.completed]="currentNewOrderStep > 2">
+            <button type="button" (click)="setNewOrderStep(2)">2</button>
+          </li>
+          <li [class.active]="currentNewOrderStep === 3" [class.completed]="currentNewOrderStep > 3">
+            <button type="button" (click)="setNewOrderStep(3)">3</button>
+          </li>
+          <li [class.active]="currentNewOrderStep === 4">
+            <button type="button" (click)="setNewOrderStep(4)">4</button>
+          </li>
+        </ol>
+
+        @if (currentNewOrderStep === 1) {
+          <div class="order-details-heading">
+            <h3>Order Details</h3>
+            <button class="direct-order" type="button">Direct Order</button>
+          </div>
+
+          <form class="new-order-form">
+            <label class="modal-field">
+              <span>Order Created By</span>
+              <input type="text" placeholder="Enter Name" />
+            </label>
+
+            <div class="modal-field">
+              <div class="modal-label-row">
+                <label for="new-order-reseller">Reseller</label>
+                <label class="tentative-toggle">
+                  <span>Tentative</span>
+                  <input type="checkbox" />
+                </label>
+              </div>
+              <select id="new-order-reseller">
+                <option>Select Reseller</option>
+              </select>
+            </div>
+
+            <div class="modal-field">
+              <div class="modal-label-row">
+                <label for="new-order-agent">Original Agent</label>
+                <a href="/">Add New</a>
+              </div>
+              <select id="new-order-agent">
+                <option>Select Agent Name</option>
+              </select>
+            </div>
+
+            <label class="modal-field">
+              <span>Person In Charge (PIC)</span>
+              <select>
+                <option>Select Person In Charge</option>
+              </select>
+            </label>
+
+            <label class="modal-field">
+              <span>PIC Email</span>
+              <input type="email" placeholder="Enter Email" />
+            </label>
+
+            <label class="modal-field">
+              <span>Copy Email</span>
+              <input type="email" placeholder="Enter Email" />
+            </label>
+
+            <label class="modal-field">
+              <span>Reference Number 1</span>
+              <input type="text" placeholder="Enter Reference Number" />
+            </label>
+
+            <label class="modal-field">
+              <span>Reference Number 2</span>
+              <input type="text" placeholder="Enter Reference Number" />
+            </label>
+          </form>
+        }
+
+        @if (currentNewOrderStep === 2) {
+          <section class="service-details" aria-labelledby="service-details-title">
+            <h3 id="service-details-title">Service Details</h3>
+
+            <div class="service-details-grid">
+              <label class="modal-field date-field">
+                <span>Target Date</span>
+                <input type="text" placeholder="Select Date" />
+                <img class="date-icon" src="/ui-icons/date.png" alt="Date icon" />
+              </label>
+
+              <label class="modal-field">
+                <span>Area</span>
+                <select>
+                  <option>Select Area</option>
+                </select>
+              </label>
+
+              <label class="modal-field">
+                <span>Service Type</span>
+                <select>
+                  <option>Select Service Type</option>
+                </select>
+              </label>
+            </div>
+
+            <section class="time-slots-card" aria-label="Available time slots">
+              <div class="time-slots-header">
+                <span>Available Time Slots</span>
+                <span class="private-badge">
+                  <span class="private-label">Private</span>
+                  <img class="private-icon" src="/ui-icons/person.png" alt="" aria-hidden="true" />
+                </span>
+              </div>
+
+              <div class="time-slot-options" role="group" aria-label="Available time slot filters">
+                @for (slot of timeSlots; track slot) {
+                  <button
+                    type="button"
+                    [class.active]="selectedTimeSlot === slot"
+                    (click)="selectTimeSlot(slot)"
+                  >
+                    {{ slot }}
+                  </button>
+                }
+              </div>
+            </section>
+
+            <section class="service-list" aria-label="Available services">
+              @for (service of serviceOptions; track service.name) {
+                <div class="service-list-row">
+                  <span>{{ service.name }}</span>
+                  <a href="/">View Info</a>
+                </div>
+              }
+            </section>
+
+            <label class="modal-field start-time-field">
+              <span>Start Time</span>
+              <input type="text" placeholder="Select Tour Start Time" />
+              <img class="date-icon" src="/ui-icons/date.png" alt="Date icon" />
+            </label>
+          </section>
+        }
+
+        @if (currentNewOrderStep === 3) {
+          <section class="additional-services" aria-labelledby="additional-services-title">
+            <h3 id="additional-services-title">Additional Services</h3>
+
+            <label class="modal-field additional-card voucher-field">
+              <span>Voucher Number</span>
+              <input type="text" placeholder="Enter Voucher Number" />
+            </label>
+
+            <section class="additional-card service-extra-card" aria-label="Pick up details">
+              <label class="additional-toggle checked-toggle">
+                <span>Pick Up</span>
+                <input type="checkbox" checked />
+              </label>
+              <p>The suggested pick-up time will be included in the order offer or confirmation</p>
+              <input type="text" placeholder="Enter Pick-up Location" aria-label="Pick-up location" />
+              <select aria-label="Pick-up service type">
+                <option>Select Service Type</option>
+              </select>
+              <select aria-label="Pick-up distance">
+                <option>Select Distance</option>
+              </select>
+              <strong class="additional-fee">Fee: $200</strong>
+            </section>
+
+            <section class="additional-card service-extra-card" aria-label="Drop off details">
+              <div class="additional-choice-row">
+                <label class="additional-toggle radio-toggle">
+                  <span>Drop Off</span>
+                  <input type="radio" name="drop-service-type" checked />
+                </label>
+                <label class="additional-toggle radio-toggle">
+                  <span>Hand Off</span>
+                  <input type="radio" name="drop-service-type" />
+                </label>
+              </div>
+              <p>The suggested drop-off time will be included in the order offer or confirmation</p>
+              <input type="text" placeholder="Enter Drop-off Location" aria-label="Drop-off location" />
+              <select aria-label="Drop-off service type">
+                <option>Select Service Type</option>
+              </select>
+              <select aria-label="Drop-off distance">
+                <option>Select Distance</option>
+              </select>
+              <strong class="additional-fee">Fee: $200</strong>
+            </section>
+          </section>
+        }
+
+        @if (currentNewOrderStep === 4) {
+          <section class="guest-details" aria-labelledby="guest-details-title">
+            <h3 id="guest-details-title">Guest Details</h3>
+
+            <label class="modal-field guest-email-field">
+              <span>Guest Email</span>
+              <input type="email" placeholder="Enter Email" />
+            </label>
+
+            <div class="guest-counts">
+              <div class="guest-count-field">
+                <span>Adults</span>
+                <div class="guest-counter" aria-label="Adults count">
+                  <button type="button" aria-label="Decrease adults" (click)="adjustGuestCount('adult', -1)">-</button>
+                  <strong>{{ formatGuestCount(adultGuests) }}</strong>
+                  <button type="button" aria-label="Increase adults" (click)="adjustGuestCount('adult', 1)">+</button>
+                </div>
+              </div>
+
+              <div class="guest-count-field">
+                <span>Children (Age 12 and under)</span>
+                <div class="guest-counter" aria-label="Children count">
+                  <button type="button" aria-label="Decrease children" (click)="adjustGuestCount('child', -1)">-</button>
+                  <strong>{{ formatGuestCount(childGuests) }}</strong>
+                  <button type="button" aria-label="Increase children" (click)="adjustGuestCount('child', 1)">+</button>
+                </div>
+              </div>
+            </div>
+
+            <label class="modal-field guest-full-field">
+              <span>Allergies or Dietary Restrictions</span>
+              <input type="text" placeholder="Enter Allergies or Dietary Restrictions" />
+            </label>
+
+            <div class="modal-field guest-full-field">
+              <span>Special Requests</span>
+              <button class="special-request-select" type="button" aria-label="Special requests">
+                <span class="special-request-chips">
+                  <span>Special Occasion</span>
+                  <span>VIP</span>
+                </span>
+                <span class="special-request-chevron" aria-hidden="true"></span>
+              </button>
+            </div>
+          </section>
+        }
+
+        <footer class="new-order-footer">
+          <button class="request-order" type="button" [disabled]="currentNewOrderStep !== 4">Request Order</button>
+          <button class="cancel-order" type="button" (click)="closeNewOrderModal()">Cancel</button>
+        </footer>
+      </section>
+    </div>
+  }
 </main>

@@ -32,6 +32,10 @@ interface StatusFilter {
   active: boolean;
 }
 
+interface ServiceOption {
+  name: string;
+}
+
 @Component({
   selector: 'app-orders-view',
   imports: [],
@@ -40,6 +44,20 @@ interface StatusFilter {
 })
 export class OrdersView {
   protected isSidebarCollapsed = false;
+  protected isNewOrderOpen = false;
+  protected currentNewOrderStep = 1;
+  protected adultGuests = 2;
+  protected childGuests = 1;
+
+  protected readonly timeSlots = ['Any', 'Morning', 'Daytime', 'Evening', 'Night'];
+  protected selectedTimeSlot = 'Any';
+  protected readonly serviceOptions: ServiceOption[] = [
+    { name: 'The Drunken Tiger' },
+    { name: 'Golden Barrel Pub' },
+    { name: 'Midnight Bites Tavern' },
+    { name: 'Urban Grill House' },
+    { name: 'The Tipsy Spoon' },
+  ];
 
   protected navItems: NavigationItem[] = [
     { label: 'Catalog', icon: '/nav-icons/catalog.png', active: false },
@@ -160,6 +178,41 @@ export class OrdersView {
 
   protected toggleSidebar(): void {
     this.isSidebarCollapsed = !this.isSidebarCollapsed;
+  }
+
+  protected openNewOrderModal(): void {
+    this.isNewOrderOpen = true;
+    this.currentNewOrderStep = 1;
+  }
+
+  protected closeNewOrderModal(): void {
+    this.isNewOrderOpen = false;
+    this.currentNewOrderStep = 1;
+  }
+
+  protected setNewOrderStep(step: number): void {
+    if (step > 4) {
+      return;
+    }
+
+    this.currentNewOrderStep = step;
+  }
+
+  protected adjustGuestCount(type: 'adult' | 'child', change: number): void {
+    if (type === 'adult') {
+      this.adultGuests = Math.max(0, this.adultGuests + change);
+      return;
+    }
+
+    this.childGuests = Math.max(0, this.childGuests + change);
+  }
+
+  protected formatGuestCount(count: number): string {
+    return count.toString().padStart(2, '0');
+  }
+
+  protected selectTimeSlot(slot: string): void {
+    this.selectedTimeSlot = slot;
   }
 
   protected setActiveNav(label: string): void {

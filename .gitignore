@@ -39,6 +39,7 @@ yarn-error.log
 testem.log
 /typings
 __screenshots__/
+/.codex-git-push-tmp-*/
 
 # System files
 .DS_Store

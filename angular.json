@@ -7,7 +7,7 @@
   },
   "newProjectRoot": "projects",
   "projects": {
-    "new-project": {
+    "gourmet-bookings-frontend": {
       "projectType": "application",
       "schematics": {},
       "root": "",
@@ -57,10 +57,10 @@
           "builder": "@angular/build:dev-server",
           "configurations": {
             "production": {
-              "buildTarget": "new-project:build:production"
+              "buildTarget": "gourmet-bookings-frontend:build:production"
             },
             "development": {
-              "buildTarget": "new-project:build:development"
+              "buildTarget": "gourmet-bookings-frontend:build:development"
             }
           },
           "defaultConfiguration": "development"

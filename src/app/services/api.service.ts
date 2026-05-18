@@ -1,0 +1,300 @@
+import { Injectable } from '@angular/core';
+import { HttpClient, HttpHeaders } from '@angular/common/http';
+import { Observable, of } from 'rxjs';
+import { environment } from '../../environments/environment';
+import { MOCK_ORDERS } from './mock-orders.data';
+
+export interface Order {
+  id?: number;
+  orderNumber: string;
+  status: OrderStatus;
+  orderChannel?: string;
+  isTentative: boolean;
+  createdByUser?: User;
+  createdByName?: string;
+  reseller?: Reseller;
+  picContact?: ResellerContact;
+  picEmail?: string;
+  copyEmail?: string;
+  originalAgent?: Agent;
+  ref1?: string;
+  ref2?: string;
+  voucherNumber?: string;
+  guestEmail?: string;
+  adultCount?: number;
+  childCount?: number;
+  dietaryRestrictions?: string;
+  currencyCode?: string;
+  totalFeeAmount?: number;
+  requestedAt?: string;
+  submittedAt?: string;
+  createdAt?: string;
+  updatedAt?: string;
+  deletedAt?: string;
+  orderServices?: OrderService[];
+  additionalServices?: OrderAdditionalService[];
+  specialRequests?: SpecialRequestType[];
+  financialLines?: OrderFinancialLine[];
+  guide?: string;
+}
+
+export interface OrderStatus {
+  id: number;
+  code: string;
+  label: string;
+}
+
+export interface User {
+  id: number;
+  role: Role;
+  fullName: string;
+  email: string;
+  isActive: boolean;
+}
+
+export interface Role {
+  id: number;
+  code: string;
+  name: string;
+}
+
+export interface Reseller {
+  id: number;
+  name: string;
+  status: string;
+}
+
+export interface ResellerContact {
+  id: number;
+  reseller: Reseller;
+  name: string;
+  email: string;
+  isPrimary: boolean;
+}
+
+export interface Agent {
+  id: number;
+  reseller: Reseller;
+  name: string;
+  email: string;
+}
+
+export interface OrderService {
+  id?: number;
+  service: Service;
+  serviceNameSnapshot: string;
+  area: Area;
+  serviceType: ServiceType;
+  targetDate?: string;
+  startTime?: string;
+  timeSlotCode?: string;
+  isPrivate: boolean;
+  timezone?: string;
+  isAdminModified?: boolean;
+  originalServiceId?: number;
+  originalServiceNameSnapshot?: string;
+}
+
+export interface OrderAdditionalService {
+  id?: number;
+  kind: string;
+  isEnabled: boolean;
+  location?: string;
+  serviceType?: ServiceType;
+  distanceBand?: DistanceBand;
+  suggestedTime?: string;
+  feeAmount?: number;
+  currencyCode?: string;
+}
+
+export interface SpecialRequestType {
+  id: number;
+  code: string;
+  label: string;
+}
+
+export interface OrderFinancialLine {
+  id: number;
+  lineType: string;
+  description?: string;
+  amount?: number;
+  taxAmount?: number;
+  currencyCode?: string;
+  isTaxIncluded: boolean;
+}
+
+export interface Service {
+  id: number;
+  area: Area;
+  serviceType: ServiceType;
+  name: string;
+  isPrivateAvailable: boolean;
+  isActive: boolean;
+}
+
+export interface Area {
+  id: number;
+  code: string;
+  name: string;
+}
+
+export interface ServiceType {
+  id: number;
+  code: string;
+  name: string;
+}
+
+export interface DistanceBand {
+  id: number;
+  label: string;
+  sortOrder: number;
+}
+
+export interface OrderCreateRequest {
+  orderNumber: string;
+  orderChannel?: string;
+  isTentative?: boolean;
+  createdByName?: string;
+  picEmail?: string;
+  copyEmail?: string;
+  ref1?: string;
+  ref2?: string;
+  voucherNumber?: string;
+  guestEmail?: string;
+  adultCount?: number;
+  childCount?: number;
+  dietaryRestrictions?: string;
+  currencyCode?: string;
+  totalFeeAmount?: number;
+  requestedAt?: string;
+  orderServices?: OrderServiceRequest[];
+  additionalServices?: OrderAdditionalServiceRequest[];
+  specialRequestTypeIds?: number[];
+}
+
+export interface OrderServiceRequest {
+  serviceId: number;
+  serviceNameSnapshot?: string;
+  areaId: number;
+  serviceTypeId: number;
+  targetDate?: string;
+  startTime?: string;
+  timeSlotCode?: string;
+  isPrivate?: boolean;
+  timezone?: string;
+}
+
+export interface OrderAdditionalServiceRequest {
+  kind: string;
+  isEnabled?: boolean;
+  location?: string;
+  serviceTypeId?: number;
+  distanceBandId?: number;
+  suggestedTime?: string;
+  feeAmount?: number;
+  currencyCode?: string;
+}
+
+@Injectable({
+  providedIn: 'root'
+})
+export class ApiService {
+  private readonly apiUrl = environment.apiUrl || '/api';
+  private readonly useMockData = environment.useMockData ?? false;
+
+  constructor(private http: HttpClient) {}
+
+  private getHttpOptions() {
+    return {
+      headers: new HttpHeaders({
+        'Content-Type': 'application/json'
+      })
+    };
+  }
+
+  // Order endpoints
+  getOrders(): Observable<Order[]> {
+    // if (this.useMockData) {
+    //   console.warn('Using mock data for orders. Set useMockData to false in environment.ts when backend is ready.');
+    //   return of(MOCK_ORDERS);
+    // }
+    return this.http.get<Order[]>(`${this.apiUrl}/orders`);
+  }
+
+  getOrder(id: number): Observable<Order> {
+    return this.http.get<Order>(`${this.apiUrl}/orders/${id}`);
+  }
+
+  getOrderByNumber(orderNumber: string): Observable<Order> {
+    return this.http.get<Order>(`${this.apiUrl}/orders/number/${orderNumber}`);
+  }
+
+  getOrdersByStatus(statusId: number): Observable<Order[]> {
+    return this.http.get<Order[]>(`${this.apiUrl}/orders/status/${statusId}`);
+  }
+
+  getOrdersByReseller(resellerId: number): Observable<Order[]> {
+    return this.http.get<Order[]>(`${this.apiUrl}/orders/reseller/${resellerId}`);
+  }
+
+  createOrder(order: OrderCreateRequest): Observable<Order> {
+    return this.http.post<Order>(`${this.apiUrl}/orders`, order, this.getHttpOptions());
+  }
+
+  updateOrder(id: number, order: Partial<Order>): Observable<Order> {
+    return this.http.put<Order>(`${this.apiUrl}/orders/${id}`, order, this.getHttpOptions());
+  }
+
+  deleteOrder(id: number): Observable<void> {
+    return this.http.delete<void>(`${this.apiUrl}/orders/${id}`);
+  }
+
+  submitOrder(id: number): Observable<Order> {
+    return this.http.post<Order>(`${this.apiUrl}/orders/${id}/submit`, {}, this.getHttpOptions());
+  }
+
+  cancelOrder(id: number, note?: string): Observable<Order> {
+    return this.http.post<Order>(`${this.apiUrl}/orders/${id}/cancel`, note || '', this.getHttpOptions());
+  }
+
+  // Service endpoints
+  getServices(): Observable<Service[]> {
+    return this.http.get<Service[]>(`${this.apiUrl}/services`);
+  }
+
+  getAreas(): Observable<Area[]> {
+    return this.http.get<Area[]>(`${this.apiUrl}/services/areas`);
+  }
+
+  getServiceTypes(): Observable<ServiceType[]> {
+    return this.http.get<ServiceType[]>(`${this.apiUrl}/services/service-types`);
+  }
+
+  getService(id: number): Observable<Service> {
+    return this.http.get<Service>(`${this.apiUrl}/services/${id}`);
+  }
+
+  getServicesByArea(areaId: number): Observable<Service[]> {
+    return this.http.get<Service[]>(`${this.apiUrl}/services/area/${areaId}`);
+  }
+
+  getServicesByType(serviceTypeId: number): Observable<Service[]> {
+    return this.http.get<Service[]>(`${this.apiUrl}/services/type/${serviceTypeId}`);
+  }
+
+  getServicesByAreaAndType(areaId: number, serviceTypeId: number): Observable<Service[]> {
+    return this.http.get<Service[]>(`${this.apiUrl}/services/area/${areaId}/type/${serviceTypeId}`);
+  }
+
+  getPrivateServices(): Observable<Service[]> {
+    return this.http.get<Service[]>(`${this.apiUrl}/services/private`);
+  }
+
+  createService(service: Partial<Service>): Observable<Service> {
+    return this.http.post<Service>(`${this.apiUrl}/services`, service, this.getHttpOptions());
+  }
+
+  updateService(id: number, service: Partial<Service>): Observable<Service> {
+    return this.http.put<Service>(`${this.apiUrl}/services/${id}`, service, this.getHttpOptions());
+  }
+}

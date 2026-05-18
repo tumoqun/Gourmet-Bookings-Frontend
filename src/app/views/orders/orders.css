@@ -502,6 +502,19 @@ select {
   overflow: hidden;
 }
 
+.api-message {
+  margin: 18px 0 -14px;
+  padding: 12px 16px;
+  border-radius: 8px;
+  font-size: 0.95rem;
+  font-weight: 700;
+}
+
+.api-message.error {
+  color: #b42318;
+  background: #fee4e2;
+}
+
 .table-scroll {
   overflow-x: auto;
 }
@@ -537,6 +550,13 @@ td {
   color: #676661;
   font-size: 0.95rem;
   white-space: nowrap;
+}
+
+.table-state {
+  height: 140px;
+  color: #8a837a;
+  font-weight: 700;
+  text-align: center;
 }
 
 tbody tr:last-child td {
@@ -587,6 +607,11 @@ td strong {
   line-height: 1.15;
   text-align: center;
   white-space: normal;
+}
+
+.service.admin-modified {
+  background: #c5a55a;
+  box-shadow: 0 0 0 2px rgba(197, 165, 90, 0.3);
 }
 
 .service-stack .service:first-child {
@@ -845,6 +870,7 @@ td strong {
   text-align: center;
   text-decoration: none;
   white-space: nowrap;
+  cursor: pointer;
   transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
 }
 
@@ -1430,6 +1456,23 @@ td strong {
 
 .service-list-row:last-child {
   border-bottom: 0;
+}
+
+.service-list-row button {
+  border: 0;
+  color: #165dff;
+  background: transparent;
+  font: inherit;
+  cursor: pointer;
+}
+
+.service-list-row.selected {
+  background: #fffaf0;
+}
+
+.service-list-row.selected button {
+  color: #c48f36;
+  font-weight: 800;
 }
 
 .service-list-row a {

@@ -1,31 +1,85 @@
 import { TestBed } from '@angular/core/testing';
+import { provideHttpClient } from '@angular/common/http';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { OrdersView } from './orders';
 
+const mockOrders = [
+  {
+    id: 1,
+    orderNumber: 'ORD-TEST-1',
+    status: { id: 1, code: 'requested', label: 'Requested' },
+    isTentative: false,
+    createdByName: 'Alexander Pierce',
+    adultCount: 2,
+    childCount: 1,
+    currencyCode: 'JPY',
+    totalFeeAmount: 12000,
+    requestedAt: '2026-05-15T10:00:00',
+  },
+];
+
+const mockServices = [
+  {
+    id: 1,
+    name: 'The Drunken Tiger',
+    isPrivateAvailable: true,
+    isActive: true,
+    area: { id: 1, code: 'TOKYO', name: 'Tokyo' },
+    serviceType: { id: 1, code: 'DINING', name: 'Dining' },
+  },
+  {
+    id: 2,
+    name: 'Golden Barrel Pub',
+    isPrivateAvailable: false,
+    isActive: true,
+    area: { id: 1, code: 'TOKYO', name: 'Tokyo' },
+    serviceType: { id: 1, code: 'DINING', name: 'Dining' },
+  },
+];
+
 describe('OrdersView', () => {
+  let httpMock: HttpTestingController;
+
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       imports: [OrdersView],
+      providers: [provideHttpClient(), provideHttpClientTesting()],
     }).compileComponents();
+
+    httpMock = TestBed.inject(HttpTestingController);
   });
 
-  it('should create the view', () => {
+  afterEach(() => {
+    httpMock.verify();
+  });
+
+  function createFixture() {
     const fixture = TestBed.createComponent(OrdersView);
+    fixture.detectChanges();
+    httpMock.expectOne('/api/orders').flush(mockOrders);
+    httpMock.expectOne('/api/services').flush(mockServices);
+    httpMock.expectOne('/api/services/areas').flush([{ id: 1, code: 'TOKYO', name: 'Tokyo' }]);
+    httpMock.expectOne('/api/services/service-types').flush([{ id: 1, code: 'DINING', name: 'Dining' }]);
+    fixture.detectChanges();
+    return fixture;
+  }
+
+  it('should create the view', () => {
+    const fixture = createFixture();
     const view = fixture.componentInstance;
     expect(view).toBeTruthy();
   });
 
   it('should render the orders table', async () => {
-    const fixture = TestBed.createComponent(OrdersView);
-    fixture.detectChanges();
+    const fixture = createFixture();
     await fixture.whenStable();
     const compiled = fixture.nativeElement as HTMLElement;
     expect(compiled.querySelector('h1')?.textContent).toContain('Orders');
-    expect(compiled.querySelectorAll('tbody tr').length).toBe(5);
+    expect(compiled.querySelectorAll('tbody tr').length).toBe(1);
   });
 
   it('should open and close the new order dialog', async () => {
-    const fixture = TestBed.createComponent(OrdersView);
-    fixture.detectChanges();
+    const fixture = createFixture();
     await fixture.whenStable();
 
     const compiled = fixture.nativeElement as HTMLElement;
@@ -47,8 +101,7 @@ describe('OrdersView', () => {
   });
 
   it('should show service details on step two of the new order dialog', async () => {
-    const fixture = TestBed.createComponent(OrdersView);
-    fixture.detectChanges();
+    const fixture = createFixture();
     await fixture.whenStable();
 
     const compiled = fixture.nativeElement as HTMLElement;
@@ -62,7 +115,7 @@ describe('OrdersView', () => {
     await fixture.whenStable();
 
     expect(compiled.querySelector('#service-details-title')?.textContent).toContain('Service Details');
-    expect(compiled.querySelectorAll('.service-list-row').length).toBe(5);
+    expect(compiled.querySelectorAll('.service-list-row').length).toBe(2);
 
     const eveningButton = Array.from(compiled.querySelectorAll('.time-slot-options button')).find(
       (button) => button.textContent?.trim() === 'Evening',
@@ -74,8 +127,7 @@ describe('OrdersView', () => {
   });
 
   it('should show additional services on step three of the new order dialog', async () => {
-    const fixture = TestBed.createComponent(OrdersView);
-    fixture.detectChanges();
+    const fixture = createFixture();
     await fixture.whenStable();
 
     const compiled = fixture.nativeElement as HTMLElement;
@@ -95,8 +147,7 @@ describe('OrdersView', () => {
   });
 
   it('should show guest details and enable request order on step four', async () => {
-    const fixture = TestBed.createComponent(OrdersView);
-    fixture.detectChanges();
+    const fixture = createFixture();
     await fixture.whenStable();
 
     const compiled = fixture.nativeElement as HTMLElement;

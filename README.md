@@ -1,59 +1,103 @@
-# Gourmet-Bookings-Frontend
+# Gourmet Bookings Frontend
 
-This project was generated using [Angular CLI](https://github.com/angular/angular-cli) version 21.2.9.
+Angular 21+ frontend application for Gourmet Bookings order management system, integrated with Spring Boot backend.
 
-## Development server
+## Prerequisites
 
-To start a local development server, run:
+- Node.js 18+ and npm
+- Angular CLI 21+
+- Spring Boot backend running on `http://localhost:8080`
 
-```bash
-ng serve
+## Development Setup
+
+1. Install dependencies:
+   ```bash
+   npm install
+   ```
+
+2. Start development server:
+   ```bash
+   npm start
+   ```
+
+3. Access application at `http://localhost:4200`
+
+## Features
+
+- **Order Management**: Complete CRUD operations for orders
+- **4-Step Order Creation**: Modal-based order creation workflow
+- **Real-time Integration**: Connected to Spring Boot backend API
+- **Responsive Design**: Modern UI with navigation and filtering
+- **Status Tracking**: Order status management and updates
+
+## Project Structure
+
+```
+Gourmet-Bookings-Frontend/
+├── src/
+│   ├── app/
+│   │   ├── views/
+│   │   │   ├── orders/
+│   │   │   └── login/
+│   │   ├── services/           # API service layer
+│   │   ├── app.config.ts
+│   │   └── app.routes.ts
+│   ├── main.ts
+│   └── styles.css
+├── public/
+│   ├── nav-icons/
+│   └── ui-icons/
+├── package.json
+├── angular.json
+├── proxy.conf.json
+└── README.md
 ```
 
-Once the server is running, open your browser and navigate to `http://localhost:4200/`. The application will automatically reload whenever you modify any of the source files.
+## Integration with Backend
 
-## Code scaffolding
+The frontend is fully integrated with the Spring Boot backend:
 
-Angular CLI includes powerful code scaffolding tools. To generate a new component, run:
+### API Service
+- `ApiService` provides comprehensive TypeScript interfaces
+- All backend endpoints are mapped
+- Proper error handling and loading states
 
-```bash
-ng generate component component-name
-```
+### Proxy Configuration
+- Development proxy routes `/api/*` to backend
+- CORS configured for seamless communication
+- Production-ready configuration
 
-For a complete list of available schematics (such as `components`, `directives`, or `pipes`), run:
+### Data Flow
+1. Frontend components call API service methods
+2. API service makes HTTP requests to backend
+3. Backend processes requests and returns data
+4. Frontend updates UI with real-time data
 
-```bash
-ng generate --help
-```
+## Available Scripts
 
-## Building
+- `npm start` - Start development server
+- `npm run build` - Build for production
+- `npm run watch` - Build in watch mode
+- `npm test` - Run unit tests
 
-To build the project run:
+## Technologies Used
 
-```bash
-ng build
-```
+- **Angular 21+** - Frontend framework
+- **TypeScript** - Type-safe JavaScript
+- **RxJS** - Reactive programming
+- **Angular CLI** - Build tooling
+- **CSS3** - Styling and layout
 
-This will compile your project and store the build artifacts in the `dist/` directory. By default, the production build optimizes your application for performance and speed.
+## Browser Support
 
-## Running unit tests
+- Chrome (latest)
+- Firefox (latest)
+- Safari (latest)
+- Edge (latest)
 
-To execute unit tests with the [Vitest](https://vitest.dev/) test runner, use the following command:
+## Development Notes
 
-```bash
-ng test
-```
-
-## Running end-to-end tests
-
-For end-to-end (e2e) testing, run:
-
-```bash
-ng e2e
-```
-
-Angular CLI does not come with an end-to-end testing framework by default. You can choose one that suits your needs.
-
-## Additional Resources
-
-For more information on using the Angular CLI, including detailed command references, visit the [Angular CLI Overview and Command Reference](https://angular.dev/tools/cli) page.
+- Uses proxy configuration for seamless backend integration
+- Implements proper error handling and user feedback
+- Responsive design for mobile and desktop
+- Component-based architecture for maintainability

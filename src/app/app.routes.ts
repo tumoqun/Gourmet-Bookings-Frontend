@@ -4,11 +4,6 @@ import { OrdersView } from './views/orders/orders';
 import { Works } from './views/works/works';
 
 export const routes: Routes = [
-  // { path: '', component: LoginView },
-  // { path: 'login', component: LoginView },
-  // { path: 'orders', component: OrdersView },
-  // { path: 'works', component: Works },
-  // { path: '**', redirectTo: '' },
   {
     path: '',
     loadComponent: () => import('./views/login/login').then((m) => m.LoginView),

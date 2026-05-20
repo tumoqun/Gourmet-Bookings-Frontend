@@ -1,0 +1,37 @@
+<aside class="sidebar" aria-label="Main navigation" [class.collapsed]="isSidebarCollapsed">
+  <div class="logo-wrap">
+    <img src="/gourmet-logo.svg" alt="Borcelle logo" />
+  </div>
+  <button class="collapse-dot" type="button"
+    [attr.aria-label]="isSidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'"
+    [attr.aria-expanded]="!isSidebarCollapsed" (click)="toggleSidebar()">
+    <span *ngIf="isSidebarCollapsed" aria-hidden="true">&rsaquo;</span>
+    <span *ngIf="!isSidebarCollapsed" aria-hidden="true">&lsaquo;</span>
+  </button>
+
+  <nav class="nav-list">
+    <a class="nav-item" *ngFor="let item of navItems" [class.active]="item.active" [href]="item.path"
+      [attr.aria-current]="item.active ? 'page' : null" (click)="setActiveNav(item.label)">
+      <img class="nav-icon" [src]="item.icon" [alt]="item.label + ' icon'" />
+      <span>{{ item.label }}</span>
+    </a>
+  </nav>
+
+  <div class="sidebar-footer">
+    <div class="profile">
+      <span class="avatar">AP</span>
+      <span>
+        <strong>Alexander Pierce</strong>
+        <small>Administrator</small>
+      </span>
+    </div>
+    <a href="/">
+      <img class="sidebar-link-icon" src="/ui-icons/support.png" alt="Support icon" />
+      <span>Support</span>
+    </a>
+    <a href="/">
+      <img class="sidebar-link-icon" src="/ui-icons/logout.png" alt="Logout icon" />
+      <span>Logout</span>
+    </a>
+  </div>
+</aside>

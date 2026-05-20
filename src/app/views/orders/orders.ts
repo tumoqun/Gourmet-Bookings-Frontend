@@ -24,12 +24,6 @@ interface OrderRow {
   guide: string;
 }
 
-interface NavigationItem {
-  label: string;
-  icon: string;
-  active: boolean;
-}
-
 interface StatusFilter {
   label: string;
   count: string;
@@ -43,7 +37,6 @@ interface StatusFilter {
   styleUrl: './orders.css',
 })
 export class OrdersView implements OnInit {
-  protected isSidebarCollapsed = false;
   protected isNewOrderOpen = false;
   protected currentNewOrderStep = 1;
   protected adultGuests = 2;
@@ -59,15 +52,6 @@ export class OrdersView implements OnInit {
   protected services: Service[] = [];
   protected areas: Area[] = [];
   protected serviceTypes: ServiceType[] = [];
-
-  protected navItems: NavigationItem[] = [
-    { label: 'Catalog', icon: '/nav-icons/catalog.png', active: false },
-    { label: 'Allotments', icon: '/nav-icons/allotments.png', active: false },
-    { label: 'Orders', icon: '/nav-icons/orders.png', active: true },
-    { label: 'Assignments', icon: '/nav-icons/assignments.png', active: false },
-    { label: 'Job Accounting', icon: '/nav-icons/job-accounting.png', active: false },
-    { label: 'Management', icon: '/nav-icons/management.png', active: false },
-  ];
 
   protected filters: StatusFilter[] = [
     { label: 'All Orders', count: '0', active: true },
@@ -154,10 +138,6 @@ export class OrdersView implements OnInit {
     });
   }
 
-  protected toggleSidebar(): void {
-    this.isSidebarCollapsed = !this.isSidebarCollapsed;
-  }
-
   protected openNewOrderModal(): void {
     this.isNewOrderOpen = true;
     this.currentNewOrderStep = 1;
@@ -198,13 +178,6 @@ export class OrdersView implements OnInit {
     this.selectedService = service;
     this.selectedArea = service.area;
     this.selectedServiceType = service.serviceType;
-  }
-
-  protected setActiveNav(label: string): void {
-    this.navItems = this.navItems.map((item) => ({
-      ...item,
-      active: item.label === label,
-    }));
   }
 
   protected setActiveFilter(filterLabel: string): void {

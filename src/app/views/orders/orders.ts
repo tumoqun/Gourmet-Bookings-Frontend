@@ -1,6 +1,7 @@
 import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { ApiService, Area, Order, Service, ServiceType } from '../../services/api.service';
+import { FormsModule } from '@angular/forms';
+import { ApiService, Allotment, Area, Order, Service, ServiceType, Reseller, ResellerContact, Agent } from '../../services/api.service';
 
 interface OrderRow {
   id?: number;
@@ -32,7 +33,7 @@ interface StatusFilter {
 
 @Component({
   selector: 'app-orders-view',
-  imports: [CommonModule],
+  imports: [CommonModule, FormsModule],
   templateUrl: './orders.html',
   styleUrl: './orders.css',
 })
@@ -50,8 +51,44 @@ export class OrdersView implements OnInit {
   protected selectedArea?: Area;
   protected selectedServiceType?: ServiceType;
   protected services: Service[] = [];
+  protected filteredServices: Service[] = [];
+  protected serviceAllotments: Allotment[] = [];
+  protected dateAllotments: Allotment[] = [];
+  protected isLoadingDateAllotments = false;
+  protected isLoadingServiceTimes = false;
+  protected serviceTimesMessage = 'Select a target date and service to see start times.';
   protected areas: Area[] = [];
   protected serviceTypes: ServiceType[] = [];
+  
+  protected resellers: Reseller[] = [];
+  protected contacts: ResellerContact[] = [];
+  protected agents: Agent[] = [];
+  protected filteredContacts: ResellerContact[] = [];
+  protected filteredAgents: Agent[] = [];
+
+  protected selectedResellerId?: number;
+  protected selectedContactId?: number;
+  protected selectedAgentId?: number;
+
+  protected isTentativeNewOrder = false;
+  protected createdByNameNewOrder = '';
+  protected picEmailNewOrder = '';
+  protected copyEmailNewOrder = '';
+  protected targetDateNewOrder = '';
+  protected startTimeNewOrder = '';
+  protected selectedAllotmentId?: number;
+  protected voucherNumberNewOrder = '';
+  protected pickupLocationNewOrder = '';
+  protected pickupServiceTypeId?: number;
+  protected pickupDistanceId?: number;
+  protected dropoffLocationNewOrder = '';
+  protected dropoffServiceTypeId?: number;
+  protected dropoffDistanceId?: number;
+  protected selectedAreaId?: number;
+  protected selectedServiceTypeId?: number;
+  protected dropoffSelected?: string;
+  protected ref1NewOrder = '';
+  protected ref2NewOrder = '';
 
   protected filters: StatusFilter[] = [
     { label: 'All Orders', count: '0', active: true },
@@ -75,6 +112,7 @@ export class OrdersView implements OnInit {
     this.loadServices();
     this.loadAreas();
     this.loadServiceTypes();
+    this.loadResellersData();
   }
 
   protected loadOrders(): void {
@@ -106,10 +144,12 @@ export class OrdersView implements OnInit {
     this.apiService.getServices().subscribe({
       next: (services) => {
         this.services = services;
+        this.applyServiceFilters();
       },
       error: () => {
         this.errorMessage = this.errorMessage || 'Could not load services from the backend.';
         this.services = [];
+        this.filteredServices = [];
         this.areas = [];
         this.serviceTypes = [];
       },
@@ -138,10 +178,152 @@ export class OrdersView implements OnInit {
     });
   }
 
+  protected loadResellersData(): void {
+    this.apiService.getResellers().subscribe({
+      next: (resellers) => {
+        this.resellers = resellers;
+        this.cdr.detectChanges();
+      },
+      error: () => {
+        this.resellers = [];
+      }
+    });
+    this.apiService.getResellerContacts().subscribe({
+      next: (contacts) => {
+        this.contacts = contacts;
+        // Show all contacts by default until a reseller is selected
+        if (!this.selectedResellerId) {
+          this.filteredContacts = contacts;
+        }
+        this.cdr.detectChanges();
+      },
+      error: () => {
+        this.contacts = [];
+        this.filteredContacts = [];
+      }
+    });
+    this.apiService.getAgents().subscribe({
+      next: (agents) => {
+        this.agents = agents;
+        // Show all agents by default until a reseller is selected
+        if (!this.selectedResellerId) {
+          this.filteredAgents = agents;
+        }
+        this.cdr.detectChanges();
+      },
+      error: () => {
+        this.agents = [];
+        this.filteredAgents = [];
+      }
+    });
+  }
+
+  protected onResellerChange(event: Event): void {
+    const select = event.target as HTMLSelectElement;
+    const resellerId = Number(select.value);
+    this.selectedResellerId = resellerId || undefined;
+
+    if (resellerId) {
+      // Filter to only the selected reseller's contacts and agents
+      this.filteredContacts = this.contacts.filter(c => Number(c.reseller?.id) === resellerId);
+      this.filteredAgents = this.agents.filter(a => Number(a.reseller?.id) === resellerId);
+    } else {
+      // No reseller selected — show all
+      this.filteredContacts = [...this.contacts];
+      this.filteredAgents = [...this.agents];
+    }
+    this.selectedContactId = undefined;
+    this.selectedAgentId = undefined;
+    this.picEmailNewOrder = '';
+    this.cdr.detectChanges();
+  }
+
+  protected onContactChange(event: Event): void {
+    const select = event.target as HTMLSelectElement;
+    const contactId = Number(select.value);
+    this.selectedContactId = contactId || undefined;
+
+    const contact = this.contacts.find(c => c.id === contactId);
+    if (contact) {
+      this.picEmailNewOrder = contact.email;
+    } else {
+      this.picEmailNewOrder = '';
+    }
+  }
+
+  protected onAgentChange(event: Event): void {
+    const select = event.target as HTMLSelectElement;
+    const agentId = Number(select.value);
+    this.selectedAgentId = agentId || undefined;
+  }
+
+  protected onTargetDateChange(value: string): void {
+    this.targetDateNewOrder = value;
+    this.startTimeNewOrder = '';
+    this.selectedAllotmentId = undefined;
+    this.dateAllotments = [];
+    this.loadDateAllotments();
+    this.loadServiceTimes();
+  }
+
+  protected onAreaChange(value: any): void {
+    const id = Number(value);
+    this.selectedAreaId = id || undefined;
+    this.selectedArea = this.areas.find(a => a.id === id);
+    this.selectedService = undefined;
+    this.startTimeNewOrder = '';
+    this.selectedAllotmentId = undefined;
+    this.serviceAllotments = [];
+    this.loadServiceTimes();
+    this.applyServiceFilters();
+  }
+
+  protected onServiceTypeChange(value: any): void {
+    const id = Number(value);
+    this.selectedServiceTypeId = id || undefined;
+    this.selectedServiceType = this.serviceTypes.find(st => st.id === id);
+    this.selectedService = undefined;
+    this.startTimeNewOrder = '';
+    this.selectedAllotmentId = undefined;
+    this.serviceAllotments = [];
+    this.loadServiceTimes();
+    this.applyServiceFilters();
+  }
+
+  protected onDropoffSelectionChange(value: string): void {
+    this.dropoffSelected = value;
+  }
+
   protected openNewOrderModal(): void {
     this.isNewOrderOpen = true;
     this.currentNewOrderStep = 1;
     this.errorMessage = '';
+    this.isTentativeNewOrder = false;
+    this.createdByNameNewOrder = '';
+    this.picEmailNewOrder = '';
+    this.copyEmailNewOrder = '';
+    this.ref1NewOrder = '';
+    this.ref2NewOrder = '';
+    this.selectedResellerId = undefined;
+    this.selectedContactId = undefined;
+    this.selectedAgentId = undefined;
+    this.targetDateNewOrder = '';
+    this.startTimeNewOrder = '';
+    this.selectedTimeSlot = 'Any';
+    this.selectedService = undefined;
+    this.selectedArea = undefined;
+    this.selectedServiceType = undefined;
+    this.selectedAreaId = undefined;
+    this.selectedServiceTypeId = undefined;
+    this.selectedAllotmentId = undefined;
+    this.serviceAllotments = [];
+    this.dateAllotments = [];
+    this.isLoadingDateAllotments = false;
+    this.serviceTimesMessage = 'Select a target date and service to see start times.';
+    // Reset to show all when modal is re-opened
+    this.filteredContacts = [...this.contacts];
+    this.filteredAgents = [...this.agents];
+    this.applyServiceFilters();
   }
 
   protected closeNewOrderModal(): void {
@@ -172,12 +354,138 @@ export class OrdersView implements OnInit {
 
   protected selectTimeSlot(slot: string): void {
     this.selectedTimeSlot = slot;
+    this.selectedService = undefined;
+    this.startTimeNewOrder = '';
+    this.selectedAllotmentId = undefined;
+    this.serviceAllotments = [];
+    this.applyServiceFilters();
+  }
+
+  private applyServiceFilters(): void {
+    let filtered = [...this.services];
+
+    // Filter by area
+    if (this.selectedAreaId) {
+      filtered = filtered.filter(s => s.area?.id === this.selectedAreaId);
+    }
+
+    // Filter by service type
+    if (this.selectedServiceTypeId) {
+      filtered = filtered.filter(s => s.serviceType?.id === this.selectedServiceTypeId);
+    }
+
+    // Filter by time slot: keep services that support private if slot is selected,
+    // or simply narrow by a future hook; for now all services are shown per slot
+    // (the DB does not store per-service time slots — slot is stored on order_services)
+    // The slot selection mainly sets startTime; no further service exclusion needed.
+
+    if (this.selectedTimeSlot !== 'Any') {
+      if (!this.targetDateNewOrder) {
+        filtered = [];
+      } else {
+        const serviceIdsWithMatchingTime = new Set(
+          this.dateAllotments
+            .filter((allotment) => this.isAllotmentInSelectedSlot(allotment))
+            .map((allotment) => allotment.serviceId),
+        );
+        filtered = filtered.filter((service) => serviceIdsWithMatchingTime.has(service.id));
+      }
+    }
+
+    this.filteredServices = filtered;
   }
 
   protected selectService(service: Service): void {
     this.selectedService = service;
     this.selectedArea = service.area;
     this.selectedServiceType = service.serviceType;
+    this.selectedAreaId = service.area.id;
+    this.selectedServiceTypeId = service.serviceType.id;
+    this.startTimeNewOrder = '';
+    this.selectedAllotmentId = undefined;
+    this.applyServiceFilters();
+    this.loadServiceTimes();
+  }
+
+  protected selectServiceTime(allotment: Allotment): void {
+    this.selectedAllotmentId = allotment.id;
+    this.startTimeNewOrder = this.normalizeTime(allotment.startTime);
+    this.selectedTimeSlot = 'Any';
+  }
+
+  protected formatAllotmentTime(time?: string): string {
+    return this.formatTime(time);
+  }
+
+  private loadServiceTimes(): void {
+    this.serviceAllotments = [];
+
+    if (!this.selectedService || !this.targetDateNewOrder) {
+      this.isLoadingServiceTimes = false;
+      this.serviceTimesMessage = 'Select a target date and service to see start times.';
+      return;
+    }
+
+    this.isLoadingServiceTimes = true;
+    this.serviceTimesMessage = '';
+
+    this.apiService.getAllotmentsByServiceAndDate(this.selectedService.id, this.targetDateNewOrder).subscribe({
+      next: (allotments) => {
+        this.serviceAllotments = allotments;
+        this.isLoadingServiceTimes = false;
+        this.serviceTimesMessage = allotments.length ? '' : 'No start times for this service on the selected date.';
+        this.cdr.detectChanges();
+      },
+      error: () => {
+        this.serviceAllotments = [];
+        this.isLoadingServiceTimes = false;
+        this.serviceTimesMessage = 'Could not load start times for this service.';
+        this.cdr.detectChanges();
+      },
+    });
+  }
+
+  private loadDateAllotments(): void {
+    if (!this.targetDateNewOrder) {
+      this.dateAllotments = [];
+      this.isLoadingDateAllotments = false;
+      this.applyServiceFilters();
+      return;
+    }
+
+    this.isLoadingDateAllotments = true;
+
+    this.apiService.getAllotmentsByDate(this.targetDateNewOrder).subscribe({
+      next: (allotments) => {
+        this.dateAllotments = allotments;
+        this.isLoadingDateAllotments = false;
+        this.applyServiceFilters();
+        this.cdr.detectChanges();
+      },
+      error: () => {
+        this.dateAllotments = [];
+        this.isLoadingDateAllotments = false;
+        this.applyServiceFilters();
+        this.cdr.detectChanges();
+      },
+    });
+  }
+
+  private isAllotmentInSelectedSlot(allotment: Allotment): boolean {
+    const minutes = this.timeToMinutes(allotment.startTime);
+
+    switch (this.selectedTimeSlot) {
+      case 'Morning':
+        return minutes >= 5 * 60 && minutes < 12 * 60;
+      case 'Daytime':
+        return minutes >= 12 * 60 && minutes < 17 * 60;
+      case 'Evening':
+        return minutes >= 17 * 60 && minutes < 21 * 60;
+      case 'Night':
+        return minutes >= 21 * 60 || minutes < 5 * 60;
+      default:
+        return true;
+    }
   }
 
   protected setActiveFilter(filterLabel: string): void {
@@ -193,8 +501,17 @@ export class OrdersView implements OnInit {
     const orderData = {
       orderNumber: `ORD-${Date.now()}`,
       orderChannel: 'frontend',
-      isTentative: false,
-      createdByName: 'Alexander Pierce',
+      isTentative: this.isTentativeNewOrder,
+      createdByName: this.createdByNameNewOrder || 'Alexander Pierce',
+      resellerId: this.selectedResellerId,
+      picContactId: this.selectedContactId,
+      picEmail: this.picEmailNewOrder,
+      copyEmail: this.copyEmailNewOrder,
+      originalAgentId: this.selectedAgentId,
+      voucherNumber: this.voucherNumberNewOrder,
+      additionalServices: this.buildAdditionalServices(),
+      ref1: this.ref1NewOrder,
+      ref2: this.ref2NewOrder,
       adultCount: this.adultGuests,
       childCount: this.childGuests,
       currencyCode: 'JPY',
@@ -206,6 +523,8 @@ export class OrdersView implements OnInit {
               serviceNameSnapshot: this.selectedService.name,
               areaId: this.selectedService.area.id,
               serviceTypeId: this.selectedService.serviceType.id,
+              targetDate: this.targetDateNewOrder || undefined,
+              startTime: this.startTimeNewOrder || undefined,
               isPrivate: false,
               timeSlotCode: this.selectedTimeSlot === 'Any' ? undefined : this.selectedTimeSlot.toUpperCase(),
               timezone: 'Asia/Tokyo',
@@ -340,6 +659,16 @@ export class OrdersView implements OnInit {
     return date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }).replace(' ', '');
   }
 
+  private normalizeTime(time: string): string {
+    const [hour = '', minute = ''] = time.split(':');
+    return `${hour.padStart(2, '0')}:${minute.padStart(2, '0')}`;
+  }
+
+  private timeToMinutes(time: string): number {
+    const [hour = '0', minute = '0'] = time.split(':');
+    return Number(hour) * 60 + Number(minute);
+  }
+
   private formatGuests(adults?: number, children?: number): string {
     return `${adults ?? 0}/${children ?? 0}`;
   }
@@ -446,4 +775,26 @@ export class OrdersView implements OnInit {
   private uniqueById<T extends { id: number }>(items: T[]): T[] {
     return Array.from(new Map(items.map((item) => [item.id, item])).values());
   }
+
+  private buildAdditionalServices(): any[] | undefined {
+  const services = [];
+  if (this.pickupLocationNewOrder) {
+    services.push({
+      kind: 'PICKUP',
+      location: this.pickupLocationNewOrder,
+      serviceTypeId: this.pickupServiceTypeId,
+      distanceId: this.pickupDistanceId,
+    });
+  }
+  if (this.dropoffLocationNewOrder) {
+    services.push({
+      kind: 'DROPOFF',
+      location: this.dropoffLocationNewOrder,
+      serviceTypeId: this.dropoffServiceTypeId,
+      distanceId: this.dropoffDistanceId,
+    });
+  }
+  return services.length ? services : undefined;
+}
+
 }

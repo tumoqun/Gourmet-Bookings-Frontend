@@ -132,6 +132,17 @@ export interface Service {
   isActive: boolean;
 }
 
+export interface Allotment {
+  id: number;
+  serviceId: number;
+  serviceDate: string;
+  startTime: string;
+  capacityTotal: number;
+  reservedTotal: number;
+  availableTotal: number;
+  status: string;
+}
+
 export interface Area {
   id: number;
   code: string;
@@ -290,11 +301,32 @@ export class ApiService {
     return this.http.get<Service[]>(`${this.apiUrl}/services/private`);
   }
 
+  getAllotmentsByServiceAndDate(serviceId: number, serviceDate: string): Observable<Allotment[]> {
+    return this.http.get<Allotment[]>(`${this.apiUrl}/allotments/service/${serviceId}/date/${serviceDate}`);
+  }
+
+  getAllotmentsByDate(serviceDate: string): Observable<Allotment[]> {
+    return this.http.get<Allotment[]>(`${this.apiUrl}/allotments/date/${serviceDate}`);
+  }
+
   createService(service: Partial<Service>): Observable<Service> {
     return this.http.post<Service>(`${this.apiUrl}/services`, service, this.getHttpOptions());
   }
 
   updateService(id: number, service: Partial<Service>): Observable<Service> {
     return this.http.put<Service>(`${this.apiUrl}/services/${id}`, service, this.getHttpOptions());
+  }
+
+  // Reseller and Agent endpoints
+  getResellers(): Observable<Reseller[]> {
+    return this.http.get<Reseller[]>(`${this.apiUrl}/resellers`);
+  }
+
+  getResellerContacts(): Observable<ResellerContact[]> {
+    return this.http.get<ResellerContact[]>(`${this.apiUrl}/resellers/contacts`);
+  }
+
+  getAgents(): Observable<Agent[]> {
+    return this.http.get<Agent[]>(`${this.apiUrl}/resellers/agents`);
   }
 }

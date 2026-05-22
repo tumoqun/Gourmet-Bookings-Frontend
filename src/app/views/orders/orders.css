@@ -719,11 +719,16 @@ td strong {
 }
 
 .table-footer {
-  min-height: 96px;
-  padding: 0 18px 0 24px;
-  gap: 30px;
-  color: #b4aea5;
-  font-size: 0.94rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  padding: 16px 24px;
+  border-top: 1px solid #ebe8e3;
+  background: #fafaf9;
+  color: #8a837a;
+  font-size: 0.92rem;
+  flex-wrap: wrap;
 }
 
 .rows-control {
@@ -1269,6 +1274,54 @@ td strong {
 
 .start-time-field input {
   width: 100%;
+}
+
+.service-time-options {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(118px, 1fr));
+  gap: 8px;
+  min-height: 42px;
+}
+
+.service-time-options button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  min-height: 42px;
+  padding: 0 12px;
+  border: 1px solid #d9d5cf;
+  border-radius: 7px;
+  color: #3f3a35;
+  background: #ffffff;
+  font: inherit;
+  cursor: pointer;
+}
+
+.service-time-options button.active {
+  border-color: #cfa24b;
+  background: #fffaf0;
+  color: #2f2d2a;
+}
+
+.service-time-options button:disabled {
+  color: #a7a19b;
+  background: #f5f4f2;
+  cursor: not-allowed;
+}
+
+.service-time-options button span {
+  color: #76716b;
+  font-size: 13px;
+  white-space: nowrap;
+}
+
+.service-time-state {
+  display: inline-flex;
+  align-items: center;
+  min-height: 42px;
+  color: #76716b;
+  font-size: 15px;
 }
 
 .additional-services {

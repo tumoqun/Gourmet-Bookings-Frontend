@@ -1,6 +1,5 @@
 export const environment = {
   production: false,
-  apiUrl: '/api',
-  useMockData: false // Set to false when backend is ready
+  apiUrl: 'http://localhost:8080/api',
+  useMockData: true // Set to false when backend is ready
 };
-

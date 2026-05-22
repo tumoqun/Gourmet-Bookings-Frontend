@@ -3,4 +3,3 @@ export const environment = {
   apiUrl: '/api',
   useMockData: false
 };
-

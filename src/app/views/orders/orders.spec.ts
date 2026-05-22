@@ -37,6 +37,29 @@ const mockServices = [
   },
 ];
 
+const mockAllotments = [
+  {
+    id: 10,
+    serviceId: 1,
+    serviceDate: '2026-06-01',
+    startTime: '09:00:00',
+    capacityTotal: 8,
+    reservedTotal: 3,
+    availableTotal: 5,
+    status: 'ACTIVE',
+  },
+  {
+    id: 11,
+    serviceId: 1,
+    serviceDate: '2026-06-01',
+    startTime: '13:00:00',
+    capacityTotal: 8,
+    reservedTotal: 8,
+    availableTotal: 0,
+    status: 'ACTIVE',
+  },
+];
+
 describe('OrdersView', () => {
   let httpMock: HttpTestingController;
 
@@ -60,6 +83,9 @@ describe('OrdersView', () => {
     httpMock.expectOne('/api/services').flush(mockServices);
     httpMock.expectOne('/api/services/areas').flush([{ id: 1, code: 'TOKYO', name: 'Tokyo' }]);
     httpMock.expectOne('/api/services/service-types').flush([{ id: 1, code: 'DINING', name: 'Dining' }]);
+    httpMock.expectOne('/api/resellers').flush([]);
+    httpMock.expectOne('/api/resellers/contacts').flush([]);
+    httpMock.expectOne('/api/resellers/agents').flush([]);
     fixture.detectChanges();
     return fixture;
   }
@@ -124,6 +150,69 @@ describe('OrdersView', () => {
     fixture.detectChanges();
 
     expect(eveningButton.classList).toContain('active');
+  });
+
+  it('should load service start times for the selected date and service', async () => {
+    const fixture = createFixture();
+    await fixture.whenStable();
+
+    const compiled = fixture.nativeElement as HTMLElement;
+    const newBookingButton = compiled.querySelector('.new-booking') as HTMLButtonElement;
+    newBookingButton.click();
+    fixture.detectChanges();
+
+    const stepTwoButton = compiled.querySelector('.order-stepper li:nth-child(2) button') as HTMLButtonElement;
+    stepTwoButton.click();
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    const targetDateInput = compiled.querySelector('input[name="targetDate"]') as HTMLInputElement;
+    targetDateInput.value = '2026-06-01';
+    targetDateInput.dispatchEvent(new Event('input'));
+    httpMock.expectOne('/api/allotments/date/2026-06-01').flush(mockAllotments);
+    fixture.detectChanges();
+
+    const selectButton = compiled.querySelector('.service-list-row button') as HTMLButtonElement;
+    selectButton.click();
+    httpMock.expectOne('/api/allotments/service/1/date/2026-06-01').flush(mockAllotments);
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    const timeButtons = compiled.querySelectorAll('.service-time-options button');
+    expect(timeButtons.length).toBe(2);
+    expect(timeButtons[0].textContent).toContain('9:00AM');
+    expect((timeButtons[1] as HTMLButtonElement).disabled).toBe(true);
+  });
+
+  it('should filter services by the selected available time slot', async () => {
+    const fixture = createFixture();
+    await fixture.whenStable();
+
+    const compiled = fixture.nativeElement as HTMLElement;
+    const newBookingButton = compiled.querySelector('.new-booking') as HTMLButtonElement;
+    newBookingButton.click();
+    fixture.detectChanges();
+
+    const stepTwoButton = compiled.querySelector('.order-stepper li:nth-child(2) button') as HTMLButtonElement;
+    stepTwoButton.click();
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    const targetDateInput = compiled.querySelector('input[name="targetDate"]') as HTMLInputElement;
+    targetDateInput.value = '2026-06-01';
+    targetDateInput.dispatchEvent(new Event('input'));
+    httpMock.expectOne('/api/allotments/date/2026-06-01').flush(mockAllotments);
+    fixture.detectChanges();
+
+    const morningButton = Array.from(compiled.querySelectorAll('.time-slot-options button')).find(
+      (button) => button.textContent?.trim() === 'Morning',
+    ) as HTMLButtonElement;
+    morningButton.click();
+    fixture.detectChanges();
+
+    const serviceRows = compiled.querySelectorAll('.service-list-row');
+    expect(serviceRows.length).toBe(1);
+    expect(serviceRows[0].textContent).toContain('The Drunken Tiger');
   });
 
   it('should show additional services on step three of the new order dialog', async () => {

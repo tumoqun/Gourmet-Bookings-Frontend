@@ -1,1 +1,183 @@
-<p>works!</p>
+<section class="work-list-wrapper">
+  <header class="topbar">
+    <div>
+      <h1 id="works-title">Works</h1>
+      <p>TODAY IS THURSDAY, MARCH 12, 2026</p>
+    </div>
+    <div class="top-actions">
+      <button class="refresh" type="button" [disabled]="isLoading" (click)="loadWorks()">
+        <span aria-hidden="true">&#8635;</span> Refresh
+      </button>
+    </div>
+  </header>
+
+  <div class="status-tabs" aria-label="Order status filters">
+    <button type="button" *ngFor="let filter of filters" [class.active]="filter.active"
+      (click)="setActiveFilter(filter.label)">
+      <span>{{ filter.label }}</span>
+      <strong>{{ filter.count }}</strong>
+    </button>
+  </div>
+
+  <section class="filters-card" aria-label="Order search filters">
+    <div class="filter-grid top">
+      <label>
+        <span>Reseller</span>
+        <select aria-label="Reseller">
+          <option>Reseller</option>
+        </select>
+      </label>
+      <label>
+        <span>Ref</span>
+        <select aria-label="Ref">
+          <option>Ref</option>
+        </select>
+      </label>
+      <label>
+        <span>Person In Charge</span>
+        <select aria-label="Person In Charge">
+          <option>Person In Charge</option>
+        </select>
+      </label>
+      <label>
+        <span>Area</span>
+        <select aria-label="Area">
+          <option>Area</option>
+        </select>
+      </label>
+      <label>
+        <span>Service Name</span>
+        <select aria-label="Service Name">
+          <option>Service Name</option>
+        </select>
+      </label>
+      <label>
+        <span>Guide Name</span>
+        <select aria-label="Guide Name">
+          <option>Guide Name</option>
+        </select>
+      </label>
+    </div>
+    <div class="filter-grid bottom">
+      <label class="tour-date-field">
+        <span>Tour Date</span>
+        <input type="text" placeholder="Tour Date" aria-label="Tour Date" />
+        <img class="date-icon" src="/ui-icons/date.png" alt="Date icon" />
+      </label>
+      <label>
+        <span>All Statuses</span>
+        <select aria-label="All Statuses">
+          <option>All Statuses</option>
+        </select>
+      </label>
+      <div class="filter-toggles">
+        <button class="private-toggle" type="button">
+          <span>Private</span>
+        </button>
+        <button class="apply" type="button">Apply</button>
+        <button class="clear" type="button">Clear Filters</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- <section class="table-card">
+    <ag-grid-angular class="ag-theme-quartz" style="width: 100%; height: 500px;" [rowData]="rowData"
+      [columnDefs]="columnDefs" [defaultColDef]="defaultColDef" [pagination]="true" [paginationPageSize]="5">
+    </ag-grid-angular>
+  </section> -->
+  
+
+  <p class="api-message error" *ngIf="errorMessage">{{ errorMessage }}</p>
+  
+  <section class="table-card" aria-label="Orders table">
+    <div class="table-scroll">
+      <table>
+        <thead>
+          <tr>
+            <th>Reseller</th>
+            <th>Area</th>
+            <th>Service Name</th>
+            <th>PIC</th>
+            <th>Ref 1</th>
+            <th>P/S</th>
+            <th>Date-Time</th>
+            <th>#Guests</th>
+            <th>Status</th>
+            <th>Guide</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngIf="isLoading && works.length === 0">
+            <td class="table-state" colspan="17">Loading orders...</td>
+          </tr>
+          <tr *ngIf="!isLoading && works.length === 0">
+            <td class="table-state" colspan="17">No orders found.</td>
+          </tr>
+  
+          <tr *ngFor="let work of works; trackBy: trackByWork">
+            <td class="reseller">{{ work.reseller }}</td>
+            <td><span class="area">{{ work.area }}</span></td>
+            <td><span class="service">{{ work.service }}</span></td>
+            <td><span class="pic">{{ work.pic }}</span></td>
+            <td><span class="ref1">{{ work.ref1 }}</span></td>
+            <td><span class="ps">{{ work.ps }}</span></td>
+            <td>
+              <span class="datetime">
+                <span>{{ work.tourStartDate }}</span>
+              </span>
+            </td>
+            <td><span class="guests">{{ work.guests }}</span></td>
+            <td><span [class]="getStatusClass(work.status)">{{ work.status }}</span></td>
+            <td>
+              <span class="guide">
+                <img class="guide-icon" src="/ui-icons/image-default.png" alt="Guide icon" />
+                <strong>{{ work.guide }}</strong>
+              </span>
+            </td>
+            <td>
+              <span class="actions-cell">
+                View Details
+              </span>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  
+    <footer class="table-footer">
+      <div class="pagination-controls">
+        <div class="rows-control">
+          <span>Show:</span>
+          <strong>100 rows</strong>
+          <img class="dropdown-icon" src="/ui-icons/arrow-down.png" alt="Dropdown icon" />
+        </div>
+        <div class="pagination" aria-label="Pagination">
+          <div class="pagination-item">
+            <img class="page-edge first" src="/ui-icons/first-prev.png" alt="First page" />
+          </div>
+          <div class="pagination-item">
+            <img class="page-edge previous" src="/ui-icons/next.png" alt="Last page" style="transform: rotate(180deg);" />
+          </div>
+          <button class="active" type="button">1</button>
+          <button type="button">2</button>
+          <div class="pagination-item">
+            <img class="page-edge next" src="/ui-icons/next.png" alt="Next page" />
+          </div>
+          <div class="pagination-item">
+            <img class="page-edge last" src="/ui-icons/last-next.png" alt="Last page" />
+          </div>
+        </div>
+        <span>5 records</span>
+      </div>
+      <div class="summary">
+        <span>Total Guests</span>
+        <div class="guest-summary">
+          <img class="guest-icon" src="/ui-icons/guests.png" alt="Guest icon" />
+          <strong>18 / 11</strong>
+        </div>
+      </div>
+    </footer>
+  </section>
+
+</section>

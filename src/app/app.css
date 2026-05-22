@@ -7,10 +7,12 @@
   display: flex;
   min-height: 100vh;
   font-family: "Aptos", "Segoe UI", sans-serif;
+  overflow-x: hidden;
 }
 
 .content-area {
   flex: 1;
+  width: calc(100% - 256px);
 }
 
 .sidebar-container {

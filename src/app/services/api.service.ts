@@ -100,6 +100,7 @@ export interface OrderAdditionalService {
   kind: string;
   isEnabled: boolean;
   location?: string;
+  handoffText?: string;
   serviceType?: ServiceType;
   distanceBand?: DistanceBand;
   suggestedTime?: string;
@@ -199,6 +200,7 @@ export interface OrderAdditionalServiceRequest {
   kind: string;
   isEnabled?: boolean;
   location?: string;
+  handoffText?: string;
   serviceTypeId?: number;
   distanceBandId?: number;
   suggestedTime?: string;

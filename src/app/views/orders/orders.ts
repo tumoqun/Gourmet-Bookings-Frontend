@@ -1,7 +1,18 @@
 import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { ApiService, Allotment, Area, Order, Service, ServiceType, Reseller, ResellerContact, Agent } from '../../services/api.service';
+import {
+  ApiService,
+  Allotment,
+  Area,
+  Order,
+  OrderAdditionalServiceRequest,
+  Service,
+  ServiceType,
+  Reseller,
+  ResellerContact,
+  Agent,
+} from '../../services/api.service';
 
 interface OrderRow {
   id?: number;
@@ -88,9 +99,10 @@ export class OrdersView implements OnInit {
   protected dropoffLocationNewOrder = '';
   protected dropoffServiceTypeId?: number;
   protected dropoffDistanceId?: number;
+  protected handoffTextNewOrder = '';
   protected selectedAreaId?: number;
   protected selectedServiceTypeId?: number;
-  protected dropoffSelected?: string;
+  protected dropoffSelected: 'DROP' | 'HAND' = 'DROP';
   protected ref1NewOrder = '';
   protected ref2NewOrder = '';
 
@@ -300,7 +312,16 @@ export class OrdersView implements OnInit {
   }
 
   protected onDropoffSelectionChange(value: string): void {
-    this.dropoffSelected = value;
+    this.dropoffSelected = value === 'HAND' ? 'HAND' : 'DROP';
+
+    if (this.dropoffSelected === 'HAND') {
+      this.dropoffLocationNewOrder = '';
+      this.dropoffServiceTypeId = undefined;
+      this.dropoffDistanceId = undefined;
+      return;
+    }
+
+    this.handoffTextNewOrder = '';
   }
 
   protected openNewOrderModal(): void {
@@ -311,6 +332,15 @@ export class OrdersView implements OnInit {
     this.createdByNameNewOrder = '';
     this.picEmailNewOrder = '';
     this.copyEmailNewOrder = '';
+    this.voucherNumberNewOrder = '';
+    this.pickupLocationNewOrder = '';
+    this.pickupServiceTypeId = undefined;
+    this.pickupDistanceId = undefined;
+    this.dropoffLocationNewOrder = '';
+    this.dropoffServiceTypeId = undefined;
+    this.dropoffDistanceId = undefined;
+    this.handoffTextNewOrder = '';
+    this.dropoffSelected = 'DROP';
     this.ref1NewOrder = '';
     this.ref2NewOrder = '';
     this.selectedResellerId = undefined;
@@ -689,6 +719,7 @@ export class OrdersView implements OnInit {
   private getPickupInfo(order: Order): string {
     const pickup = order.additionalServices?.find((service) => service.kind.toUpperCase() === 'PICKUP');
     const dropoff = order.additionalServices?.find((service) => service.kind.toUpperCase() === 'DROPOFF');
+    const handoff = order.additionalServices?.find((service) => service.kind.toUpperCase() === 'HANDOFF');
 
     const formatTime = (time?: string) => {
       if (!time) return '';
@@ -699,10 +730,12 @@ export class OrdersView implements OnInit {
       return `${hour12}:${m}${ampm}`;
     };
 
-    if (!pickup && !dropoff) return '-/-';
+    if (!pickup && !dropoff && !handoff) return '-/-';
 
     const puTime = formatTime(pickup?.suggestedTime) || '-';
+    if (pickup && handoff && !dropoff) return `${puTime}/${handoff.handoffText || 'Hand Off'}`;
     if (pickup && !dropoff) return `${puTime}/${pickup.location || '-'}`;
+    if (!pickup && handoff && !dropoff) return `-/${handoff.handoffText || 'Hand Off'}`;
     if (!pickup && dropoff) return `${formatTime(dropoff.suggestedTime) || '-'}/${dropoff.location || '-'}`;
 
     const doLoc = dropoff?.location || formatTime(dropoff?.suggestedTime) || '-';
@@ -800,25 +833,38 @@ export class OrdersView implements OnInit {
     return Array.from(new Map(items.map((item) => [item.id, item])).values());
   }
 
-  private buildAdditionalServices(): any[] | undefined {
-  const services = [];
-  if (this.pickupLocationNewOrder) {
-    services.push({
-      kind: 'PICKUP',
-      location: this.pickupLocationNewOrder,
-      serviceTypeId: this.pickupServiceTypeId,
-      distanceId: this.pickupDistanceId,
-    });
+  private buildAdditionalServices(): OrderAdditionalServiceRequest[] | undefined {
+    const services: OrderAdditionalServiceRequest[] = [];
+
+    if (this.pickupLocationNewOrder) {
+      services.push({
+        kind: 'PICKUP',
+        isEnabled: true,
+        location: this.pickupLocationNewOrder,
+        serviceTypeId: this.pickupServiceTypeId,
+        distanceBandId: this.pickupDistanceId,
+      });
+    }
+
+    if (this.dropoffSelected === 'HAND') {
+      services.push({
+        kind: 'HANDOFF',
+        isEnabled: true,
+        handoffText: this.handoffTextNewOrder || undefined,
+      });
+    }
+
+    if (this.dropoffSelected === 'DROP' && this.dropoffLocationNewOrder) {
+      services.push({
+        kind: 'DROPOFF',
+        isEnabled: true,
+        location: this.dropoffLocationNewOrder,
+        serviceTypeId: this.dropoffServiceTypeId,
+        distanceBandId: this.dropoffDistanceId,
+      });
+    }
+
+    return services.length ? services : undefined;
   }
-  if (this.dropoffLocationNewOrder) {
-    services.push({
-      kind: 'DROPOFF',
-      location: this.dropoffLocationNewOrder,
-      serviceTypeId: this.dropoffServiceTypeId,
-      distanceId: this.dropoffDistanceId,
-    });
-  }
-  return services.length ? services : undefined;
-}
 
 }

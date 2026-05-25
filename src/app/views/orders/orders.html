@@ -413,33 +413,43 @@
                </select>
             <select aria-label="Pick-up distance" [(ngModel)]="pickupDistanceId" name="pickupDistanceId">
                  <option [ngValue]="undefined">Select Distance</option>
-                 <option *ngFor="let d of [1,2,3]" [ngValue]="d">{{ d }} km</option>
+                 <option [ngValue]="1">1 km</option>
+                 <option [ngValue]="2">2 km</option>
+                 <option [ngValue]="3">3 km</option>
                </select>
-            <strong class="additional-fee">Fee: $200</strong>
+            <strong class="additional-fee">Fee: {{ pickupDistanceId === 1 ? 100 : pickupDistanceId === 2 ? 150 : pickupDistanceId === 3 ? 200 : '-' }}</strong>
           </section>
 
           <section class="additional-card service-extra-card" aria-label="Drop off details">
             <div class="additional-choice-row">
               <label class="additional-toggle radio-toggle">
                  <span>Drop Off</span>
-                 <input type="radio" name="drop-service-type" [(ngModel)]="dropoffSelected" [value]="'DROP'" checked />
+                 <input type="radio" name="drop-service-type" [ngModel]="dropoffSelected" (ngModelChange)="onDropoffSelectionChange($event)" [value]="'DROP'" />
                </label>
               <label class="additional-toggle radio-toggle">
                  <span>Hand Off</span>
-                 <input type="radio" name="drop-service-type" [(ngModel)]="dropoffSelected" [value]="'HAND'" />
+                 <input type="radio" name="drop-service-type" [ngModel]="dropoffSelected" (ngModelChange)="onDropoffSelectionChange($event)" [value]="'HAND'" />
                </label>
             </div>
-            <p>The suggested drop-off time will be included in the order offer or confirmation</p>
-            <input type="text" placeholder="Enter Drop-off Location" aria-label="Drop-off location" [(ngModel)]="dropoffLocationNewOrder" name="dropoffLocation" />
-            <select aria-label="Drop-off service type" [(ngModel)]="dropoffServiceTypeId" name="dropoffServiceTypeId">
-               <option [ngValue]="undefined">Select Service Type</option>
-               <option *ngFor="let type of serviceTypes" [ngValue]="type.id">{{ type.name }}</option>
-             </select>
-            <select aria-label="Drop-off distance" [(ngModel)]="dropoffDistanceId" name="dropoffDistanceId">
-               <option [ngValue]="undefined">Select Distance</option>
-               <option *ngFor="let d of [1,2,3]" [ngValue]="d">{{ d }} km</option>
-             </select>
-            <strong class="additional-fee">Fee: $200</strong>
+            <ng-container *ngIf="dropoffSelected === 'DROP'; else handoffFields">
+              <p>The suggested drop-off time will be included in the order offer or confirmation</p>
+              <input type="text" placeholder="Enter Drop-off Location" aria-label="Drop-off location" [(ngModel)]="dropoffLocationNewOrder" name="dropoffLocation" />
+              <select aria-label="Drop-off service type" [(ngModel)]="dropoffServiceTypeId" name="dropoffServiceTypeId">
+                 <option [ngValue]="undefined">Select Service Type</option>
+                 <option *ngFor="let type of serviceTypes" [ngValue]="type.id">{{ type.name }}</option>
+               </select>
+              <select aria-label="Drop-off distance" [(ngModel)]="dropoffDistanceId" name="dropoffDistanceId">
+                 <option [ngValue]="undefined">Select Distance</option>
+                 <option [ngValue]="1">1 km</option>
+                 <option [ngValue]="2">2 km</option>
+                 <option [ngValue]="3">3 km</option>
+               </select>
+              <strong class="additional-fee">Fee: {{ dropoffDistanceId === 1 ? 100 : dropoffDistanceId === 2 ? 150 : dropoffDistanceId === 3 ? 200 : '-' }}</strong>
+            </ng-container>
+            <ng-template #handoffFields>
+              <p>The hand off location and time will be confirmed later</p>
+              <input type="text" placeholder="Enter Hand Off Details" aria-label="Hand off details" [(ngModel)]="handoffTextNewOrder" name="handoffText" />
+            </ng-template>
           </section>
         </section>
       </div>

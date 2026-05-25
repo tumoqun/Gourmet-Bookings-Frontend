@@ -233,6 +233,56 @@ describe('OrdersView', () => {
     expect(compiled.querySelector('input[placeholder="Enter Voucher Number"]')).toBeTruthy();
     expect(compiled.querySelectorAll('.service-extra-card').length).toBe(2);
     expect(compiled.querySelectorAll('.additional-fee').length).toBe(2);
+
+    const handoffRadio = compiled.querySelectorAll('input[name="drop-service-type"]')[1] as HTMLInputElement;
+    handoffRadio.click();
+    fixture.detectChanges();
+
+    expect(compiled.textContent).toContain('The hand off location and time will be confirmed later');
+    expect(compiled.querySelector('input[placeholder="Enter Hand Off Details"]')).toBeTruthy();
+    expect(compiled.querySelector('input[placeholder="Enter Drop-off Location"]')).toBeFalsy();
+    expect(compiled.querySelectorAll('.service-extra-card')[1].querySelector('.additional-fee')).toBeFalsy();
+  });
+
+  it('should submit hand off as a distinct additional service', async () => {
+    const fixture = createFixture();
+    await fixture.whenStable();
+
+    const compiled = fixture.nativeElement as HTMLElement;
+    const newBookingButton = compiled.querySelector('.new-booking') as HTMLButtonElement;
+    newBookingButton.click();
+    fixture.detectChanges();
+
+    const stepThreeButton = compiled.querySelector('.order-stepper li:nth-child(3) button') as HTMLButtonElement;
+    stepThreeButton.click();
+    fixture.detectChanges();
+
+    const handoffRadio = compiled.querySelectorAll('input[name="drop-service-type"]')[1] as HTMLInputElement;
+    handoffRadio.click();
+    fixture.detectChanges();
+
+    const handoffInput = compiled.querySelector('input[name="handoffText"]') as HTMLInputElement;
+    handoffInput.value = 'Meet at the hotel lobby after confirmation';
+    handoffInput.dispatchEvent(new Event('input'));
+    fixture.detectChanges();
+
+    const stepFourButton = compiled.querySelector('.order-stepper li:nth-child(4) button') as HTMLButtonElement;
+    stepFourButton.click();
+    fixture.detectChanges();
+
+    const requestButton = compiled.querySelector('.request-order') as HTMLButtonElement;
+    requestButton.click();
+
+    const request = httpMock.expectOne('/api/orders');
+    expect(request.request.body.additionalServices).toEqual([
+      {
+        kind: 'HANDOFF',
+        isEnabled: true,
+        handoffText: 'Meet at the hotel lobby after confirmation',
+      },
+    ]);
+    request.flush(mockOrders[0]);
+    httpMock.expectOne('/api/orders').flush(mockOrders);
   });
 
   it('should show guest details and enable request order on step four', async () => {

@@ -44,6 +44,10 @@ export class OrdersView implements OnInit {
   protected childGuests = 1;
   protected isLoading = false;
   protected errorMessage = '';
+  protected selectedRows = 100;
+  protected totalAdults = 0;
+  protected totalChildren = 0;
+  protected totalVolume = 0;
 
   protected readonly timeSlots = ['Any', 'Morning', 'Daytime', 'Evening', 'Night'];
   protected selectedTimeSlot = 'Any';
@@ -138,6 +142,11 @@ export class OrdersView implements OnInit {
         });
       },
     });
+  }
+
+  protected onRowsChange(event: Event): void {
+    const select = event.target as HTMLSelectElement;
+    this.selectedRows = Number(select.value) || 100;
   }
 
   protected loadServices(): void {
@@ -673,7 +682,7 @@ export class OrdersView implements OnInit {
     return `${adults ?? 0}/${children ?? 0}`;
   }
 
-  private formatCurrency(amount?: number): string {
+  protected formatCurrency(amount?: number): string {
     return (amount ?? 0).toLocaleString();
   }
 
@@ -770,6 +779,21 @@ export class OrdersView implements OnInit {
 
       return { ...filter, count: '0' };
     });
+
+    this.totalAdults = this.orders.reduce((sum, order) => {
+        const adults = parseInt(order.guests.split('/')[0], 10) || 0;
+        return sum + adults;
+    }, 0);
+    
+    this.totalChildren = this.orders.reduce((sum, order) => {
+        const children = parseInt(order.guests.split('/')[1], 10) || 0;
+        return sum + children;
+    }, 0);
+
+    this.totalVolume = this.orders.reduce((sum, order) => {
+        const fee = parseFloat(order.fee.replace(/,/g, '')) || 0;
+        return sum + fee;
+    }, 0);
   }
 
   private uniqueById<T extends { id: number }>(items: T[]): T[] {

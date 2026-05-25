@@ -178,11 +178,18 @@
       </div>
 
       <footer class="table-footer">
-        <div class="rows-control">
-          <span>Show:</span>
-          <strong>100 rows</strong>
-          <span class="chevron">&#8964;</span>
+        <div class="footer-left">
+          <div class="rows-control">
+            <span>Rows per page</span>
+            <select [(ngModel)]="selectedRows" (ngModelChange)="onRowsChange($event)">
+              <option [value]="100">100</option>
+              <option [value]="150">150</option>
+              <option [value]="200">200</option>
+            </select>
+          </div>
+          <span class="records-count">{{ orders.length }} records</span>
         </div>
+        
         <div class="pagination" aria-label="Pagination">
           <button class="page-edge first" type="button" aria-label="First page"></button>
           <button class="page-edge previous" type="button" aria-label="Previous page"></button>
@@ -190,15 +197,17 @@
           <button type="button">2</button>
           <button class="page-edge next" type="button" aria-label="Next page"></button>
           <button class="page-edge last" type="button" aria-label="Last page"></button>
-          <span>5 records</span>
         </div>
-        <div class="summary guests">
-          <span>Total Guests</span>
-          <strong>18 / 11</strong>
-        </div>
-        <div class="summary value">
-          <span>Total Volumes</span>
-          <strong>&yen;360,582</strong>
+
+        <div class="footer-right">
+          <div class="summary guests">
+            <span>Total Guests</span>
+            <strong>{{ totalAdults }} / {{ totalChildren }}</strong>
+          </div>
+          <div class="summary value">
+            <span>Total Volume</span>
+            <strong>&yen;{{ formatCurrency(totalVolume) }}</strong>
+          </div>
         </div>
       </footer>
     </section>

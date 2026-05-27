@@ -178,11 +178,18 @@
       </div>
 
       <footer class="table-footer">
-        <div class="rows-control">
-          <span>Show:</span>
-          <strong>100 rows</strong>
-          <span class="chevron">&#8964;</span>
+        <div class="footer-left">
+          <div class="rows-control">
+            <span>Rows per page</span>
+            <select [(ngModel)]="selectedRows" (ngModelChange)="onRowsChange($event)">
+              <option [value]="100">100</option>
+              <option [value]="150">150</option>
+              <option [value]="200">200</option>
+            </select>
+          </div>
+          <span class="records-count">{{ orders.length }} records</span>
         </div>
+        
         <div class="pagination" aria-label="Pagination">
           <button class="page-edge first" type="button" aria-label="First page"></button>
           <button class="page-edge previous" type="button" aria-label="Previous page"></button>
@@ -190,15 +197,17 @@
           <button type="button">2</button>
           <button class="page-edge next" type="button" aria-label="Next page"></button>
           <button class="page-edge last" type="button" aria-label="Last page"></button>
-          <span>5 records</span>
         </div>
-        <div class="summary guests">
-          <span>Total Guests</span>
-          <strong>18 / 11</strong>
-        </div>
-        <div class="summary value">
-          <span>Total Volumes</span>
-          <strong>&yen;360,582</strong>
+
+        <div class="footer-right">
+          <div class="summary guests">
+            <span>Total Guests</span>
+            <strong>{{ totalAdults }} / {{ totalChildren }}</strong>
+          </div>
+          <div class="summary value">
+            <span>Total Volume</span>
+            <strong>&yen;{{ formatCurrency(totalVolume) }}</strong>
+          </div>
         </div>
       </footer>
     </section>
@@ -239,7 +248,7 @@
         <form class="new-order-form">
           <label class="modal-field">
             <span>Order Created By</span>
-            <input type="text" placeholder="Enter Name" />
+            <input type="text" placeholder="Enter Name" [value]="createdByNameNewOrder" (input)="createdByNameNewOrder = $any($event.target).value" />
           </label>
 
           <div class="modal-field">
@@ -247,11 +256,12 @@
               <label for="new-order-reseller">Reseller</label>
               <label class="tentative-toggle">
                 <span>Tentative</span>
-                <input type="checkbox" />
+                <input type="checkbox" [checked]="isTentativeNewOrder" (change)="isTentativeNewOrder = $any($event.target).checked" />
               </label>
             </div>
-            <select id="new-order-reseller">
-              <option>Select Reseller</option>
+            <select id="new-order-reseller" (change)="onResellerChange($event)">
+              <option value="">Select Reseller</option>
+              <option *ngFor="let reseller of resellers" [value]="reseller.id">{{ reseller.name }}</option>
             </select>
           </div>
 
@@ -260,36 +270,38 @@
               <label for="new-order-agent">Original Agent</label>
               <a href="/">Add New</a>
             </div>
-            <select id="new-order-agent">
-              <option>Select Agent Name</option>
+            <select id="new-order-agent" (change)="onAgentChange($event)" [value]="selectedAgentId || ''">
+              <option value="">Select Agent Name</option>
+              <option *ngFor="let agent of filteredAgents" [value]="agent.id">{{ agent.name }}</option>
             </select>
           </div>
 
           <label class="modal-field">
             <span>Person In Charge (PIC)</span>
-            <select>
-              <option>Select Person In Charge</option>
+            <select (change)="onContactChange($event)" [value]="selectedContactId || ''">
+              <option value="">Select Person In Charge</option>
+              <option *ngFor="let contact of filteredContacts" [value]="contact.id">{{ contact.name }}</option>
             </select>
           </label>
 
           <label class="modal-field">
             <span>PIC Email</span>
-            <input type="email" placeholder="Enter Email" />
+            <input type="email" placeholder="Enter Email" [value]="picEmailNewOrder" (input)="picEmailNewOrder = $any($event.target).value" />
           </label>
 
           <label class="modal-field">
             <span>Copy Email</span>
-            <input type="email" placeholder="Enter Email" />
+            <input type="email" placeholder="Enter Email" [value]="copyEmailNewOrder" (input)="copyEmailNewOrder = $any($event.target).value" />
           </label>
 
           <label class="modal-field">
             <span>Reference Number 1</span>
-            <input type="text" placeholder="Enter Reference Number" />
+            <input type="text" placeholder="Enter Reference Number" [value]="ref1NewOrder" (input)="ref1NewOrder = $any($event.target).value" />
           </label>
 
           <label class="modal-field">
             <span>Reference Number 2</span>
-            <input type="text" placeholder="Enter Reference Number" />
+            <input type="text" placeholder="Enter Reference Number" [value]="ref2NewOrder" (input)="ref2NewOrder = $any($event.target).value" />
           </label>
         </form>
       </div>
@@ -301,22 +313,24 @@
           <div class="service-details-grid">
             <label class="modal-field date-field">
               <span>Target Date</span>
-              <input type="text" placeholder="Select Date" />
+              <input type="date" [ngModel]="targetDateNewOrder" (ngModelChange)="onTargetDateChange($event)" name="targetDate" />
               <img class="date-icon" src="/ui-icons/date.png" alt="Date icon" />
             </label>
 
             <label class="modal-field">
               <span>Area</span>
-              <select>
-                <option>Select Area</option>
-              </select>
+              <select [ngModel]="selectedAreaId" (ngModelChange)="onAreaChange($event)" name="selectedAreaId">
+                 <option [ngValue]="undefined">Select Area</option>
+                 <option *ngFor="let area of areas" [ngValue]="area.id">{{ area.name }}</option>
+               </select>
             </label>
 
             <label class="modal-field">
               <span>Service Type</span>
-              <select>
-                <option>Select Service Type</option>
-              </select>
+              <select [ngModel]="selectedServiceTypeId" (ngModelChange)="onServiceTypeChange($event)" name="selectedServiceTypeId">
+                 <option [ngValue]="undefined">Select Service Type</option>
+                 <option *ngFor="let type of serviceTypes" [ngValue]="type.id">{{ type.name }}</option>
+               </select>
             </label>
           </div>
 
@@ -347,7 +361,11 @@
               <button type="button" (click)="loadServices()">Retry</button>
             </div>
 
-            <div *ngFor="let service of services" class="service-list-row" [class.selected]="selectedService?.id === service.id">
+            <div *ngIf="services.length > 0 && filteredServices.length === 0" class="service-list-row">
+              <span>No services match the selected area and type</span>
+            </div>
+
+            <div *ngFor="let service of filteredServices" class="service-list-row" [class.selected]="selectedService?.id === service.id">
               <span>{{ service.name }}</span>
               <button type="button" (click)="selectService(service)">Select</button>
             </div>
@@ -355,8 +373,20 @@
 
           <label class="modal-field start-time-field">
             <span>Start Time</span>
-            <input type="text" placeholder="Select Tour Start Time" />
-            <img class="date-icon" src="/ui-icons/date.png" alt="Date icon" />
+            <div class="service-time-options" role="group" aria-label="Service start times">
+              <span *ngIf="isLoadingServiceTimes" class="service-time-state">Loading start times...</span>
+              <span *ngIf="!isLoadingServiceTimes && serviceTimesMessage" class="service-time-state">{{ serviceTimesMessage }}</span>
+              <button
+                type="button"
+                *ngFor="let allotment of serviceAllotments"
+                [class.active]="selectedAllotmentId === allotment.id"
+                [disabled]="allotment.availableTotal === 0"
+                (click)="selectServiceTime(allotment)"
+              >
+                <strong>{{ formatAllotmentTime(allotment.startTime) }}</strong>
+                <span>{{ allotment.availableTotal }} left</span>
+              </button>
+            </div>
           </label>
         </section>
       </div>
@@ -367,7 +397,7 @@
 
           <label class="modal-field additional-card voucher-field">
             <span>Voucher Number</span>
-            <input type="text" placeholder="Enter Voucher Number" />
+            <input type="text" placeholder="Enter Voucher Number" [(ngModel)]="voucherNumberNewOrder" name="voucherNumber" />
           </label>
 
           <section class="additional-card service-extra-card" aria-label="Pick up details">
@@ -376,36 +406,50 @@
               <input type="checkbox" checked />
             </label>
             <p>The suggested pick-up time will be included in the order offer or confirmation</p>
-            <input type="text" placeholder="Enter Pick-up Location" aria-label="Pick-up location" />
-            <select aria-label="Pick-up service type">
-              <option>Select Service Type</option>
-            </select>
-            <select aria-label="Pick-up distance">
-              <option>Select Distance</option>
-            </select>
-            <strong class="additional-fee">Fee: $200</strong>
+            <input type="text" placeholder="Enter Pick-up Location" aria-label="Pick-up location" [(ngModel)]="pickupLocationNewOrder" name="pickupLocation" />
+            <select aria-label="Pick-up service type" [(ngModel)]="pickupServiceTypeId" name="pickupServiceTypeId">
+                 <option [ngValue]="undefined">Select Service Type</option>
+                 <option *ngFor="let type of serviceTypes" [ngValue]="type.id">{{ type.name }}</option>
+               </select>
+            <select aria-label="Pick-up distance" [(ngModel)]="pickupDistanceId" name="pickupDistanceId">
+                 <option [ngValue]="undefined">Select Distance</option>
+                 <option [ngValue]="1">1 km</option>
+                 <option [ngValue]="2">2 km</option>
+                 <option [ngValue]="3">3 km</option>
+               </select>
+            <strong class="additional-fee">Fee: {{ pickupDistanceId === 1 ? 100 : pickupDistanceId === 2 ? 150 : pickupDistanceId === 3 ? 200 : '-' }}</strong>
           </section>
 
           <section class="additional-card service-extra-card" aria-label="Drop off details">
             <div class="additional-choice-row">
               <label class="additional-toggle radio-toggle">
-                <span>Drop Off</span>
-                <input type="radio" name="drop-service-type" checked />
-              </label>
+                 <span>Drop Off</span>
+                 <input type="radio" name="drop-service-type" [ngModel]="dropoffSelected" (ngModelChange)="onDropoffSelectionChange($event)" [value]="'DROP'" />
+               </label>
               <label class="additional-toggle radio-toggle">
-                <span>Hand Off</span>
-                <input type="radio" name="drop-service-type" />
-              </label>
+                 <span>Hand Off</span>
+                 <input type="radio" name="drop-service-type" [ngModel]="dropoffSelected" (ngModelChange)="onDropoffSelectionChange($event)" [value]="'HAND'" />
+               </label>
             </div>
-            <p>The suggested drop-off time will be included in the order offer or confirmation</p>
-            <input type="text" placeholder="Enter Drop-off Location" aria-label="Drop-off location" />
-            <select aria-label="Drop-off service type">
-              <option>Select Service Type</option>
-            </select>
-            <select aria-label="Drop-off distance">
-              <option>Select Distance</option>
-            </select>
-            <strong class="additional-fee">Fee: $200</strong>
+            <ng-container *ngIf="dropoffSelected === 'DROP'; else handoffFields">
+              <p>The suggested drop-off time will be included in the order offer or confirmation</p>
+              <input type="text" placeholder="Enter Drop-off Location" aria-label="Drop-off location" [(ngModel)]="dropoffLocationNewOrder" name="dropoffLocation" />
+              <select aria-label="Drop-off service type" [(ngModel)]="dropoffServiceTypeId" name="dropoffServiceTypeId">
+                 <option [ngValue]="undefined">Select Service Type</option>
+                 <option *ngFor="let type of serviceTypes" [ngValue]="type.id">{{ type.name }}</option>
+               </select>
+              <select aria-label="Drop-off distance" [(ngModel)]="dropoffDistanceId" name="dropoffDistanceId">
+                 <option [ngValue]="undefined">Select Distance</option>
+                 <option [ngValue]="1">1 km</option>
+                 <option [ngValue]="2">2 km</option>
+                 <option [ngValue]="3">3 km</option>
+               </select>
+              <strong class="additional-fee">Fee: {{ dropoffDistanceId === 1 ? 100 : dropoffDistanceId === 2 ? 150 : dropoffDistanceId === 3 ? 200 : '-' }}</strong>
+            </ng-container>
+            <ng-template #handoffFields>
+              <p>The hand off location and time will be confirmed later</p>
+              <input type="text" placeholder="Enter Hand Off Details" aria-label="Hand off details" [(ngModel)]="handoffTextNewOrder" name="handoffText" />
+            </ng-template>
           </section>
         </section>
       </div>

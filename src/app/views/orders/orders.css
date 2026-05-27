@@ -457,15 +457,17 @@ td strong {
   text-transform: uppercase;
 }
 
-.special-item.h,
+.special-item.wheel,
 .special-item.bag,
 .special-item.eye,
 .special-item.fork,
-.special-item.link {
+.special-item.link,
+.special-item.child,
+.special-item.diet {
   font-size: 0;
 }
 
-.special-item.h::before,
+.special-item.wheel::before,
 .special-item.fork::before {
   width: 14px;
   height: 14px;
@@ -476,6 +478,30 @@ td strong {
     linear-gradient(currentColor, currentColor) 4.75px 8px / 1.5px 5px no-repeat,
     linear-gradient(currentColor, currentColor) 11px 1px / 1.5px 12px no-repeat,
     linear-gradient(currentColor, currentColor) 9px 1px / 4.5px 1.5px no-repeat;
+  content: "";
+}
+
+.special-item.wheel::before {
+  width: 15px;
+  height: 15px;
+  border: 2px solid currentColor;
+  border-radius: 999px;
+  background:
+    radial-gradient(circle at 50% 50%, currentColor 0 2px, transparent 2.5px),
+    linear-gradient(currentColor, currentColor) 50% 1px / 2px 11px no-repeat,
+    linear-gradient(currentColor, currentColor) 1px 50% / 11px 2px no-repeat;
+}
+
+.special-item.wheel::after {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  width: 7px;
+  height: 2px;
+  border-radius: 999px;
+  background: currentColor;
+  transform: rotate(38deg);
+  transform-origin: right center;
   content: "";
 }
 
@@ -534,6 +560,43 @@ td strong {
 .special-item.link::after {
   right: 3px;
   transform: rotate(36deg);
+}
+
+.special-item.child::before {
+  width: 14px;
+  height: 14px;
+  border: 1.5px solid currentColor;
+  border-radius: 999px;
+  content: "";
+}
+
+.special-item.child::after {
+  position: absolute;
+  top: 4px;
+  width: 7px;
+  height: 4px;
+  border-bottom: 1.5px solid currentColor;
+  border-radius: 0 0 999px 999px;
+  content: "";
+}
+
+.special-item.diet::before {
+  width: 13px;
+  height: 13px;
+  border: 1.5px solid currentColor;
+  border-radius: 999px;
+  content: "";
+}
+
+.special-item.diet::after {
+  position: absolute;
+  top: 2px;
+  width: 7px;
+  height: 11px;
+  background:
+    linear-gradient(currentColor, currentColor) 3px 0 / 1.5px 11px no-repeat,
+    linear-gradient(currentColor, currentColor) 0 3px / 7px 1.5px no-repeat;
+  content: "";
 }
 
 .tr {

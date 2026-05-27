@@ -234,6 +234,10 @@ export class ApiService {
     return this.http.get<Order[]>(`${this.apiUrl}/orders`);
   }
 
+  getSpecialRequestTypes(): Observable<SpecialRequestType[]> {
+    return this.http.get<SpecialRequestType[]>(`${this.apiUrl}/special-requests`);
+  }
+
   getOrder(id: number): Observable<Order> {
     return this.http.get<Order>(`${this.apiUrl}/orders/${id}`);
   }

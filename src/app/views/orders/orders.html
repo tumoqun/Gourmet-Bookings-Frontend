@@ -147,8 +147,13 @@
               <td>{{ order.guests }}</td>
               <td>
                 <span class="specials">
-                  <span class="special-item {{ special }}" *ngFor="let special of order.special">
-                    {{ special === 'vip' ? 'VIP' : special }}
+                  <span
+                    class="special-item {{ special }}"
+                    *ngFor="let special of order.special"
+                    [attr.aria-label]="formatSpecialRequestLabel(special)"
+                    [attr.title]="formatSpecialRequestLabel(special)"
+                  >
+                    {{ getSpecialRequestTableIcon(special) }}
                   </span>
                 </span>
               </td>
@@ -189,7 +194,7 @@
           </div>
           <span class="records-count">{{ orders.length }} records</span>
         </div>
-        
+
         <div class="pagination" aria-label="Pagination">
           <button class="page-edge first" type="button" aria-label="First page"></button>
           <button class="page-edge previous" type="button" aria-label="Previous page"></button>
@@ -460,7 +465,7 @@
 
           <label class="modal-field guest-email-field">
             <span>Guest Email</span>
-            <input type="email" placeholder="Enter Email" />
+            <input type="email" placeholder="Enter Email" [(ngModel)]="guestEmailNewOrder" name="guestEmail" />
           </label>
 
           <div class="guest-counts">
@@ -485,18 +490,22 @@
 
           <label class="modal-field guest-full-field">
             <span>Allergies or Dietary Restrictions</span>
-            <input type="text" placeholder="Enter Allergies or Dietary Restrictions" />
+            <input type="text" placeholder="Enter Allergies or Dietary Restrictions" [(ngModel)]="dietaryRestrictionsNewOrder" name="dietaryRestrictions" />
           </label>
 
           <div class="modal-field guest-full-field">
             <span>Special Requests</span>
-            <button class="special-request-select" type="button" aria-label="Special requests">
-              <span class="special-request-chips">
-                <span>Special Occasion</span>
-                <span>VIP</span>
-              </span>
-              <span class="special-request-chevron" aria-hidden="true"></span>
-            </button>
+            <div class="special-request-options" style="display: flex; gap: 8px; flex-wrap: wrap; margin-top: 8px;">
+              <button *ngFor="let srt of specialRequestTypes"
+                      type="button"
+                      [class.selected]="selectedSpecialRequestIds.includes(srt.id)"
+                      (click)="toggleSpecialRequest(srt.id)"
+                      style="padding: 4px 12px; border-radius: 4px; border: 1px solid #C5A05A; cursor: pointer; color: black;"
+                      [style.background]="selectedSpecialRequestIds.includes(srt.id) ? '#e6dfce' : '#F6F1E6'"
+                      [style.border-color]="selectedSpecialRequestIds.includes(srt.id) ? '#000' : '#C5A05A'">
+                {{srt.label}}
+              </button>
+            </div>
           </div>
         </section>
       </div>

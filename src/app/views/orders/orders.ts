@@ -12,6 +12,7 @@ import {
   Reseller,
   ResellerContact,
   Agent,
+  SpecialRequestType,
 } from '../../services/api.service';
 
 interface OrderRow {
@@ -89,6 +90,7 @@ export class OrdersView implements OnInit {
   protected createdByNameNewOrder = '';
   protected picEmailNewOrder = '';
   protected copyEmailNewOrder = '';
+  protected guestEmailNewOrder = '';
   protected targetDateNewOrder = '';
   protected startTimeNewOrder = '';
   protected selectedAllotmentId?: number;
@@ -99,6 +101,9 @@ export class OrdersView implements OnInit {
   protected dropoffLocationNewOrder = '';
   protected dropoffServiceTypeId?: number;
   protected dropoffDistanceId?: number;
+  protected dietaryRestrictionsNewOrder = '';
+  protected specialRequestTypes: SpecialRequestType[] = [];
+  protected selectedSpecialRequestIds: number[] = [];
   protected handoffTextNewOrder = '';
   protected selectedAreaId?: number;
   protected selectedServiceTypeId?: number;
@@ -129,6 +134,14 @@ export class OrdersView implements OnInit {
     this.loadAreas();
     this.loadServiceTypes();
     this.loadResellersData();
+    this.loadSpecialRequestTypes();
+  }
+
+  protected loadSpecialRequestTypes(): void {
+    this.apiService.getSpecialRequestTypes().subscribe({
+      next: (types) => this.specialRequestTypes = types,
+      error: () => this.specialRequestTypes = []
+    });
   }
 
   protected loadOrders(): void {
@@ -332,6 +345,9 @@ export class OrdersView implements OnInit {
     this.createdByNameNewOrder = '';
     this.picEmailNewOrder = '';
     this.copyEmailNewOrder = '';
+    this.guestEmailNewOrder = '';
+    this.dietaryRestrictionsNewOrder = '';
+    this.selectedSpecialRequestIds = [];
     this.voucherNumberNewOrder = '';
     this.pickupLocationNewOrder = '';
     this.pickupServiceTypeId = undefined;
@@ -389,6 +405,62 @@ export class OrdersView implements OnInit {
 
   protected formatGuestCount(count: number): string {
     return count.toString().padStart(2, '0');
+  }
+
+  protected toggleSpecialRequest(id: number): void {
+    const index = this.selectedSpecialRequestIds.indexOf(id);
+    if (index > -1) {
+      this.selectedSpecialRequestIds.splice(index, 1);
+    } else {
+      this.selectedSpecialRequestIds.push(id);
+    }
+  }
+
+  protected getSpecialRequestIcon(type: SpecialRequestType): string {
+    const code = type.code.toLowerCase();
+    const iconMap: Record<string, string> = {
+      vip: 'VIP',
+      bag: 'BAG',
+      eye: 'EYE',
+      for: 'F/S',
+      link: 'LNK',
+      wheel: 'WHL',
+      child: 'CHD',
+      diet: 'DIE',
+    };
+
+    return iconMap[code] ?? type.code.slice(0, 3).toUpperCase();
+  }
+
+  protected getSpecialRequestIconClass(type: SpecialRequestType): string {
+    return type.code.toLowerCase().replace(/[^a-z0-9-]/g, '');
+  }
+
+  protected getSpecialRequestTableIcon(code: string): string {
+    const normalizedCode = code.toLowerCase();
+    const iconMap: Record<string, string> = {
+      vip: 'VIP',
+      child: '12',
+      diet: 'D',
+    };
+
+    return iconMap[normalizedCode] ?? '';
+  }
+
+  protected formatSpecialRequestLabel(code: string): string {
+    const normalizedCode = code.toLowerCase();
+    const labelMap: Record<string, string> = {
+      vip: 'VIP Guest',
+      bag: 'Baggage Handling',
+      eye: 'Eye Contact',
+      fork: 'Fork & Spoon',
+      link: 'Linked Orders',
+      wheel: 'Wheelchair Access',
+      child: 'Child Care',
+      diet: 'Dietary Restriction',
+    };
+
+    return labelMap[normalizedCode] ?? code.toUpperCase();
   }
 
   protected selectTimeSlot(slot: string): void {
@@ -546,6 +618,9 @@ export class OrdersView implements OnInit {
       picContactId: this.selectedContactId,
       picEmail: this.picEmailNewOrder,
       copyEmail: this.copyEmailNewOrder,
+      guestEmail: this.guestEmailNewOrder,
+      dietaryRestrictions: this.dietaryRestrictionsNewOrder,
+      specialRequestTypeIds: this.selectedSpecialRequestIds,
       originalAgentId: this.selectedAgentId,
       voucherNumber: this.voucherNumberNewOrder,
       additionalServices: this.buildAdditionalServices(),
@@ -745,7 +820,11 @@ export class OrdersView implements OnInit {
   private getSpecialRequests(order: Order): string[] {
     return order.specialRequests?.map((request) => {
       const code = request.code.toLowerCase();
-      return code === 'wheel' ? 'h' : code;
+      if (code === 'for') {
+        return 'fork';
+      }
+
+      return code;
     }) ?? [];
   }
 

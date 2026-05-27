@@ -313,4 +313,28 @@ describe('OrdersView', () => {
 
     expect(compiled.querySelector('.guest-counter strong')?.textContent?.trim()).toBe('03');
   });
+
+  it('should hide the new order dialog after creating an order successfully', async () => {
+    const fixture = createFixture();
+    await fixture.whenStable();
+
+    const compiled = fixture.nativeElement as HTMLElement;
+    const newBookingButton = compiled.querySelector('.new-booking') as HTMLButtonElement;
+    newBookingButton.click();
+    fixture.detectChanges();
+
+    const stepFourButton = compiled.querySelector('.order-stepper li:nth-child(4) button') as HTMLButtonElement;
+    stepFourButton.click();
+    fixture.detectChanges();
+
+    const requestButton = compiled.querySelector('.request-order') as HTMLButtonElement;
+    requestButton.click();
+
+    httpMock.expectOne('/api/orders').flush(mockOrders[0]);
+    httpMock.expectOne('/api/orders').flush(mockOrders);
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    expect(compiled.querySelector('[role="dialog"]')).toBeFalsy();
+  });
 });

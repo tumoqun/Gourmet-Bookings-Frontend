@@ -1,0 +1,406 @@
+<section class="work-detail-list-wrapper">
+  <header class="topbar">
+    <div>
+      <h1 id="works-title">Work Detail</h1>
+      <p>TODAY IS THURSDAY, MARCH 12, 2026</p>
+    </div>
+  </header>
+  <div class="tour-header">
+    <div class="tour-info">
+      <h2>Tokyo W</h2>
+      <div class="tag-private">Private</div>
+    </div>
+  
+    <!-- STEPS -->
+    <div class="tour-steps">
+      <div class="step-item">
+        <div style="display: flex;">
+          <div class="step active">
+            <div class="circle">1</div>
+          </div>
+          <div class="line"></div>
+        </div>
+        <span>Scheduled</span>
+      </div>
+      <div class="step-item">
+        <div style="display: flex;">
+          <div class="step">
+            <div class="circle">2</div>
+          </div>
+          <div class="line"></div>
+        </div>
+        <span></span>
+      </div>
+      <div class="step-item">
+        <div style="display: flex;">
+          <div class="step">
+            <div class="circle">3</div>
+          </div>
+          <div class="line"></div>
+        </div>
+        <span></span>
+      </div>
+      <div class="step-item">
+        <div style="display: flex;">
+          <div class="step">
+            <div class="circle">4</div>
+          </div>
+          <div class="line"></div>
+        </div>
+        <span></span>
+      </div>
+      <div class="step-item">
+        <div style="display: flex;">
+          <div class="step">
+            <div class="circle">5</div>
+          </div>
+          <div class="line"></div>
+        </div>
+        <span></span>
+      </div>
+      <div class="step-item">
+        <div style="display: flex;">
+          <div class="step">
+            <div class="circle">6</div>
+          </div>
+          <div class="line"></div>
+        </div>
+        <span></span>
+      </div>
+      <div class="step-item">
+        <div style="display: flex;">
+          <div class="step">
+            <div class="circle">7</div>
+          </div>
+          <div class="line"></div>
+        </div>
+        <span></span>
+      </div>
+      <div class="step-item">
+        <div style="display: flex;">
+          <div class="step">
+            <div class="circle">8</div>
+          </div>
+          <div class="line"></div>
+        </div>
+        <span></span>
+      </div>
+      <div class="step-item">
+        <div style="display: flex;">
+          <div class="step">
+            <div class="circle">9</div>
+          </div>
+        </div>
+        <span></span>
+      </div>
+    </div>
+  </div>
+  <div class="tour-content">
+  
+    <div class="info-group">
+      <label>TOUR DATE</label>
+      <p>Friday, 03/April/2026</p>
+    </div>
+  
+    <div class="info-group">
+      <label>START TIME</label>
+      <p>5:30 AM</p>
+    </div>
+  
+    <div class="info-group">
+      <label>END TIME</label>
+      <p>7:30 PM</p>
+    </div>
+  
+    <div class="info-group">
+      <label>TOUR DURATION</label>
+      <p>3hr</p>
+    </div>
+  
+    <div class="info-group">
+      <label>NUMBER OF ADULTS</label>
+      <p>5</p>
+    </div>
+  
+    <div class="info-group">
+      <label>NUMBER OF CHILDREN</label>
+      <p>2</p>
+    </div>
+  
+    <div class="info-group">
+      <label>AREA</label>
+      <p>Tokyo</p>
+    </div>
+  
+    <div class="info-group">
+      <label>PRODUCT CODE</label>
+      <p>T6X1M5B9K3</p>
+    </div>
+  
+    <div class="info-group full-width">
+      <label>MEETING POINT</label>
+      <p>Sakura Skyline Hotel, 3-15-8 Shinjuku</p>
+    </div>
+    <a class="migration-link">Migration Notes</a>
+  </div>
+  <div class="table-card">
+    <!-- HEADER -->
+    <div class="table-header">
+      <h2>Orders</h2>
+      <select class="status-select" [(ngModel)]="selectedStatus">
+        <option *ngFor="let option of statusOptions" [value]="option.value">
+          {{ option.label }}
+        </option>
+      </select>
+    </div>
+    <!-- TABLE -->
+    <div class="table-contents">
+      <!-- HEADER -->
+      <div class="order-row table-head">
+        <div>RESELLER</div>
+        <div>ORIGINAL AGENT</div>
+        <div>REF 1</div>
+        <div>#GUESTS</div>
+        <div>FEE (INC. TAX)</div>
+        <div>SPECIAL</div>
+        <div>STATUS</div>
+        <div></div>
+      </div>
+      <!-- BODY -->
+      <div class="order-row" *ngFor="let order of filteredOrders">
+        <div>
+          {{ order.reseller }}
+        </div>
+        <div>
+          {{ order.originalAgent }}
+        </div>
+        <div class="bold">
+          {{ order.ref1 }}
+        </div>
+        <div>
+          {{ order.guests }}
+        </div>
+        <div class="bold">
+          {{ order.fee }}
+        </div>
+        <div class="special-cell">
+          <span>
+            <span *ngIf="order.special" class="vip-badge">{{ order.special }}</span>
+            <span>{{ order.specialIcon }}</span>
+          </span>
+          <a [href]="order.specialLink" target="_blank">
+            {{ order.specialNote }}
+          </a>
+        </div>
+        <div>
+          <span class="status" [class]="getStatusClass(order.status)">
+            {{ order.status }}
+          </span>
+        </div>
+        <div class="details-link">
+          Order Details
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="table-card">
+    <!-- HEADER -->
+    <div class="table-header">
+      <h2>Guides</h2>
+      <button class="add-guide-btn" (click)="addGuide()">
+        Add Guide
+      </button>
+    </div>
+    <!-- TABLE -->
+    <div class="table-contents">
+      <!-- TABLE HEADER -->
+      <div class="guide-row table-head">
+        <div>GUIDE</div>
+        <div>PHONE NUMBER</div>
+        <div>MANAGER'S NOTE</div>
+        <div>ROLE</div>
+        <div>CALENDAR INVITATION</div>
+        <div>STATUS</div>
+        <div>ACTIONS</div>
+      </div>
+      <!-- TABLE BODY -->
+      <div class="guide-row" *ngFor="let guide of guides">
+        <!-- NAME -->
+        <div>
+          {{ guide.name }}
+        </div>
+        <!-- PHONE -->
+        <div>
+          {{ guide.phoneNumber }}
+        </div>
+        <!-- NOTE -->
+        <div class="note-cell">
+          <span>
+            {{ guide.managerNote }}
+          </span>
+          <button class="icon-btn">
+            ✏️
+          </button>
+        </div>
+        <!-- ROLE -->
+        <div>
+          {{ guide.role }}
+        </div>
+        <!-- CALENDAR -->
+        <div class="calendar-cell">
+          {{ guide.calendarInvitation ? 'YES' : 'NO' }}
+        </div>
+        <!-- STATUS -->
+        <div>
+          <span class="guide-status" [class]="getGuideStatusClass(guide.status)">
+            {{ guide.status }}
+          </span>
+        </div>
+        <!-- ACTIONS -->
+        <div class="actions-cell">
+          <button class="action-btn accept" (click)="approveGuide(guide)">
+            <img class="approve-icon" src="/ui-icons/accept.png" alt="accept icon" />
+          </button>
+          <button class="action-btn reject" (click)="rejectGuide(guide)">
+            <img class="reject-icon" src="/ui-icons/reject.png" alt="reject icon" />
+          </button>
+          <button class="action-btn remove" (click)="removeGuide(guide)">
+            <img class="remove-icon" src="/ui-icons/remove.png" alt="remove icon" />
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="table-card">
+    <!-- HEADER -->
+    <div class="table-header">
+      <h2>Itinerary</h2>
+      <div class="header-actions">
+        <button class="copy-btn" (click)="copyItinerary()">
+          Copy Itinerary
+        </button>
+        <button class="notes-btn" (click)="openTourNotes()">
+          <span class="notes-text">Tour Notes</span>
+          <img class="link-icon" src="/ui-icons/link.png" alt="link icon" />
+        </button>
+        <button class="add-stop-btn" (click)="addStop()">
+          Add Stop
+        </button>
+      </div>
+    </div>
+    <!-- TABLE -->
+    <div class="table-contents">
+      <!-- HEADER -->
+      <div class="itinerary-row table-head">
+        <div>NAME</div>
+        <div>SCHEDULE TIME</div>
+        <div>PHONE NUMBER</div>
+        <div>ADDED BY</div>
+        <div>ADDED AT</div>
+        <div>STATUS</div>
+        <div>NOTES</div>
+        <div>ACTIONS</div>
+      </div>
+      <!-- BODY -->
+      <div class="itinerary-row" *ngFor="let item of itineraryList">
+        <!-- NAME -->
+        <div>
+          {{ item.name }}
+        </div>
+        <!-- SCHEDULE -->
+        <div>
+          {{ item.scheduleTime }}
+        </div>
+        <!-- PHONE -->
+        <div>
+          {{ item.phoneNumber }}
+        </div>
+        <!-- ADDED BY -->
+        <div class="bold">
+          {{ item.addedBy }}
+        </div>
+        <!-- ADDED AT -->
+        <div>
+          {{ item.addedAt }}
+        </div>
+        <!-- STATUS -->
+        <div>
+          {{ item.status }}
+        </div>
+        <!-- NOTES -->
+        <div>
+          {{ item.notes }}
+        </div>
+        <!-- ACTIONS -->
+        <div class="actions-cell">
+          <button class="action-btn accept" (click)="approveItineraryItem(item)">
+            <img class="approve-icon" src="/ui-icons/accept.png" alt="accept icon" />
+          </button>
+          <button class="action-btn remove" (click)="removeItineraryItem(item)">
+            <img class="remove-icon" src="/ui-icons/remove.png" alt="remove icon" />
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="table-card">
+    <div class="table-header">
+      <h2>Receipts</h2>
+    </div>
+    <div class="table-table">
+      <div class="receipt-row table-head">
+        <div>RESTAURANT</div>
+        <div>NOTES</div>
+        <div>FEE</div>
+        <div>TAX</div>
+        <div>TOTAL</div>
+        <div>T-NUMBER</div>
+        <div>PASS-THROUGH</div>
+        <div>PHOTO</div>
+        <div>SUBMITTED BY</div>
+        <div>SUBMITTED AT</div>
+      </div>
+      <div class="receipt-row" *ngFor="let receipt of receipts">
+        <div>
+          {{ receipt.restaurant }}
+        </div>
+        <div>
+          {{ receipt.notes }}
+        </div>
+        <div>
+          {{ formatCurrency(receipt.fee) }}
+        </div>
+        <div>
+          {{ formatCurrency(receipt.tax) }}
+        </div>
+        <div class="bold">
+          {{ formatCurrency(receipt.total) }}
+        </div>
+        <div class="bold">
+          {{ receipt.tNumber }}
+        </div>
+        <div>
+          {{ receipt.passThrough ? 'Yes' : 'No' }}
+        </div>
+        <div>
+          <img class="photo-icon" src="/ui-icons/image-default.png" alt="photo icon" (click)="openReceiptPhoto(receipt)" />
+        </div>
+        <div>
+          {{ receipt.submittedBy }}
+        </div>
+        <div>
+          {{ receipt.submittedAt }}
+        </div>
+      </div>
+      <!-- FOOTER -->
+      <div class="receipts-footer">
+        <div class="footer-label">
+          TOTAL VOLUME
+        </div>
+        <div class="footer-total">
+          {{ formatCurrency(totalVolume) }}
+        </div>
+      </div>
+    </div>
+  </div>
+</section>

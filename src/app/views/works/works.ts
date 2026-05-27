@@ -1,26 +1,13 @@
 import { CommonModule } from '@angular/common';
-import { Component, ViewEncapsulation } from '@angular/core';
-import { AgGridAngular } from 'ag-grid-angular';
-import { ColDef } from 'ag-grid-community';
+import { ChangeDetectorRef, Component, OnInit, ViewEncapsulation } from '@angular/core';
+import { Work, WorkListResponse, WorkService } from '../../services/work.service';
+import { firstValueFrom } from 'rxjs';
+import { FormsModule } from '@angular/forms';
 
 interface WorkFilter {
   label: string;
   count: string;
   active: boolean;
-}
-
-interface WorkRow {
-  id?: number;
-  reseller: string;
-  area: string;
-  service: string;
-  pic: string;
-  ref1: string;
-  ps: string;
-  tourStartDate: string;
-  guests: string;
-  status: string;
-  guide: string;
 }
 
 export enum StatusClass {
@@ -42,87 +29,54 @@ export enum StatusClass {
 
 @Component({
   selector: 'app-works',
-  imports: [CommonModule],
+  imports: [CommonModule, FormsModule],
   templateUrl: './works.html',
   styleUrl: './works.css',
   encapsulation: ViewEncapsulation.None,
 })
 export class Works {
-  isLoading = true;
-  protected errorMessage = '';
-  protected readonly StatusClass = StatusClass;
+  isLoading = false;
+  errorMessage = '';
+  readonly StatusClass = StatusClass;
+
+  pageSize = 10;
+  pageNumber = 0;
+  totalPages = 0;
+  totalElements = 0;
+  pageNumbers: number[] = [];
+  pageSizeOptions: number[] = [5, 10, 20, 50, 100];
+
+  guestsSummary = {
+    totalAdults: 0,
+    totalChildren: 0,
+  };
+
+  workData: WorkListResponse = {
+    content: [],
+    totalElements: 0,
+    totalPages: 0,
+    first: true,
+    last: true,
+    number: 0,
+    size: 0,
+    numberOfElements: 0,
+    empty: true,
+  };
+
+  constructor(
+    private workService: WorkService,
+    private cdr: ChangeDetectorRef,
+  ) {}
 
   filters: WorkFilter[] = [
     { label: 'All Assignments', count: '0', active: true },
     { label: 'Changed Requests', count: '0', active: false },
   ];
 
-  works: WorkRow[] = [
-    {
-      reseller: 'EXO',
-      area: 'TOKYO',
-      service: 'Tokyo W',
-      pic: 'James Anderson',
-      ref1: 'TK-08053-1',
-      ps: 'P',
-      tourStartDate: 'Sat, 07-Dec-24 - 5:30PM',
-      guests: '5/0',
-      status: 'ENDED',
-      guide: 'SOPHIA TAYLOR',
-    },
-
-    {
-      reseller: 'Deomo Travel',
-      area: 'TOKYO',
-      service: 'Tokyo Underpass',
-      pic: 'Emily Johnson',
-      ref1: 'JPITAMI-M-9/7',
-      ps: 'S',
-      tourStartDate: 'Sat, 04-Jan-25 - 5:00PM',
-      guests: '2/1',
-      status: 'ACTIVE',
-      guide: 'EMILY JOHNSON',
-    },
-
-    {
-      reseller: 'Deomo',
-      area: 'TOKYO',
-      service: 'Shimbashi',
-      pic: 'Michael Brown',
-      ref1: 'NOLIRL322',
-      ps: 'P',
-      tourStartDate: 'Fri, 15-Jan-25 - 3:30PM',
-      guests: '2/0',
-      status: 'SCHEDULED',
-      guide: 'MICHAEL BROWN',
-    },
-
-    {
-      reseller: 'Deomo Japan',
-      area: 'TOKYO',
-      service: 'Tokyo Underpass',
-      pic: 'Olivia Davis',
-      ref1: 'JPTAM-JAM0030D',
-      ps: 'S',
-      tourStartDate: 'Sun, 26-Jan-25 - 5:00PM',
-      guests: '5/0',
-      status: 'IN PREP',
-      guide: 'OLIVIA DAVIS',
-    },
-
-    {
-      reseller: 'Direct Customer',
-      area: 'TOKYO',
-      service: 'The Ikebuy',
-      pic: 'Daniel Wilson',
-      ref1: 'SPT-#1',
-      ps: 'S',
-      tourStartDate: 'Mon, 19-May-25 - 6:00PM',
-      guests: '4/0',
-      status: 'CANCELLED',
-      guide: 'DANIEL WILSON',
-    },
-  ];
+  async ngOnInit(): Promise<void> {
+    await this.loadWorks(this.pageNumber, this.pageSize);
+    await this.getGuestSummary();
+  }
 
   setActiveFilter(filterLabel: string): void {
     this.filters = this.filters.map((filter) => ({
@@ -135,11 +89,82 @@ export class Works {
     return StatusClass[status as keyof typeof StatusClass] || '';
   }
 
-  loadWorks = () => {
-    console.log('load works');
-  };
+  async loadWorks(page: number, size: number = this.pageSize): Promise<void> {
+    try {
+      this.isLoading = true;
+      this.errorMessage = '';
+      const workResponse = await firstValueFrom(this.workService.getWorks(page, size));
+      this.workData = workResponse;
+    } catch (error) {
+      console.error('Error loading works:', error);
+      this.errorMessage = 'Error loading works';
+    } finally {
+      this.isLoading = false;
+      this.cdr.detectChanges();
+    }
+  }
 
-  protected trackByWork(index: number, work: WorkRow): number | undefined {
+  get visiblePages(): number[] {
+    // chỉ có 1 page
+    if (this.totalPages <= 1) {
+      return [0];
+    }
+    // page đầu -> hiện 1,2
+    if (this.pageNumber === 0) {
+      return [0, 1];
+    }
+    // page cuối -> hiện page trước + page hiện tại
+    if (this.pageNumber === this.totalPages - 1) {
+      return [this.pageNumber - 1, this.pageNumber];
+    }
+    // các page ở giữa -> hiện current + next
+    return [this.pageNumber, this.pageNumber + 1];
+  }
+
+  goToPage(page: number): void {
+    if (page < 0 || page >= this.totalPages) {
+      return;
+    }
+
+    this.pageNumber = page;
+    this.loadWorks(page, this.pageSize);
+  }
+
+  goToFirstPage(): void {
+    this.goToPage(0);
+  }
+
+  goToPreviousPage(): void {
+    this.goToPage(this.pageNumber - 1);
+  }
+
+  goToNextPage(): void {
+    this.goToPage(this.pageNumber + 1);
+  }
+
+  goToLastPage(): void {
+    this.goToPage(this.totalPages - 1);
+  }
+
+  onPageSizeChange(event: Event): void {
+    const value = Number((event.target as HTMLSelectElement).value);
+    this.pageSize = value;
+    // reset về page đầu
+    this.pageNumber = 0;
+    this.loadWorks(this.pageNumber, this.pageSize);
+  }
+
+  trackByWork(index: number, work: Work): number | undefined {
     return work.id ?? index;
+  }
+
+  async getGuestSummary(): Promise<void> {
+    try {
+      const summary = await firstValueFrom(this.workService.getGuestSummary());
+      this.guestsSummary = { ...summary };
+      this.cdr.detectChanges();
+    } catch (error) {
+      console.error('Error fetching guest summary:', error);
+    }
   }
 }

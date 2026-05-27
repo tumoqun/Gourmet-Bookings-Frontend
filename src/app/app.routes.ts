@@ -1,7 +1,4 @@
 import { Routes } from '@angular/router';
-import { LoginView } from './views/login/login';
-import { OrdersView } from './views/orders/orders';
-import { Works } from './views/works/works';
 
 export const routes: Routes = [
   {
@@ -18,6 +15,17 @@ export const routes: Routes = [
   },
   {
     path: 'works',
-    loadComponent: () => import('./views/works/works').then((m) => m.Works),
+    children: [
+      {
+        path: '',
+        loadComponent: () =>
+          import('./views/works/works').then((m) => m.Works),
+      },
+      {
+        path: ':id',
+        loadComponent: () =>
+          import('./views/works/detail/detail').then((m) => m.WorkDetail),
+      },
+    ],
   },
 ];

@@ -455,11 +455,41 @@ td {
 
 .rows-control {
   display: flex;
+  align-items: center;
   gap: 8px;
+}
+
+.rows-select-wrapper {
+  position: relative;
+  display: flex;
   align-items: center;
 }
 
-.rows-control strong,
+.rows-select {
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+
+  padding: 6px 32px 6px 12px;
+
+  border: 1px solid #dcdcdc;
+  border-radius: 8px;
+
+  background: #fff;
+  cursor: pointer;
+  height: auto;
+}
+
+.dropdown-icon {
+  position: absolute;
+  right: 10px;
+
+  width: 12px;
+  height: 8px;
+
+  pointer-events: none;
+}
+
 .summary strong {
   color: #34312d;
 }

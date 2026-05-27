@@ -5,7 +5,7 @@
       <p>TODAY IS THURSDAY, MARCH 12, 2026</p>
     </div>
     <div class="top-actions">
-      <button class="refresh" type="button" [disabled]="isLoading" (click)="loadWorks()">
+      <button class="refresh" type="button" [disabled]="isLoading" (click)="loadWorks(this.pageNumber, this.pageSize)">
         <span aria-hidden="true">&#8635;</span> Refresh
       </button>
     </div>
@@ -108,26 +108,26 @@
           </tr>
         </thead>
         <tbody>
-          <tr *ngIf="isLoading && works.length === 0">
-            <td class="table-state" colspan="17">Loading orders...</td>
+          <tr *ngIf="isLoading && workData.content.length === 0">
+            <td class="table-state" colspan="17">Loading works...</td>
           </tr>
-          <tr *ngIf="!isLoading && works.length === 0">
-            <td class="table-state" colspan="17">No orders found.</td>
+          <tr *ngIf="!isLoading && workData.content.length === 0">
+            <td class="table-state" colspan="17">No works found.</td>
           </tr>
   
-          <tr *ngFor="let work of works; trackBy: trackByWork">
-            <td class="reseller">{{ work.reseller }}</td>
-            <td><span class="area">{{ work.area }}</span></td>
-            <td><span class="service">{{ work.service }}</span></td>
-            <td><span class="pic">{{ work.pic }}</span></td>
+          <tr *ngFor="let work of workData.content; trackBy: trackByWork">
+            <td class="reseller">{{ work.resellerName }}</td>
+            <td><span class="area">{{ work.areaName }}</span></td>
+            <td><span class="service">{{ work.serviceName }}</span></td>
+            <td><span class="pic">{{ work.picName }}</span></td>
             <td><span class="ref1">{{ work.ref1 }}</span></td>
-            <td><span class="ps">{{ work.ps }}</span></td>
+            <td><span class="ps">{{ work.isPrivate ? 'P' : 'S' }}</span></td>
             <td>
               <span class="datetime">
-                <span>{{ work.tourStartDate }}</span>
+                <span>{{ work.tourDate }}</span>
               </span>
             </td>
-            <td><span class="guests">{{ work.guests }}</span></td>
+            <td><span class="guests">{{ work.adultCount }}/{{ work.childCount }}</span></td>
             <td><span [class]="getStatusClass(work.status)">{{ work.status }}</span></td>
             <td>
               <span class="guide">
@@ -149,32 +149,46 @@
       <div class="pagination-controls">
         <div class="rows-control">
           <span>Show:</span>
-          <strong>100 rows</strong>
-          <img class="dropdown-icon" src="/ui-icons/arrow-down.png" alt="Dropdown icon" />
+          <div class="rows-select-wrapper">
+            <select class="rows-select" [ngModel]="pageSize" (change)="onPageSizeChange($event)">
+              <option *ngFor="let size of pageSizeOptions" [value]="size">
+                {{ size }}
+              </option>
+            </select>
+            <img class="dropdown-icon" src="/ui-icons/arrow-down.png" alt="Dropdown icon" />
+          </div>
+          <span>rows</span>
         </div>
         <div class="pagination" aria-label="Pagination">
-          <div class="pagination-item">
+          <!-- First -->
+          <button class="pagination-item" type="button" (click)="goToFirstPage()" [disabled]="pageNumber === 0">
             <img class="page-edge first" src="/ui-icons/first-prev.png" alt="First page" />
-          </div>
-          <div class="pagination-item">
-            <img class="page-edge previous" src="/ui-icons/next.png" alt="Last page" style="transform: rotate(180deg);" />
-          </div>
-          <button class="active" type="button">1</button>
-          <button type="button">2</button>
-          <div class="pagination-item">
+          </button>
+          <!-- Previous -->
+          <button class="pagination-item" type="button" (click)="goToPreviousPage()" [disabled]="pageNumber === 0">
+            <img class="page-edge previous" src="/ui-icons/next.png" alt="Previous page" style="transform: rotate(180deg);" />
+          </button>
+          <!-- Dynamic Pages -->
+          <button *ngFor="let page of visiblePages" type="button" class="page-button" [class.active]="page === pageNumber"
+            (click)="goToPage(page)">
+            {{ page + 1 }}
+          </button>
+          <!-- Next -->
+          <button class="pagination-item" type="button" (click)="goToNextPage()" [disabled]="pageNumber >= totalPages - 1">
             <img class="page-edge next" src="/ui-icons/next.png" alt="Next page" />
-          </div>
-          <div class="pagination-item">
+          </button>
+          <!-- Last -->
+          <button class="pagination-item" type="button" (click)="goToLastPage()" [disabled]="pageNumber >= totalPages - 1">
             <img class="page-edge last" src="/ui-icons/last-next.png" alt="Last page" />
-          </div>
+          </button>
         </div>
-        <span>5 records</span>
+        <span>{{ workData.totalElements }} records</span>
       </div>
       <div class="summary">
         <span>Total Guests</span>
         <div class="guest-summary">
           <img class="guest-icon" src="/ui-icons/guests.png" alt="Guest icon" />
-          <strong>18 / 11</strong>
+          <strong>{{ guestsSummary.totalAdults }} / {{ guestsSummary.totalChildren }}</strong>
         </div>
       </div>
     </footer>

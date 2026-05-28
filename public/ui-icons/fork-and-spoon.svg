@@ -1,0 +1,16 @@
+<svg width="120" height="120" viewBox="0 0 120 120" role="img" xmlns="http://www.w3.org/2000/svg">
+  <title>Fork and Spoon</title>
+  <defs>
+    <style>
+      .fork-color { stroke: #0F6E56; fill: none; }
+      .spoon-color { stroke: #0F6E56; fill: none; }
+    </style>
+  </defs>
+  <rect width="120" height="120" rx="14" fill="#fff" stroke="rgba(0,0,0,0.12)" stroke-width="0.5"/>
+  <line x1="48" y1="22" x2="48" y2="98" class="fork-color" stroke-width="2.5" stroke-linecap="round"/>
+  <line x1="41" y1="22" x2="41" y2="42" class="fork-color" stroke-width="2" stroke-linecap="round"/>
+  <line x1="55" y1="22" x2="55" y2="42" class="fork-color" stroke-width="2" stroke-linecap="round"/>
+  <path d="M41 42 Q48 50 55 42" class="fork-color" stroke-width="2" stroke-linecap="round"/>
+  <line x1="75" y1="50" x2="75" y2="98" class="spoon-color" stroke-width="2.5" stroke-linecap="round"/>
+  <ellipse cx="75" cy="33" rx="10" ry="13" class="spoon-color" stroke-width="2"/>
+</svg>

@@ -60,6 +60,24 @@ export class OrdersView implements OnInit {
   protected totalAdults = 0;
   protected totalChildren = 0;
   protected totalVolume = 0;
+  protected actionPopupOpen = false;
+  protected orderForAction?: number;
+  protected actionPopupPosition = { top: 0, left: 0 };
+  protected makeOfferPopupOpen = false;
+  protected offerPricingNotes = '';
+  protected hostConfirmationRequired = false;
+  protected offerOrder?: Order;
+  protected selectedServiceForOffer?: number;
+  protected offerDays = 0;
+  protected offerNetPrice = '';
+  protected offerDiscountPercent = '0';
+  protected offerDiscountAmount = '0.00';
+  protected offerPuDoFee = '0.00';
+  protected offerCommissionPercent = '10';
+  protected offerCommissionAmount = '0.00';
+  protected offerSubtotal = '0.00';
+  protected offerEstimatedTax = '0.00';
+  protected offerTotalAmount = '0.00';
 
   protected readonly timeSlots = ['Any', 'Morning', 'Daytime', 'Evening', 'Night'];
   protected selectedTimeSlot = 'Any';
@@ -75,7 +93,7 @@ export class OrdersView implements OnInit {
   protected serviceTimesMessage = 'Select a target date and service to see start times.';
   protected areas: Area[] = [];
   protected serviceTypes: ServiceType[] = [];
-  
+
   protected resellers: Reseller[] = [];
   protected contacts: ResellerContact[] = [];
   protected agents: Agent[] = [];
@@ -416,26 +434,6 @@ export class OrdersView implements OnInit {
     }
   }
 
-  protected getSpecialRequestIcon(type: SpecialRequestType): string {
-    const code = type.code.toLowerCase();
-    const iconMap: Record<string, string> = {
-      vip: 'VIP',
-      bag: 'BAG',
-      eye: 'EYE',
-      for: 'F/S',
-      link: 'LNK',
-      wheel: 'WHL',
-      child: 'CHD',
-      diet: 'DIE',
-    };
-
-    return iconMap[code] ?? type.code.slice(0, 3).toUpperCase();
-  }
-
-  protected getSpecialRequestIconClass(type: SpecialRequestType): string {
-    return type.code.toLowerCase().replace(/[^a-z0-9-]/g, '');
-  }
-
   protected getSpecialRequestTableIcon(code: string): string {
     const normalizedCode = code.toLowerCase();
     const iconMap: Record<string, string> = {
@@ -686,6 +684,213 @@ export class OrdersView implements OnInit {
     });
   }
 
+  protected showActionPopup(event: Event, orderId?: number): void {
+    if (!orderId) {
+      return;
+    }
+
+    const button = event.currentTarget as HTMLElement;
+    const rect = button.getBoundingClientRect();
+    const popupWidth = 250;
+    const popupHeight = 100;
+    const screenWidth = window.innerWidth;
+    const screenHeight = window.innerHeight;
+
+    let left = rect.left;
+    let top = rect.bottom + 5;
+
+    // Check if popup would go off the right edge
+    if (left + popupWidth > screenWidth) {
+      left = screenWidth - popupWidth - 10;
+    }
+
+    // Check if popup would go off the bottom edge
+    if (top + popupHeight > screenHeight) {
+      top = rect.top - popupHeight - 5;
+    }
+
+    this.orderForAction = orderId;
+    this.actionPopupPosition = { top, left };
+    this.actionPopupOpen = true;
+  }
+
+  protected makeOffer(): void {
+    if (this.orderForAction) {
+      // Load the order details for the offer popup
+      this.apiService.getOrder(this.orderForAction).subscribe({
+        next: (order) => {
+          this.offerOrder = order;
+          this.offerPricingNotes = '';
+          this.hostConfirmationRequired = false;
+          this.selectedServiceForOffer = order.orderServices?.[0]?.service?.id;
+          this.offerDays = 0;
+          this.offerNetPrice = this.formatCurrency(order.totalFeeAmount || 0);
+          this.offerDiscountPercent = '0';
+          this.offerDiscountAmount = '0.00';
+          this.offerPuDoFee = this.formatCurrency(this.getAdditionalServicesTotal());
+          this.offerCommissionPercent = '10';
+          this.offerCommissionAmount = this.formatCurrency((order.totalFeeAmount || 0) * 0.1);
+          this.calculateTotals();
+          this.makeOfferPopupOpen = true;
+          this.closeActionPopup();
+        },
+        error: () => {
+          this.errorMessage = 'Could not load order details for offer.';
+        }
+      });
+    }
+  }
+
+  protected closeActionPopup(): void {
+    this.actionPopupOpen = false;
+    this.orderForAction = undefined;
+  }
+
+  protected addAnother(): void {
+    // TODO: Implement add another functionality
+    console.log('Add another for order:', this.orderForAction);
+  }
+
+  protected viewGuestDetails(): void {
+    // TODO: Implement view guest details functionality
+    console.log('View guest details for order:', this.orderForAction);
+  }
+
+  protected editOrder(): void {
+    // TODO: Implement edit order functionality
+    console.log('Edit order:', this.orderForAction);
+  }
+
+  protected requestChange(): void {
+    // TODO: Implement request change functionality
+    console.log('Request change for order:', this.orderForAction);
+  }
+
+  protected editFees(): void {
+    // TODO: Implement edit fees functionality
+    console.log('Edit fees for order:', this.orderForAction);
+  }
+
+  protected goToAssignment(): void {
+    // TODO: Implement go to assignment functionality
+    console.log('Go to assignment for order:', this.orderForAction);
+  }
+
+  protected confirmOrder(): void {
+    // TODO: Implement confirm order functionality
+    console.log('Confirm order:', this.orderForAction);
+  }
+
+  protected copyLink(): void {
+    // TODO: Implement copy link functionality
+    console.log('Copy link for order:', this.orderForAction);
+  }
+
+  protected deleteOrder(): void {
+    // TODO: Implement delete order functionality
+    console.log('Delete order:', this.orderForAction);
+  }
+
+  protected closeMakeOfferPopup(): void {
+    this.makeOfferPopupOpen = false;
+    this.offerOrder = undefined;
+    this.offerPricingNotes = '';
+    this.hostConfirmationRequired = false;
+    this.offerNetPrice = '';
+    this.offerDiscountPercent = '0';
+    this.offerDiscountAmount = '0.00';
+    this.offerPuDoFee = '0.00';
+    this.offerCommissionPercent = '10';
+    this.offerCommissionAmount = '0.00';
+  }
+
+  protected getPickupLocation(): string {
+    const pickupService = this.offerOrder?.additionalServices?.find(s => s.kind === 'pickup');
+    return pickupService?.location || 'None required';
+  }
+
+  protected getDropoffLocation(): string {
+    const dropoffService = this.offerOrder?.additionalServices?.find(s => s.kind === 'dropoff');
+    return dropoffService?.location || 'None required';
+  }
+
+  protected findMatch(): void {
+    // TODO: Implement find match logic
+    console.log('Find match for', this.offerDays, 'days');
+  }
+
+  protected calculateTotals(): void {
+    const netPrice = parseFloat(this.offerNetPrice.replace(/,/g, '')) || 0;
+    const discountPercent = parseFloat(this.offerDiscountPercent) || 0;
+    const discountAmount = parseFloat(this.offerDiscountAmount.replace(/,/g, '')) || 0;
+    const puDoFee = parseFloat(this.offerPuDoFee.replace(/,/g, '')) || 0;
+    const commissionPercent = parseFloat(this.offerCommissionPercent) || 0;
+    const commissionAmount = parseFloat(this.offerCommissionAmount.replace(/,/g, '')) || 0;
+
+    // Calculate discount amount if percent is provided
+    let calculatedDiscount = discountAmount;
+    if (discountPercent > 0 && discountAmount === 0) {
+      calculatedDiscount = netPrice * (discountPercent / 100);
+    }
+
+    // Calculate commission amount if percent is provided
+    let calculatedCommission = commissionAmount;
+    if (commissionPercent > 0 && commissionAmount === 0) {
+      calculatedCommission = netPrice * (commissionPercent / 100);
+    }
+
+    const subtotal = netPrice - calculatedDiscount + puDoFee;
+    const tax = subtotal * 0.08; // 8% tax rate
+    const total = subtotal + tax;
+
+    this.offerSubtotal = this.formatCurrency(subtotal);
+    this.offerEstimatedTax = this.formatCurrency(tax);
+    this.offerTotalAmount = this.formatCurrency(total);
+  }
+
+  protected sendOffer(): void {
+    if (!this.offerOrder) {
+      return;
+    }
+
+    // TODO: Implement send offer API call
+    console.log('Send offer for order:', this.offerOrder.id);
+    console.log('Pricing notes:', this.offerPricingNotes);
+    console.log('Host confirmation required:', this.hostConfirmationRequired);
+
+    this.closeMakeOfferPopup();
+    this.loadOrders();
+  }
+
+  protected getOfferTotalFee(): number {
+    if (!this.offerOrder) {
+      return 0;
+    }
+
+    let total = this.offerOrder.totalFeeAmount || 0;
+
+    // Add additional services fees
+    if (this.offerOrder.additionalServices) {
+      this.offerOrder.additionalServices.forEach(service => {
+        if (service.feeAmount) {
+          total += service.feeAmount;
+        }
+      });
+    }
+
+    return total;
+  }
+
+  protected getAdditionalServicesTotal(): number {
+    if (!this.offerOrder?.additionalServices) {
+      return 0;
+    }
+
+    return this.offerOrder.additionalServices.reduce((sum, service) => {
+      return sum + (service.feeAmount || 0);
+    }, 0);
+  }
+
   protected trackByOrder(index: number, order: OrderRow): number | undefined {
     return order.id ?? index;
   }
@@ -728,7 +933,7 @@ export class OrdersView implements OnInit {
     };
   }
 
-  private formatDate(dateString?: string): string {
+  protected formatDate(dateString?: string): string {
     if (!dateString) {
       return '-';
     }
@@ -757,7 +962,7 @@ export class OrdersView implements OnInit {
     });
   }
 
-  private formatTime(time?: string): string {
+  protected formatTime(time?: string): string {
     if (!time) {
       return '';
     }
@@ -828,6 +1033,21 @@ export class OrdersView implements OnInit {
     }) ?? [];
   }
 
+  protected getSpecialRequestIcon(code: string): string {
+    const iconMap: Record<string, string> = {
+      'vip': '/ui-icons/vip-guest.svg',
+      'bag': '/ui-icons/baggage-handling.svg',
+      'eye': '/ui-icons/eye-contact.svg',
+      'fork': '/ui-icons/fork-and-spoon.svg',
+      'link': '/ui-icons/linked-orders.svg',
+      'wheel': '/ui-icons/wheelchair-access.svg',
+      'h': '/ui-icons/wheelchair-access.svg',
+      'child': '/ui-icons/child-care.svg',
+      'diet': '/ui-icons/dietary-requirements.svg',
+    };
+    return iconMap[code.toLowerCase()] || '';
+  }
+
   private getStatusIcon(statusCode: string): string {
     const normalizedStatus = statusCode.toLowerCase();
     const iconMap: Record<string, string> = {
@@ -896,7 +1116,7 @@ export class OrdersView implements OnInit {
         const adults = parseInt(order.guests.split('/')[0], 10) || 0;
         return sum + adults;
     }, 0);
-    
+
     this.totalChildren = this.orders.reduce((sum, order) => {
         const children = parseInt(order.guests.split('/')[1], 10) || 0;
         return sum + children;

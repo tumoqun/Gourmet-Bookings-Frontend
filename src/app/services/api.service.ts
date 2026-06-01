@@ -131,6 +131,7 @@ export interface Service {
   name: string;
   isPrivateAvailable: boolean;
   isActive: boolean;
+  durationMinutes: number;
 }
 
 export interface Allotment {
@@ -160,6 +161,7 @@ export interface DistanceBand {
   id: number;
   label: string;
   sortOrder: number;
+  feeAmount: number;
 }
 
 export interface OrderCreateRequest {
@@ -285,6 +287,10 @@ export class ApiService {
 
   getServiceTypes(): Observable<ServiceType[]> {
     return this.http.get<ServiceType[]>(`${this.apiUrl}/services/service-types`);
+  }
+
+  getDistanceBands(): Observable<DistanceBand[]> {
+    return this.http.get<DistanceBand[]>(`${this.apiUrl}/services/distance-bands`);
   }
 
   getService(id: number): Observable<Service> {

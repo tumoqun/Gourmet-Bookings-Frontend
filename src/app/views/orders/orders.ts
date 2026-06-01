@@ -13,6 +13,7 @@ import {
   ResellerContact,
   Agent,
   SpecialRequestType,
+  DistanceBand,
 } from '../../services/api.service';
 
 interface OrderRow {
@@ -93,6 +94,7 @@ export class OrdersView implements OnInit {
   protected serviceTimesMessage = 'Select a target date and service to see start times.';
   protected areas: Area[] = [];
   protected serviceTypes: ServiceType[] = [];
+  protected distanceBands: DistanceBand[] = [];
 
   protected resellers: Reseller[] = [];
   protected contacts: ResellerContact[] = [];
@@ -151,6 +153,7 @@ export class OrdersView implements OnInit {
     this.loadServices();
     this.loadAreas();
     this.loadServiceTypes();
+    this.loadDistanceBands();
     this.loadResellersData();
     this.loadSpecialRequestTypes();
   }
@@ -226,6 +229,17 @@ export class OrdersView implements OnInit {
       },
       error: () => {
         this.serviceTypes = this.uniqueById(this.services.map((service) => service.serviceType).filter(Boolean));
+      },
+    });
+  }
+
+  protected loadDistanceBands(): void {
+    this.apiService.getDistanceBands().subscribe({
+      next: (distanceBands) => {
+        this.distanceBands = distanceBands;
+      },
+      error: () => {
+        this.distanceBands = [];
       },
     });
   }
@@ -891,6 +905,18 @@ export class OrdersView implements OnInit {
     }, 0);
   }
 
+  protected getPickupFee(distanceId?: number): string {
+    if (!distanceId) return '-';
+    const band = this.distanceBands.find(b => b.id === distanceId);
+    return band?.feeAmount?.toString() || '-';
+  }
+
+  protected getDropoffFee(distanceId?: number): string {
+    if (!distanceId) return '-';
+    const band = this.distanceBands.find(b => b.id === distanceId);
+    return band?.feeAmount?.toString() || '-';
+  }
+
   protected trackByOrder(index: number, order: OrderRow): number | undefined {
     return order.id ?? index;
   }
@@ -1012,14 +1038,64 @@ export class OrdersView implements OnInit {
 
     if (!pickup && !dropoff && !handoff) return '-/-';
 
-    const puTime = formatTime(pickup?.suggestedTime) || '-';
+    // Get tour start time and service duration from order service
+    const tourStartTime = order.orderServices?.[0]?.startTime;
+    const serviceDuration = order.orderServices?.[0]?.service?.durationMinutes || 0;
+
+    // Calculate time offset based on distance band
+    const getTimeOffset = (distanceBandId?: number): number => {
+      const offsetMap: Record<number, number> = {
+        1: 15,   // <5km
+        2: 30,   // 5km-10km
+        3: 45,   // >10km-15km
+        4: 60,   // >15km
+        5: 75,   // 15km-20km
+      };
+      return offsetMap[distanceBandId || 0] || 0;
+    };
+
+    // Calculate adjusted time
+    const calculateAdjustedTime = (baseTime: string, offsetMinutes: number, isSubtract: boolean): string => {
+      if (!baseTime) return '';
+      const [h, m] = baseTime.split(':');
+      let totalMinutes = parseInt(h, 10) * 60 + parseInt(m || '0', 10);
+
+      if (isSubtract) {
+        totalMinutes -= offsetMinutes;
+      } else {
+        totalMinutes += offsetMinutes;
+      }
+
+      // Handle day rollover
+      if (totalMinutes < 0) totalMinutes += 24 * 60;
+      if (totalMinutes >= 24 * 60) totalMinutes -= 24 * 60;
+
+      const newHour = Math.floor(totalMinutes / 60);
+      const newMinute = totalMinutes % 60;
+      const ampm = newHour >= 12 ? 'PM' : 'AM';
+      const hour12 = newHour % 12 || 12;
+
+      return `${hour12}:${newMinute.toString().padStart(2, '0')}${ampm}`;
+    };
+
+    // Calculate pickup time (tour time - offset)
+    const puOffset = getTimeOffset(pickup?.distanceBand?.id);
+    const puTime = tourStartTime && pickup?.distanceBand
+      ? calculateAdjustedTime(tourStartTime, puOffset, true)
+      : formatTime(pickup?.suggestedTime) || '-';
+
+    // Calculate dropoff time (tour time + service duration + offset)
+    const doOffset = getTimeOffset(dropoff?.distanceBand?.id);
+    const doTime = tourStartTime && dropoff?.distanceBand
+      ? calculateAdjustedTime(tourStartTime, serviceDuration + doOffset, false)
+      : formatTime(dropoff?.suggestedTime) || '-';
+
     if (pickup && handoff && !dropoff) return `${puTime}/${handoff.handoffText || 'Hand Off'}`;
     if (pickup && !dropoff) return `${puTime}/${pickup.location || '-'}`;
     if (!pickup && handoff && !dropoff) return `-/${handoff.handoffText || 'Hand Off'}`;
-    if (!pickup && dropoff) return `${formatTime(dropoff.suggestedTime) || '-'}/${dropoff.location || '-'}`;
+    if (!pickup && dropoff) return `${doTime}/${dropoff.location || '-'}`;
 
-    const doLoc = dropoff?.location || formatTime(dropoff?.suggestedTime) || '-';
-    return `${puTime}/${doLoc}`;
+    return `${puTime}/${doTime}`;
   }
 
   private getSpecialRequests(order: Order): string[] {

@@ -416,11 +416,9 @@
                </select>
             <select aria-label="Pick-up distance" [(ngModel)]="pickupDistanceId" name="pickupDistanceId">
                  <option [ngValue]="undefined">Select Distance</option>
-                 <option [ngValue]="1">1 km</option>
-                 <option [ngValue]="2">2 km</option>
-                 <option [ngValue]="3">3 km</option>
+                 <option *ngFor="let band of distanceBands" [ngValue]="band.id">{{ band.label }}</option>
                </select>
-            <strong class="additional-fee">Fee: {{ pickupDistanceId === 1 ? 100 : pickupDistanceId === 2 ? 150 : pickupDistanceId === 3 ? 200 : '-' }}</strong>
+            <strong class="additional-fee">Fee: {{ getPickupFee(pickupDistanceId) }}</strong>
           </section>
 
           <section class="additional-card service-extra-card" aria-label="Drop off details">
@@ -443,11 +441,9 @@
                </select>
               <select aria-label="Drop-off distance" [(ngModel)]="dropoffDistanceId" name="dropoffDistanceId">
                  <option [ngValue]="undefined">Select Distance</option>
-                 <option [ngValue]="1">1 km</option>
-                 <option [ngValue]="2">2 km</option>
-                 <option [ngValue]="3">3 km</option>
+                 <option *ngFor="let band of distanceBands" [ngValue]="band.id">{{ band.label }}</option>
                </select>
-              <strong class="additional-fee">Fee: {{ dropoffDistanceId === 1 ? 100 : dropoffDistanceId === 2 ? 150 : dropoffDistanceId === 3 ? 200 : '-' }}</strong>
+              <strong class="additional-fee">Fee: {{ getDropoffFee(dropoffDistanceId) }}</strong>
             </ng-container>
             <ng-template #handoffFields>
               <p>The hand off location and time will be confirmed later</p>
@@ -592,7 +588,7 @@
       Go to Assignment
     </div>
 
-    <div class="menu-item" role="menuitem" tabindex="0" (click)="makeOffer(); closeActionPopup()">
+    <div class="menu-item" role="menuitem" tabindex="0" (click)="makeOffer()">
       <span class="icon" aria-hidden="true">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
           <circle cx="12" cy="12" r="9"/>

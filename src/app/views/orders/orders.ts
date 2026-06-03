@@ -69,6 +69,8 @@ export class OrdersView implements OnInit {
   protected hostConfirmationRequired = false;
   protected offerOrder?: Order;
   protected selectedServiceForOffer?: number;
+  protected offerTargetDate = '';
+  protected offerStartTime = '';
   protected offerDays = 0;
   protected offerNetPrice = '';
   protected offerDiscountPercent = '0';
@@ -651,7 +653,6 @@ export class OrdersView implements OnInit {
               serviceTypeId: this.selectedService.serviceType.id,
               targetDate: this.targetDateNewOrder || undefined,
               startTime: this.startTimeNewOrder || undefined,
-              isPrivate: false,
               timeSlotCode: this.selectedTimeSlot === 'Any' ? undefined : this.selectedTimeSlot.toUpperCase(),
               timezone: 'Asia/Tokyo',
             },
@@ -733,17 +734,20 @@ export class OrdersView implements OnInit {
       // Load the order details for the offer popup
       this.apiService.getOrder(this.orderForAction).subscribe({
         next: (order) => {
+          const firstService = order.orderServices?.[0];
           this.offerOrder = order;
           this.offerPricingNotes = '';
           this.hostConfirmationRequired = false;
-          this.selectedServiceForOffer = order.orderServices?.[0]?.service?.id;
+          this.selectedServiceForOffer = firstService?.service?.id;
+          this.offerTargetDate = firstService?.targetDate?.substring(0, 10) || '';
+          this.offerStartTime = firstService?.startTime ? this.normalizeTime(firstService.startTime) : '';
           this.offerDays = 0;
           this.offerNetPrice = this.formatCurrency(order.totalFeeAmount || 0);
           this.offerDiscountPercent = '0';
           this.offerDiscountAmount = '0.00';
           this.offerPuDoFee = this.formatCurrency(this.getAdditionalServicesTotal());
           this.offerCommissionPercent = '10';
-          this.offerCommissionAmount = this.formatCurrency((order.totalFeeAmount || 0) * 0.1);
+          this.offerCommissionAmount = '0.00';
           this.calculateTotals();
           this.makeOfferPopupOpen = true;
           this.closeActionPopup();
@@ -810,6 +814,8 @@ export class OrdersView implements OnInit {
     this.offerOrder = undefined;
     this.offerPricingNotes = '';
     this.hostConfirmationRequired = false;
+    this.offerTargetDate = '';
+    this.offerStartTime = '';
     this.offerNetPrice = '';
     this.offerDiscountPercent = '0';
     this.offerDiscountAmount = '0.00';
@@ -819,13 +825,36 @@ export class OrdersView implements OnInit {
   }
 
   protected getPickupLocation(): string {
-    const pickupService = this.offerOrder?.additionalServices?.find(s => s.kind === 'pickup');
-    return pickupService?.location || 'None required';
+    const pickup = this.offerOrder?.additionalServices?.find(
+      (s) => s.kind.toUpperCase() === 'PICKUP'
+    );
+    if (!pickup) {
+      return 'None required';
+    }
+    return pickup.location?.trim() || '-';
   }
 
   protected getDropoffLocation(): string {
-    const dropoffService = this.offerOrder?.additionalServices?.find(s => s.kind === 'dropoff');
-    return dropoffService?.location || 'None required';
+    const dropoff = this.offerOrder?.additionalServices?.find(
+      (s) => s.kind.toUpperCase() === 'DROPOFF'
+    );
+    if (!dropoff) {
+      return 'None required';
+    }
+    return dropoff.location?.trim() || '-';
+  }
+
+  protected formatDuration(minutes?: number): string {
+    if (minutes == null || minutes <= 0) {
+      return 'N/A';
+    }
+    const hours = Math.floor(minutes / 60);
+    const mins = minutes % 60;
+    if (mins === 0) {
+      return hours === 1 ? '1 hour' : `${hours} hours`;
+    }
+    const hourPart = hours > 0 ? (hours === 1 ? '1 hour ' : `${hours} hours `) : '';
+    return `${hourPart}${mins} min`.trim();
   }
 
   protected findMatch(): void {
@@ -841,25 +870,33 @@ export class OrdersView implements OnInit {
     const commissionPercent = parseFloat(this.offerCommissionPercent) || 0;
     const commissionAmount = parseFloat(this.offerCommissionAmount.replace(/,/g, '')) || 0;
 
-    // Calculate discount amount if percent is provided
+    // Discount is based on net price.
     let calculatedDiscount = discountAmount;
-    if (discountPercent > 0 && discountAmount === 0) {
+    if (discountPercent > 0) {
       calculatedDiscount = netPrice * (discountPercent / 100);
     }
+    const discountedNet = Math.max(0, netPrice - calculatedDiscount);
 
-    // Calculate commission amount if percent is provided
+    // Commission is based on discounted net price.
     let calculatedCommission = commissionAmount;
-    if (commissionPercent > 0 && commissionAmount === 0) {
-      calculatedCommission = netPrice * (commissionPercent / 100);
+    if (commissionPercent > 0) {
+      calculatedCommission = discountedNet * (commissionPercent / 100);
     }
 
-    const subtotal = netPrice - calculatedDiscount + puDoFee;
+    this.offerDiscountAmount = this.formatCurrency(calculatedDiscount);
+    this.offerCommissionAmount = this.formatCurrency(calculatedCommission);
+
+    const subtotal = discountedNet + puDoFee;
     const tax = subtotal * 0.08; // 8% tax rate
     const total = subtotal + tax;
 
     this.offerSubtotal = this.formatCurrency(subtotal);
     this.offerEstimatedTax = this.formatCurrency(tax);
     this.offerTotalAmount = this.formatCurrency(total);
+  }
+
+  protected toggleHostConfirmation(): void {
+    this.hostConfirmationRequired = !this.hostConfirmationRequired;
   }
 
   protected sendOffer(): void {
@@ -945,7 +982,7 @@ export class OrdersView implements OnInit {
             return os.isAdminModified ? `[modified]${name}` : name;
           })
         : ['Order only'],
-      type: orderServices[0]?.isPrivate ? 'P' : 'S',
+      type: order.isPrivate ? 'P' : 'S',
       targetDate: targetDates,
       pickup: this.getPickupInfo(order),
       guests: this.formatGuests(order.adultCount, order.childCount),

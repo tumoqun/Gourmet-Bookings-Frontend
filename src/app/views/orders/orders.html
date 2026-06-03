@@ -649,10 +649,10 @@
         <div class="meta-grid">
           <div class="meta-item"><div class="label">Service Name</div><div class="value">{{ offerOrder?.orderServices?.[0]?.serviceNameSnapshot || 'N/A' }}</div></div>
           <div class="meta-item"><div class="label">Type</div><div class="value">Group Experience</div></div>
-          <div class="meta-item"><div class="label">Date &amp; Time</div><div class="value">{{ formatDate(offerOrder?.orderServices?.[0]?.targetDate) }}, {{ formatTime(offerOrder?.orderServices?.[0]?.startTime) }}</div></div>
+          <div class="meta-item"><div class="label">Date &amp; Time</div><div class="value">{{ formatDate(offerTargetDate) }}, {{ formatTime(offerStartTime) }}</div></div>
         </div>
         <div class="meta-row">
-          <div class="meta-item"><div class="label">Duration</div><div class="value">3 hours</div></div>
+          <div class="meta-item"><div class="label">Duration</div><div class="value">{{ formatDuration(offerOrder?.orderServices?.[0]?.service?.durationMinutes) }}</div></div>
           <div class="meta-item"><div class="label">Guests</div><div class="value">{{ offerOrder?.adultCount || 0 }} Adults</div></div>
         </div>
         <div class="pickup-row">
@@ -674,8 +674,12 @@
             <i class="ti ti-chevron-down chevron" aria-hidden="true"></i>
           </div>
           <div class="date-time-row">
-            <div class="dt-input"><span>{{ formatDate(offerOrder?.orderServices?.[0]?.targetDate) }}</span><i class="ti ti-calendar" aria-hidden="true"></i></div>
-            <div class="dt-input"><span>{{ formatTime(offerOrder?.orderServices?.[0]?.startTime) }}</span><i class="ti ti-calendar" aria-hidden="true"></i></div>
+            <label class="dt-input dt-input-editable">
+              <input type="date" [(ngModel)]="offerTargetDate" aria-label="Offer target date">
+            </label>
+            <label class="dt-input dt-input-editable">
+              <input type="time" [(ngModel)]="offerStartTime" aria-label="Offer start time">
+            </label>
           </div>
           <div class="find-row">
             <i class="ti ti-search" aria-hidden="true"></i>
@@ -744,7 +748,7 @@
 
       <div class="footer">
         <div class="toggle-wrap">
-          <div class="toggle" role="switch" [attr.aria-checked]="hostConfirmationRequired" (click)="hostConfirmationRequired = !hostConfirmationRequired" aria-label="Require host confirmation"></div>
+          <button class="toggle" type="button" role="switch" [class.active]="hostConfirmationRequired" [attr.aria-checked]="hostConfirmationRequired" (click)="toggleHostConfirmation()" aria-label="Require host confirmation"></button>
           <span>Require Host Confirmation</span>
         </div>
         <div class="actions">

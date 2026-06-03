@@ -10,6 +10,7 @@ export interface Order {
   status: OrderStatus;
   orderChannel?: string;
   isTentative: boolean;
+  isPrivate?: boolean;
   createdByUser?: User;
   createdByName?: string;
   reseller?: Reseller;
@@ -88,7 +89,6 @@ export interface OrderService {
   targetDate?: string;
   startTime?: string;
   timeSlotCode?: string;
-  isPrivate: boolean;
   timezone?: string;
   isAdminModified?: boolean;
   originalServiceId?: number;
@@ -168,6 +168,7 @@ export interface OrderCreateRequest {
   orderNumber: string;
   orderChannel?: string;
   isTentative?: boolean;
+  isPrivate?: boolean;
   createdByName?: string;
   picEmail?: string;
   copyEmail?: string;
@@ -194,7 +195,6 @@ export interface OrderServiceRequest {
   targetDate?: string;
   startTime?: string;
   timeSlotCode?: string;
-  isPrivate?: boolean;
   timezone?: string;
 }
 

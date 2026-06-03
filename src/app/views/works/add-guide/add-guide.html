@@ -1,0 +1,61 @@
+<div class="modal-backdrop">
+  <div class="modal-container">
+    <!-- Header -->
+    <div class="modal-header">
+      <h2>Add Guide</h2>
+    </div>
+    <!-- Tabs + Search -->
+    <div class="toolbar">
+      <div class="tabs">
+        <button type="button" class="tab-button" [class.active]="activeTab === 'available'"
+          (click)="setTab('available')">
+          Available Guides
+        </button>
+        <button type="button" class="tab-button" [class.active]="activeTab === 'unavailable'"
+          (click)="setTab('unavailable')">
+          Unavailable Guides
+        </button>
+      </div>
+      <input type="text" class="search-input" placeholder="Search Guide Name" [(ngModel)]="searchKeyword" (ngModelChange)="onSearchChange($event)" />
+    </div>
+    <!-- Guide List -->
+    <div class="guide-grid">
+      <div class="guide-card" *ngFor="let guide of guides" [class.selected]="isSelected(guide.id)"
+        (click)="toggleGuide(guide.id)">
+        <div class="guide-icon">
+          <img src="/ui-icons/image-default.png" alt="Guide icon" />
+        </div>
+        <div class="guide-name">
+          {{ guide.fullName }}
+        </div>
+      </div>
+    </div>
+    <div *ngIf="selectedGuideIds.length > 0" class="guide-notes">
+      <div class="guide-options">
+        <label class="checkbox-wrapper">
+          <span>Calendar Invite</span>
+          <input type="checkbox" [(ngModel)]="calendarInvite" />
+        </label>
+        <label class="checkbox-wrapper">
+          <span>Leader</span>
+          <input type="checkbox" [(ngModel)]="isLeader" />
+        </label>
+      </div>
+      <div class="manager-note-section">
+        <label class="note-label">
+          Manager’s Note
+        </label>
+        <input type="text" class="note-input" placeholder="Enter Note" [(ngModel)]="managerNote" />
+      </div>
+    </div>
+    <!-- Footer -->
+    <div class="modal-footer">
+      <button type="button" class="add-button" [disabled]="selectedGuideIds.length === 0" (click)="addGuide()">
+        ADD GUIDE
+      </button>
+      <button type="button" class="cancel-button" (click)="closeModal()">
+        Cancel
+      </button>
+    </div>
+  </div>
+</div>

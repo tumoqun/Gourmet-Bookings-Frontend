@@ -270,6 +270,7 @@ td {
   background-color: #1a1c3b;
   padding: 2px 8px;
   border-radius: 4px;
+  width: fit-content;
 }
 
 .service {
@@ -279,6 +280,8 @@ td {
   padding: 4px 12px;
   background-color: #475569;
   border-radius: 9999px;
+  width: fit-content;
+  max-width: 250px;
 }
 
 .pic {
@@ -435,6 +438,7 @@ td {
   font-weight: 500;
   font-size: 14px;
   color: #c5a05a;
+  cursor: pointer;
 }
 
 .table-footer {

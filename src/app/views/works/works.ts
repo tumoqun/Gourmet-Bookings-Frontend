@@ -1,7 +1,8 @@
 import { CommonModule } from '@angular/common';
-import { ChangeDetectorRef, Component, OnInit, ViewEncapsulation } from '@angular/core';
-import { Work, WorkListResponse, WorkService } from '../../services/work.service';
+import { ChangeDetectorRef, Component, inject, OnInit, ViewEncapsulation } from '@angular/core';
+import { PageResponse, Work, WorkListResponse, WorkOrder, WorkService } from '../../services/work.service';
 import { firstValueFrom } from 'rxjs';
+import { Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 
 interface WorkFilter {
@@ -10,7 +11,7 @@ interface WorkFilter {
   active: boolean;
 }
 
-export enum StatusClass {
+export enum WorkStatusClass {
   READY = 'status-ready',
   ACCEPTED = 'status-accepted',
   STARTED = 'status-started',
@@ -25,6 +26,8 @@ export enum StatusClass {
   CANCELLED = 'status-cancelled',
   DELETED = 'status-deleted',
   CLOSED = 'status-closed',
+  CONFIRMED = 'status-confirmed',
+  COMPLETED = 'status-completed',
 }
 
 @Component({
@@ -35,9 +38,11 @@ export enum StatusClass {
   encapsulation: ViewEncapsulation.None,
 })
 export class Works {
+  private router = inject(Router);
+
   isLoading = false;
   errorMessage = '';
-  readonly StatusClass = StatusClass;
+  readonly StatusClass = WorkStatusClass;
 
   pageSize = 10;
   pageNumber = 0;
@@ -51,15 +56,16 @@ export class Works {
     totalChildren: 0,
   };
 
-  workData: WorkListResponse = {
+  workData: PageResponse<WorkOrder> = {
     content: [],
     totalElements: 0,
     totalPages: 0,
-    first: true,
     last: true,
+    size: 10,
     number: 0,
-    size: 0,
+    sort: { empty: true, sorted: false, unsorted: true },
     numberOfElements: 0,
+    first: true,
     empty: true,
   };
 
@@ -86,7 +92,7 @@ export class Works {
   }
 
   getStatusClass(status: string): string {
-    return StatusClass[status as keyof typeof StatusClass] || '';
+    return WorkStatusClass[status.toUpperCase() as keyof typeof WorkStatusClass] || '';
   }
 
   async loadWorks(page: number, size: number = this.pageSize): Promise<void> {
@@ -154,7 +160,7 @@ export class Works {
     this.loadWorks(this.pageNumber, this.pageSize);
   }
 
-  trackByWork(index: number, work: Work): number | undefined {
+  trackByWork(index: number, work: WorkOrder): number {
     return work.id ?? index;
   }
 
@@ -166,5 +172,9 @@ export class Works {
     } catch (error) {
       console.error('Error fetching guest summary:', error);
     }
+  }
+
+  viewWorkDetail(workId: number): void {
+    this.router.navigate(['/works', workId]);
   }
 }

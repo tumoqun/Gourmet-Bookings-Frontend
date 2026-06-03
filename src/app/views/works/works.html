@@ -116,27 +116,36 @@
           </tr>
   
           <tr *ngFor="let work of workData.content; trackBy: trackByWork">
-            <td class="reseller">{{ work.resellerName }}</td>
-            <td><span class="area">{{ work.areaName }}</span></td>
-            <td><span class="service">{{ work.serviceName }}</span></td>
-            <td><span class="pic">{{ work.picName }}</span></td>
-            <td><span class="ref1">{{ work.ref1 }}</span></td>
-            <td><span class="ps">{{ work.isPrivate ? 'P' : 'S' }}</span></td>
+            <td class="reseller">{{ work.orders[0].resellerName }}</td>
+            <td>
+              <div class="area" *ngFor="let service of work.orders[0].services">
+                {{ service.areaName }}
+              </div>
+            </td>
+            <td>
+              <div class="service" *ngFor="let service of work.orders[0].services">
+                {{ service.serviceName }}
+              </div>
+            </td>
+            <td><div class="pic" *ngFor="let order of work.orders">{{ order.picName }}</div></td>
+            <td><span class="ref1">{{ work.orders[0].ref1 }}</span></td>
+            <td><span class="ps">{{ work.orders[0].isPrivate ? 'P' : 'S' }}</span></td>
             <td>
               <span class="datetime">
                 <span>{{ work.tourDate }}</span>
               </span>
             </td>
-            <td><span class="guests">{{ work.adultCount }}/{{ work.childCount }}</span></td>
-            <td><span [class]="getStatusClass(work.status)">{{ work.status }}</span></td>
+            <td><span class="guests">{{ work.orders[0].adultCount }}/{{ work.orders[0].childCount }}</span></td>
+            <td><span [class]="getStatusClass(work.status.toUpperCase())">{{ work.status.toUpperCase() }}</span></td>
             <td>
               <span class="guide">
-                <img class="guide-icon" src="/ui-icons/image-default.png" alt="Guide icon" />
-                <strong>{{ work.guide }}</strong>
+                <img *ngIf="work.guides[0]?.avatar" class="guide-icon" [src]="work.guides[0].avatar" alt="Guide icon" />
+                <img *ngIf="!work.guides[0]?.avatar" class="guide-icon" src="/ui-icons/image-default.png" alt="Guide icon" />
+                <strong>{{ work.guides[0].fullName }}</strong>
               </span>
             </td>
             <td>
-              <span class="actions-cell">
+              <span class="actions-cell" (click)="viewWorkDetail(work.id)">
                 View Details
               </span>
             </td>

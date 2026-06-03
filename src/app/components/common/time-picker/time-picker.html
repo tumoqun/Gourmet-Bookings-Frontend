@@ -1,0 +1,27 @@
+<div class="time-picker-popover">
+  <div class="picker-header">
+    <h3>Select Time</h3>
+  </div>
+
+  <hr class="picker-divider" />
+
+  <form [formGroup]="timeForm" (ngSubmit)="onApply()">
+    <div class="picker-body">
+      <span class="clock-icon">🕒</span>
+      <input type="number" formControlName="hour" min="1" max="12" class="time-input hour-input" />
+      <span class="colon">:</span>
+      <input type="number" formControlName="minute" min="0" max="59" class="time-input minute-input" />
+      <div class="period-toggle">
+        <button type="button" class="period-btn" [class.active]="activePeriod === 'AM'"
+          (click)="setPeriod('AM')">AM</button>
+        <button type="button" class="period-btn" [class.active]="activePeriod === 'PM'"
+          (click)="setPeriod('PM')">PM</button>
+      </div>
+    </div>
+    <hr class="picker-divider" />
+    <div class="picker-actions">
+      <button type="submit" class="btn-apply" [disabled]="timeForm.invalid">APPLY</button>
+      <button type="button" class="btn-cancel" (click)="onCancel()">Cancel</button>
+    </div>
+  </form>
+</div>

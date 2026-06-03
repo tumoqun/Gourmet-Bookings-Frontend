@@ -1,0 +1,131 @@
+.time-picker-popover {
+  background: #ffffff;
+  border-radius: 8px;
+  padding: 16px;
+  width: 270px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+  border: 1px solid #ebebeb;
+  font-family: Arial, sans-serif;
+  box-sizing: border-box;
+}
+
+.picker-header h3 {
+  margin: 0 0 10px 0;
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #333333;
+}
+
+.picker-divider {
+  border: none;
+  border-top: 1px solid #f0f0f0;
+  margin: 0 0 12px 0;
+}
+
+.picker-body {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 14px;
+}
+
+.clock-icon {
+  font-size: 1.1rem;
+  color: #888888;
+  margin-right: 4px;
+}
+
+/* Ô input giờ/phút */
+.time-input {
+  width: 42px;
+  height: 32px;
+  text-align: center;
+  border: 1px solid #e0e0e0;
+  border-radius: 6px;
+  font-size: 0.95rem;
+  outline: none;
+  color: #333;
+  -moz-appearance: textfield;
+}
+
+.time-input::-webkit-outer-spin-button,
+.time-input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+/* Khi ô input được focus (đúng chuẩn viền xanh nước biển như ảnh) */
+.time-input:focus {
+  border-color: #bad9f9;
+  box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.15);
+}
+
+.colon {
+  font-weight: bold;
+  color: #888;
+}
+
+/* Cụm AM / PM */
+.period-toggle {
+  display: flex;
+  border: 1px solid #e0e0e0;
+  border-radius: 6px;
+  overflow: hidden;
+  margin-left: auto;
+}
+
+.period-btn {
+  background: #ffffff;
+  border: none;
+  padding: 6px 10px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #666666;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+/* Nút AM/PM khi Active sang màu vàng đất giống ảnh */
+.period-btn.active {
+  background: #c5a059;
+  color: #ffffff;
+}
+
+/* Buttons Apply / Cancel */
+.picker-actions {
+  display: flex;
+  gap: 10px;
+}
+
+.btn-apply {
+  background: #c5a059;
+  color: #ffffff;
+  border: none;
+  border-radius: 6px;
+  padding: 8px 16px;
+  font-size: 0.85rem;
+  font-weight: 700;
+  cursor: pointer;
+  flex: 1;
+}
+
+.btn-apply:disabled {
+  background: #e0e0e0;
+  cursor: not-allowed;
+}
+
+.btn-cancel {
+  background: #ffffff;
+  color: #333333;
+  border: 1px solid #e0e0e0;
+  border-radius: 6px;
+  padding: 8px 16px;
+  font-size: 0.85rem;
+  font-weight: 500;
+  cursor: pointer;
+  flex: 1;
+}
+
+.btn-cancel:hover {
+  background: #f7f7f7;
+}

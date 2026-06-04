@@ -5,141 +5,80 @@
       <p>TODAY IS THURSDAY, MARCH 12, 2026</p>
     </div>
   </header>
-  <div class="tour-header">
+  <div *ngIf="loadingInfo" class="loading-state">
+    <p>Loading...</p>
+  </div>
+  <div *ngIf="!loadingInfo" class="tour-header">
     <div class="tour-info">
-      <h2>Tokyo W</h2>
-      <div class="tag-private">Private</div>
+      <h2>{{ workDetail.serviceName }}</h2>
+      <div class="tag-private">{{ workDetail.isPrivate ? 'Private' : 'Group' }}</div>
     </div>
   
     <!-- STEPS -->
     <div class="tour-steps">
-      <div class="step-item">
+      <div class="step-item" *ngFor="
+          let step of workSteps;
+          let i = index;
+          let last = last
+        ">
         <div style="display: flex;">
-          <div class="step active">
-            <div class="circle">1</div>
+          <div class="step" [class.active]="isStepActive(step)">
+            <div class="circle">
+              {{ i + 1 }}
+            </div>
           </div>
-          <div class="line"></div>
+          <div class="line" *ngIf="!last" [class.active]="isStepActive(step)"></div>
         </div>
-        <span>Scheduled</span>
-      </div>
-      <div class="step-item">
-        <div style="display: flex;">
-          <div class="step">
-            <div class="circle">2</div>
-          </div>
-          <div class="line"></div>
-        </div>
-        <span></span>
-      </div>
-      <div class="step-item">
-        <div style="display: flex;">
-          <div class="step">
-            <div class="circle">3</div>
-          </div>
-          <div class="line"></div>
-        </div>
-        <span></span>
-      </div>
-      <div class="step-item">
-        <div style="display: flex;">
-          <div class="step">
-            <div class="circle">4</div>
-          </div>
-          <div class="line"></div>
-        </div>
-        <span></span>
-      </div>
-      <div class="step-item">
-        <div style="display: flex;">
-          <div class="step">
-            <div class="circle">5</div>
-          </div>
-          <div class="line"></div>
-        </div>
-        <span></span>
-      </div>
-      <div class="step-item">
-        <div style="display: flex;">
-          <div class="step">
-            <div class="circle">6</div>
-          </div>
-          <div class="line"></div>
-        </div>
-        <span></span>
-      </div>
-      <div class="step-item">
-        <div style="display: flex;">
-          <div class="step">
-            <div class="circle">7</div>
-          </div>
-          <div class="line"></div>
-        </div>
-        <span></span>
-      </div>
-      <div class="step-item">
-        <div style="display: flex;">
-          <div class="step">
-            <div class="circle">8</div>
-          </div>
-          <div class="line"></div>
-        </div>
-        <span></span>
-      </div>
-      <div class="step-item">
-        <div style="display: flex;">
-          <div class="step">
-            <div class="circle">9</div>
-          </div>
-        </div>
-        <span></span>
+        <span>
+          {{ isStepActive(step) ? step : '' }}
+        </span>
       </div>
     </div>
   </div>
-  <div class="tour-content">
-  
+  <div *ngIf="!loadingInfo" class="tour-content">
     <div class="info-group">
       <label>TOUR DATE</label>
-      <p>Friday, 03/April/2026</p>
+      <p *ngIf="workDetail.tourDate">{{ workDetail.tourDate | date:'EEEE, dd/MMMM/yyyy' }}</p>
     </div>
   
     <div class="info-group">
       <label>START TIME</label>
-      <p>5:30 AM</p>
+      <p *ngIf="workDetail.tourStartTime">{{ formatTime(workDetail.tourStartTime) }}</p>
     </div>
   
     <div class="info-group">
       <label>END TIME</label>
-      <p>7:30 PM</p>
+      <p *ngIf="workDetail.tourEndTime">{{ formatTime(workDetail.tourEndTime) }}</p>
     </div>
   
     <div class="info-group">
       <label>TOUR DURATION</label>
-      <p>3hr</p>
+      <p *ngIf="workDetail.duration">{{ workDetail.duration }}hr</p>
     </div>
   
     <div class="info-group">
       <label>NUMBER OF ADULTS</label>
-      <p>5</p>
+      <p *ngIf="workDetail.adultCount">{{ workDetail.adultCount }}</p>
     </div>
   
     <div class="info-group">
       <label>NUMBER OF CHILDREN</label>
-      <p>2</p>
+      <p *ngIf="workDetail.childCount">{{ workDetail.childCount }}</p>
     </div>
   
     <div class="info-group">
       <label>AREA</label>
-      <p>Tokyo</p>
+      <p *ngIf="workDetail.areaName">{{ workDetail.areaName }}</p>
     </div>
   
     <div class="info-group">
       <label>PRODUCT CODE</label>
-      <p>T6X1M5B9K3</p>
+      <p *ngIf="workDetail.workNumber">{{ workDetail.workNumber }}</p>
     </div>
   
     <div class="info-group full-width">
       <label>MEETING POINT</label>
-      <p>Sakura Skyline Hotel, 3-15-8 Shinjuku</p>
+      <p *ngIf="workDetail.locationAddress">{{ workDetail.locationAddress }}</p>
     </div>
     <a class="migration-link">Migration Notes</a>
   </div>
@@ -169,26 +108,27 @@
       <!-- BODY -->
       <div class="order-row" *ngFor="let order of filteredOrders">
         <div>
-          {{ order.reseller }}
+          {{ order.reseller || '--' }}
         </div>
         <div>
-          {{ order.originalAgent }}
+          {{ order.originalAgent || '--' }}
         </div>
         <div class="bold">
-          {{ order.ref1 }}
+          {{ order.ref1 || '--' }}
         </div>
         <div>
-          {{ order.guests }}
+          {{ order.adultCount }}/{{ order.childCount }}
         </div>
         <div class="bold">
-          {{ order.fee }}
+          {{ order.totalFeeAmount || '--' }}
         </div>
         <div class="special-cell">
           <span>
+            <span *ngIf="!order.special">--</span>
             <span *ngIf="order.special" class="vip-badge">{{ order.special }}</span>
-            <span>{{ order.specialIcon }}</span>
+            <span *ngIf="order.special">{{ order.specialIcon }}</span>
           </span>
-          <a [href]="order.specialLink" target="_blank">
+          <a *ngIf="order.special" [href]="order.specialLink" target="_blank">
             {{ order.specialNote }}
           </a>
         </div>
@@ -207,7 +147,7 @@
     <!-- HEADER -->
     <div class="table-header">
       <h2>Guides</h2>
-      <button class="add-guide-btn" (click)="addGuide()">
+      <button class="add-guide-btn" (click)="openGuideModal()">
         Add Guide
       </button>
     </div>
@@ -227,16 +167,16 @@
       <div class="guide-row" *ngFor="let guide of guides">
         <!-- NAME -->
         <div>
-          {{ guide.name }}
+          {{ guide.name || '--' }}
         </div>
         <!-- PHONE -->
         <div>
-          {{ guide.phoneNumber }}
+          {{ guide.phone || '--' }}
         </div>
         <!-- NOTE -->
         <div class="note-cell">
           <span>
-            {{ guide.managerNote }}
+            {{ guide.rejectionReason || '--' }}
           </span>
           <button class="icon-btn">
             ✏️
@@ -244,15 +184,15 @@
         </div>
         <!-- ROLE -->
         <div>
-          {{ guide.role }}
+          {{ guide.role || '--' }}
         </div>
         <!-- CALENDAR -->
         <div class="calendar-cell">
-          {{ guide.calendarInvitation ? 'YES' : 'NO' }}
+          {{ guide.isCalendarInvitation ? 'Yes' : 'No' }}
         </div>
         <!-- STATUS -->
         <div>
-          <span class="guide-status" [class]="getGuideStatusClass(guide.status)">
+          <span class="guide-status" [class]="getStatusClass(guide.status)">
             {{ guide.status }}
           </span>
         </div>
@@ -283,7 +223,7 @@
           <span class="notes-text">Tour Notes</span>
           <img class="link-icon" src="/ui-icons/link.png" alt="link icon" />
         </button>
-        <button class="add-stop-btn" (click)="addStop()">
+        <button class="add-stop-btn" (click)="openStopModal()">
           Add Stop
         </button>
       </div>
@@ -305,31 +245,31 @@
       <div class="itinerary-row" *ngFor="let item of itineraryList">
         <!-- NAME -->
         <div>
-          {{ item.name }}
+          {{ item.supplierName || '--' }}
         </div>
         <!-- SCHEDULE -->
         <div>
-          {{ item.scheduleTime }}
+          {{ item.scheduledTime || '--' }}
         </div>
         <!-- PHONE -->
         <div>
-          {{ item.phoneNumber }}
+          {{ item.supplierPhone || '--' }}
         </div>
         <!-- ADDED BY -->
         <div class="bold">
-          {{ item.addedBy }}
+          {{ item.addedBy || '--' }}
         </div>
         <!-- ADDED AT -->
         <div>
-          {{ item.addedAt }}
+          {{ item.addedAt || '--' }}
         </div>
         <!-- STATUS -->
         <div>
-          {{ item.status }}
+          <span [class]="getStatusClass(item.status)">{{ item.status }}</span>
         </div>
         <!-- NOTES -->
         <div>
-          {{ item.notes }}
+          {{ item.specialNotes || '--' }}
         </div>
         <!-- ACTIONS -->
         <div class="actions-cell">
@@ -362,7 +302,7 @@
       </div>
       <div class="receipt-row" *ngFor="let receipt of receipts">
         <div>
-          {{ receipt.restaurant }}
+          {{ receipt.supplierName || '--' }}
         </div>
         <div>
           {{ receipt.notes }}
@@ -374,22 +314,23 @@
           {{ formatCurrency(receipt.tax) }}
         </div>
         <div class="bold">
-          {{ formatCurrency(receipt.total) }}
+          {{ formatCurrency(receipt.amount) }}
         </div>
         <div class="bold">
-          {{ receipt.tNumber }}
+          {{ receipt.receiptNumber || '--' }}
         </div>
         <div>
-          {{ receipt.passThrough ? 'Yes' : 'No' }}
+          {{ receipt.isVerified ? 'Yes' : 'No' }}
         </div>
         <div>
-          <img class="photo-icon" src="/ui-icons/image-default.png" alt="photo icon" (click)="openReceiptPhoto(receipt)" />
+          <img *ngIf="receipt.imageUrl" class="receipt-icon" src="{{ receipt.imageUrl }}" alt="receipt icon" (click)="openReceiptPhoto(receipt)" />
+          <img *ngIf="!receipt.imageUrl" class="photo-icon" src="/ui-icons/image-default.png" alt="photo icon" />
         </div>
         <div>
-          {{ receipt.submittedBy }}
+          {{ receipt.submittedBy || '--' }}
         </div>
         <div>
-          {{ receipt.submittedAt }}
+          {{ receipt.createdAt | date:'dd/MM/yyyy HH:mm' }}
         </div>
       </div>
       <!-- FOOTER -->
@@ -403,4 +344,9 @@
       </div>
     </div>
   </div>
+
+  <app-add-guide *ngIf="showGuideModal" [visible]="showGuideModal"
+    (close)="closeGuideModal()"></app-add-guide>
+  
+  <app-add-stop *ngIf="showStopModal" [visible]="showStopModal" [serviceInfo]="stopService" (close)="closeStopModal()"></app-add-stop>
 </section>

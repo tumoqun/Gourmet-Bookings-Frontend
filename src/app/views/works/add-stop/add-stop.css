@@ -1,0 +1,242 @@
+:host {
+  display: block;
+  font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  --primary-color: #bfa15f;
+  /* Màu vàng của tab Active */
+  --text-dark: #2c324e;
+  --text-muted: #848ca1;
+  --bg-input: #f8f9fa;
+  --border-color: #e9ecef;
+
+  /* Thiết lập để phủ toàn màn hình làm lớp Overlay mờ */
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background-color: rgba(0, 0, 0, 0.5);
+  /* Nền tối mờ phía sau */
+  z-index: 1000;
+
+  /* Căn giữa hộp thoại chính ra giữa màn hình */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.modal-container {
+  background: #ffffff;
+  border-radius: 12px;
+  padding: 24px;
+  max-width: 750px;
+  width: 90%;
+  /* Đổi từ 100% sang 90% để đẹp hơn trên giao diện mobile */
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+  /* Tăng đổ bóng để tạo hiệu ứng nổi lên */
+  box-sizing: border-box;
+
+  /* Hiệu ứng mượt mà khi modal xuất hiện */
+  animation: modalAppear 0.25s ease-out;
+}
+
+/* Keyframes giúp tạo hiệu ứng scale nhẹ khi mở modal */
+@keyframes modalAppear {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.modal-header h2 {
+  margin: 0 0 16px 0;
+  color: #1a1a1a;
+  font-size: 1.5rem;
+  font-weight: 700;
+}
+
+.divider {
+  border: none;
+  border-top: 1px solid var(--border-color);
+  margin: 0 0 20px 0;
+}
+
+/* Tabs layout styling */
+.tab-group {
+  display: flex;
+  gap: 8px;
+  background-color: #f1f3f5;
+  border-radius: 8px;
+  margin-bottom: 24px;
+  width: max-content;
+}
+
+.tab-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: transparent;
+  border: 1px solid transparent;
+  padding: 8px 16px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  color: #5c6370;
+  transition: all 0.2s ease;
+}
+
+.tab-btn.active {
+  background: #ffffff;
+  border-color: var(--primary-color);
+  color: var(--primary-color);
+  font-weight: 500;
+}
+
+/* Metadata Grid Layout */
+.meta-info-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.meta-item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.meta-label {
+  font-size: 0.725rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  letter-spacing: 0.5px;
+}
+
+.meta-value.highlights {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--text-dark);
+}
+
+/* Form Row Elements */
+.form-row {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.flex-2 {
+  flex: 2;
+}
+
+.flex-1 {
+  flex: 1;
+}
+
+.full-width {
+  margin-bottom: 24px;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.form-group label {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  font-weight: 500;
+}
+
+.form-control {
+  background-color: var(--bg-input);
+  border: 1px solid #e2e5ec;
+  border-radius: 8px;
+  padding: 12px 16px;
+  font-size: 0.95rem;
+  color: #333;
+  outline: none;
+  transition: border-color 0.2s;
+  box-sizing: border-box;
+  width: 100%;
+}
+
+.form-control::placeholder {
+  color: #b0b5c1;
+}
+
+.form-control:focus {
+  border-color: #a0a5b5;
+}
+
+/* Select wrapper styling for custom down caret icon */
+.select-wrapper {
+  position: relative;
+  width: 100%;
+}
+
+.select-control {
+  appearance: none;
+  -webkit-appearance: none;
+  cursor: pointer;
+  padding-right: 40px;
+}
+
+.select-wrapper::after {
+  content: '▼';
+  font-size: 0.65rem;
+  color: #707585;
+  position: absolute;
+  right: 16px;
+  top: 50%;
+  transform: translateY(-50%);
+  pointer-events: none;
+}
+
+/* Form Actions Button Styles */
+.footer-divider {
+  margin: 24px 0 16px 0;
+}
+
+.form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+}
+
+.btn {
+  padding: 10px 24px;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s, color 0.2s;
+  border: none;
+}
+
+.btn-submit {
+  background-color: #e0e0e0;
+  color: #ffffff;
+}
+
+/* Khi form hợp lệ, nút submit sẽ chuyển sang màu xanh/tối */
+form:not(.ng-invalid) .btn-submit {
+  background-color: #c5a05a;
+  color: white;
+}
+
+.btn-cancel {
+  background-color: transparent;
+  color: #1a1a1a;
+  border: 1px solid #dcdcdc;
+}
+
+.btn-cancel:hover {
+  background-color: #f8f9fa;
+}

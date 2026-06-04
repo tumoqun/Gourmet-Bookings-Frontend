@@ -1,6 +1,13 @@
 import { CommonModule } from '@angular/common';
-import { Component } from '@angular/core';
+import { ChangeDetectorRef, Component, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { ActivatedRoute } from '@angular/router';
+import { WorkDetailType, WorkGuide, WorkOrder, WorkService } from '../../../services/work.service';
+import { AddGuide } from "../add-guide/add-guide";
+import { AddStop } from '../add-stop/add-stop';
+import { WorkStatusClass } from '../works';
+import { ItineraryService, ItineraryStopItem } from '../../../services/itinerary.service';
+import { Receipt, ReceiptService } from '../../../services/receipt.service';
 
 export type OrderStatus = 'Completed' | 'Active' | 'Scheduled';
 
@@ -9,60 +16,57 @@ export interface StatusOption {
   value: string;
 }
 
-export interface Order {
-  reseller: string;
-  originalAgent: string;
-  ref1: string;
-  guests: string;
-  fee: string;
-  special?: string;
-  specialIcon?: string;
-  specialNote?: string;
-  specialLink?: string;
-  status: OrderStatus;
-}
-
 export type GuideStatus = 'ACCEPTED' | 'PENDING' | 'DECLINED';
 
-export interface Guide {
+export interface StopService {
   name: string;
-  phoneNumber: string;
-  managerNote: string;
-  role: string;
-  calendarInvitation: boolean;
-  status: GuideStatus;
-}
-
-export interface ItineraryItem {
-  name: string;
-  scheduleTime: string;
-  phoneNumber: string;
-  addedBy: string;
-  addedAt: string;
-  status?: string;
-  notes?: string;
-}
-
-export interface Receipt {
-  restaurant: string;
-  notes: string;
-  fee: number;
-  tax: number;
-  total: number;
-  tNumber: string;
-  passThrough: boolean;
-  photo?: string;
-  submittedBy: string;
-  submittedAt: string;
+  startTime: string;
+  endTime: string;
 }
 
 @Component({
   selector: 'app-work-detail',
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, AddGuide, AddStop],
   templateUrl: './detail.html',
   styleUrl: './detail.css',
 })
 export class WorkDetail {
+  private route = inject(ActivatedRoute);
+
+  showGuideModal = false;
+  showStopModal = false;
+  loadingInfo = true;
+  loadingOrders = true;
+  loadingGuides = true;
+  loadingItineraries = true;
+  loadingReceipts = true;
+  workId = this.route.snapshot.paramMap.get('id');
+  workDetail: WorkDetailType = {} as WorkDetailType;
+  stopService: StopService = {
+    name: '',
+    startTime: '',
+    endTime: '',
+  };
+
+  constructor(
+    private workService: WorkService,
+    private itinerariesService: ItineraryService,
+    private receiptService: ReceiptService,
+    private cdr: ChangeDetectorRef,
+  ) {}
+
+  workSteps: string[] = [
+    'SCHEDULED',
+    'IN PREP',
+    'ACCEPTED',
+    'REMINDER',
+    'READY',
+    'STARTED',
+    'ENDED',
+    'CLOSED',
+    'PAID DATE',
+  ];
+
   statusOptions: StatusOption[] = [
     {
       label: 'All Statuses',
@@ -84,48 +88,16 @@ export class WorkDetail {
 
   selectedStatus = 'ALL';
 
-  orders: Order[] = [
-    {
-      reseller: 'EXO',
-      originalAgent: 'James Anderson',
-      ref1: 'TK-08053-1',
-      guests: '5/0',
-      fee: '¥90,488',
-      special: 'VIP',
-      specialIcon: '🍴',
-      specialNote: 'View Notes',
-      specialLink: '#',
-      status: 'Completed',
-    },
+  orders: WorkOrder[] = [];
+  guides: WorkGuide[] = [];
+  itineraryList: ItineraryStopItem[] = [];
+  receipts: Receipt[] = [];
 
-    {
-      reseller: 'EXO',
-      originalAgent: 'Emily Johnson',
-      ref1: 'JPITAMI-M-9/7',
-      guests: '2/1',
-      fee: '¥90,036',
-      special: '',
-      specialIcon: '👜 ☕',
-      specialNote: 'Order Details',
-      specialLink: '#',
-      status: 'Active',
-    },
-  ];
-
-  getStatusClass(status: OrderStatus): string {
-    switch (status) {
-      case 'Completed':
-        return 'completed';
-      case 'Active':
-        return 'active';
-      case 'Scheduled':
-        return 'scheduled';
-      default:
-        return '';
-    }
+  getStatusClass(status: string): string {
+    return WorkStatusClass[status.toUpperCase() as keyof typeof WorkStatusClass] || '';
   }
 
-  get filteredOrders(): Order[] {
+  get filteredOrders(): WorkOrder[] {
     if (this.selectedStatus === 'ALL') {
       return this.orders;
     }
@@ -133,83 +105,113 @@ export class WorkDetail {
     return this.orders.filter((order) => order.status === this.selectedStatus);
   }
 
-  guides: Guide[] = [
-    {
-      name: 'Sophia Taylor',
-      phoneNumber: '0987 654 321',
-      managerNote: 'Main Guide',
-      role: 'Leader',
-      calendarInvitation: true,
-      status: 'ACCEPTED',
-    },
-  ];
-
-  receipts: Receipt[] = [
-    {
-      restaurant: 'Tokyo W',
-      notes: 'Main Stop',
-      fee: 1200,
-      tax: 120,
-      total: 1320,
-      tNumber: 'T9X4B7L2Q1',
-      passThrough: true,
-      submittedBy: 'Emily Johnson',
-      submittedAt: 'Tue, 31/March/2026 - 09:45 PM',
-    },
-
-    {
-      restaurant: 'The Drunken Tiger',
-      notes: 'Client Requested',
-      fee: 850,
-      tax: 85,
-      total: 935,
-      tNumber: 'H3K8M2P9D6',
-      passThrough: false,
-      submittedBy: 'Michael Brown',
-      submittedAt: 'Wed, 01/April/2026 - 01:20 PM',
-    },
-  ];
-
-  addGuide(): void {
-    console.log('Add guide');
+  async ngOnInit(): Promise<void> {
+    await Promise.all([
+      this.getWorkDetail(Number(this.workId)),
+      this.getWorkOrders(Number(this.workId)),
+      this.getWorkGuides(Number(this.workId)),
+      this.getReceiptsByWork(Number(this.workId)),
+      this.loadItineraryStops(Number(this.workId)),
+    ]);
+    this.stopService = {
+      name: this.workDetail.serviceName,
+      startTime: this.workDetail.tourStartTime,
+      endTime: this.workDetail.tourEndTime,
+    };
   }
 
-  approveGuide(guide: Guide): void {
-    console.log('Approve', guide);
-  }
-
-  rejectGuide(guide: Guide): void {
-    console.log('Reject', guide);
-  }
-
-  removeGuide(guide: Guide): void {
-    console.log('Remove', guide);
-  }
-
-  getGuideStatusClass(status: GuideStatus): string {
-    switch (status) {
-      case 'ACCEPTED':
-        return 'accepted';
-      case 'PENDING':
-        return 'pending';
-      case 'DECLINED':
-        return 'declined';
-      default:
-        return '';
+  async getWorkDetail(workId: number): Promise<void> {
+    try {
+      const workResponse = await this.workService.getWorkDetail(workId).toPromise();
+      this.workDetail = workResponse || ({} as WorkDetailType);
+    } catch (error) {
+      console.error('Error fetching work details:', error);
+    } finally {
+      this.loadingInfo = false;
+      this.cdr.detectChanges();
     }
   }
 
-  itineraryList: ItineraryItem[] = [
-    {
-      name: 'Pick Up',
-      scheduleTime: 'Sat, 04-Jan-25 - 5:00PM',
-      phoneNumber: '--',
-      addedBy: 'JAMIE',
-      addedAt: 'Fri, 03-Jan-25 - 5:00PM',
-      status: '--',
-      notes: '--',
-    },
-  ];
+  async getWorkOrders(workId: number): Promise<void> {
+    try {
+      const ordersResponse = await this.workService.getWorkOrders(workId).toPromise();
+      this.orders = ordersResponse || [];
+    } catch (error) {
+      console.error('Error fetching work orders:', error);
+    } finally {
+      this.loadingOrders = false;
+      this.cdr.detectChanges();
+    }
+  }
+
+  async getWorkGuides(workId: number): Promise<void> {
+    try {
+      const guidesResponse = await this.workService.getWorkGuides(workId).toPromise();
+      this.guides = guidesResponse || [];
+    } catch (error) {
+      console.error('Error fetching work guides:', error);
+    } finally {
+      this.loadingGuides = false;
+      this.cdr.detectChanges();
+    }
+  }
+
+  async loadItineraryStops(workId: number): Promise<void> {
+    try {
+      const itineraries = await this.itinerariesService
+        .getItineraryStopsByWorkId(workId)
+        .toPromise();
+      this.itineraryList = itineraries || [];
+    } catch (error) {
+      console.error('Error fetching itinerary stops:', error);
+    } finally {
+      this.loadingItineraries = false;
+      this.cdr.detectChanges();
+    }
+  }
+
+  async getReceiptsByWork(workId: number): Promise<void> {
+    try {
+      const receiptsResponse = await this.receiptService.getReceiptsByWork(workId).toPromise();
+      this.receipts = receiptsResponse || [];
+    } catch (error) {
+      console.error('Error fetching receipts:', error);
+    } finally {
+      this.loadingReceipts = false;
+      this.cdr.detectChanges();
+    }
+  }
+
+  formatTime(time: string): string {
+    const [hours, minutes] = time.split(':');
+    return `${hours}:${minutes}`;
+  }
+
+  isStepActive(step: string): boolean {
+    return (
+      this.workSteps.indexOf(step) <= this.workSteps.indexOf(this.workDetail.status.toUpperCase())
+    );
+  }
+
+  openGuideModal(): void {
+    this.showGuideModal = true;
+  }
+
+  closeGuideModal(): void {
+    this.showGuideModal = false;
+  }
+
+  approveGuide(guide: WorkGuide): void {
+    console.log('Approve', guide);
+  }
+
+  rejectGuide(guide: WorkGuide): void {
+    console.log('Reject', guide);
+  }
+
+  removeGuide(guide: WorkGuide): void {
+    console.log('Remove', guide);
+  }
 
   copyItinerary(): void {
     console.log('Copy itinerary');
@@ -219,20 +221,28 @@ export class WorkDetail {
     console.log('Open tour notes');
   }
 
+  openStopModal(): void {
+    this.showStopModal = true;
+  }
+
+  closeStopModal(): void {
+    this.showStopModal = false;
+  }
+
   addStop(): void {
     console.log('Add stop');
   }
 
-  approveItineraryItem(item: ItineraryItem): void {
+  approveItineraryItem(item: ItineraryStopItem): void {
     console.log('Approve', item);
   }
 
-  removeItineraryItem(item: ItineraryItem): void {
+  removeItineraryItem(item: ItineraryStopItem): void {
     console.log('Remove', item);
   }
 
   get totalVolume(): number {
-    return this.receipts.reduce((sum, receipt) => sum + receipt.total, 0);
+    return this.receipts.reduce((sum, receipt) => sum + receipt.amount, 0);
   }
 
   formatCurrency(value: number): string {

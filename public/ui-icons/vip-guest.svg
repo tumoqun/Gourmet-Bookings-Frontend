@@ -1,0 +1,18 @@
+<svg width="120" height="120" viewBox="0 0 120 120" role="img" xmlns="http://www.w3.org/2000/svg">
+  <title>VIP Guest</title>
+  <defs>
+    <style>
+      .vip-star { fill: #EF9F27; }
+      .vip-crown { fill: #BA7517; stroke-width: 0; }
+      .vip-ring { fill: none; stroke: #BA7517; }
+    </style>
+  </defs>
+  <rect width="120" height="120" rx="14" fill="#fff" stroke="rgba(0,0,0,0.12)" stroke-width="0.5"/>
+  <polygon points="60,22 48,42 60,37 72,42" class="vip-crown" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="48" cy="42" r="3.5" class="vip-star"/>
+  <circle cx="60" cy="37" r="3.5" class="vip-star"/>
+  <circle cx="72" cy="42" r="3.5" class="vip-star"/>
+  <rect x="45" y="43" width="30" height="9" rx="2" class="vip-crown"/>
+  <polygon points="60,60 63,69 73,69 65,75 68,84 60,78 52,84 55,75 47,69 57,69" class="vip-star"/>
+  <circle cx="60" cy="96" r="4" fill="none" class="vip-ring" stroke-width="1.5"/>
+</svg>

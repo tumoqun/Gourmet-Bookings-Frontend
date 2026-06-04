@@ -10,6 +10,7 @@ export interface Order {
   status: OrderStatus;
   orderChannel?: string;
   isTentative: boolean;
+  isPrivate?: boolean;
   createdByUser?: User;
   createdByName?: string;
   reseller?: Reseller;
@@ -88,7 +89,6 @@ export interface OrderService {
   targetDate?: string;
   startTime?: string;
   timeSlotCode?: string;
-  isPrivate: boolean;
   timezone?: string;
   isAdminModified?: boolean;
   originalServiceId?: number;
@@ -131,6 +131,7 @@ export interface Service {
   name: string;
   isPrivateAvailable: boolean;
   isActive: boolean;
+  durationMinutes: number;
 }
 
 export interface Allotment {
@@ -160,12 +161,14 @@ export interface DistanceBand {
   id: number;
   label: string;
   sortOrder: number;
+  feeAmount: number;
 }
 
 export interface OrderCreateRequest {
   orderNumber: string;
   orderChannel?: string;
   isTentative?: boolean;
+  isPrivate?: boolean;
   createdByName?: string;
   picEmail?: string;
   copyEmail?: string;
@@ -192,7 +195,6 @@ export interface OrderServiceRequest {
   targetDate?: string;
   startTime?: string;
   timeSlotCode?: string;
-  isPrivate?: boolean;
   timezone?: string;
 }
 
@@ -206,6 +208,23 @@ export interface OrderAdditionalServiceRequest {
   suggestedTime?: string;
   feeAmount?: number;
   currencyCode?: string;
+}
+
+export interface OfferCreateRequest {
+  serviceId?: number;
+  targetDate?: string;
+  startTime?: string;
+  netPrice?: number;
+  discountPercent?: number;
+  discountAmount?: number;
+  puDoFee?: number;
+  commissionPercent?: number;
+  commissionAmount?: number;
+  subtotal?: number;
+  estimatedTax?: number;
+  totalAmount?: number;
+  pricingNotes?: string;
+  hostConfirmationRequired?: boolean;
 }
 
 @Injectable({
@@ -232,6 +251,10 @@ export class ApiService {
     //   return of(MOCK_ORDERS);
     // }
     return this.http.get<Order[]>(`${this.apiUrl}/orders`);
+  }
+
+  getSpecialRequestTypes(): Observable<SpecialRequestType[]> {
+    return this.http.get<SpecialRequestType[]>(`${this.apiUrl}/special-requests`);
   }
 
   getOrder(id: number): Observable<Order> {
@@ -270,6 +293,14 @@ export class ApiService {
     return this.http.post<Order>(`${this.apiUrl}/orders/${id}/cancel`, note || '', this.getHttpOptions());
   }
 
+  sendOffer(id: number, request: OfferCreateRequest): Observable<Order> {
+    return this.http.post<Order>(`${this.apiUrl}/orders/${id}/offer`, request, this.getHttpOptions());
+  }
+
+  confirmOrder(id: number): Observable<Order> {
+    return this.http.post<Order>(`${this.apiUrl}/orders/${id}/confirm`, {}, this.getHttpOptions());
+  }
+
   // Service endpoints
   getServices(): Observable<Service[]> {
     return this.http.get<Service[]>(`${this.apiUrl}/services`);
@@ -281,6 +312,10 @@ export class ApiService {
 
   getServiceTypes(): Observable<ServiceType[]> {
     return this.http.get<ServiceType[]>(`${this.apiUrl}/services/service-types`);
+  }
+
+  getDistanceBands(): Observable<DistanceBand[]> {
+    return this.http.get<DistanceBand[]>(`${this.apiUrl}/services/distance-bands`);
   }
 
   getService(id: number): Observable<Service> {

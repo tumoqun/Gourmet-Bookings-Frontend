@@ -1,0 +1,21 @@
+<svg width="120" height="120" viewBox="0 0 120 120" role="img" xmlns="http://www.w3.org/2000/svg">
+  <title>Wheelchair Access</title>
+  <defs>
+    <style>
+      .wc-body { fill: none; stroke: #534AB7; }
+      .wc-wheel { fill: none; stroke: #534AB7; }
+      .wc-head { fill: #534AB7; }
+    </style>
+  </defs>
+  <rect width="120" height="120" rx="14" fill="#fff" stroke="rgba(0,0,0,0.12)" stroke-width="0.5"/>
+  <circle cx="60" cy="20" r="9" class="wc-head"/>
+  <path d="M60 29 L60 52 L40 64" class="wc-body" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M60 42 L78 42 L78 64" class="wc-body" stroke-width="2.5" stroke-linecap="round"/>
+  <path d="M60 52 L60 68" class="wc-body" stroke-width="2.5" stroke-linecap="round"/>
+  <line x1="51" y1="68" x2="68" y2="68" class="wc-body" stroke-width="2.5" stroke-linecap="round"/>
+  <circle cx="72" cy="82" r="14" class="wc-wheel" stroke-width="2.5"/>
+  <line x1="72" y1="68" x2="72" y2="96" class="wc-body" stroke-width="1" stroke-linecap="round"/>
+  <line x1="58" y1="82" x2="86" y2="82" class="wc-body" stroke-width="1" stroke-linecap="round"/>
+  <line x1="62" y1="72" x2="82" y2="92" class="wc-body" stroke-width="1" stroke-linecap="round"/>
+  <circle cx="72" cy="82" r="3" class="wc-head"/>
+</svg>

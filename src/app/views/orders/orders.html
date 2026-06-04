@@ -147,9 +147,12 @@
               <td>{{ order.guests }}</td>
               <td>
                 <span class="specials">
-                  <span class="special-item {{ special }}" *ngFor="let special of order.special">
-                    {{ special === 'vip' ? 'VIP' : special }}
-                  </span>
+                  <img
+                    *ngFor="let special of order.special"
+                    [src]="getSpecialRequestIcon(special)"
+                    [alt]="special === 'vip' ? 'VIP' : special"
+                    class="special-icon"
+                  />
                 </span>
               </td>
               <td><span class="tr {{ order.tr }}" aria-label="{{ order.tr }}"></span></td>
@@ -167,8 +170,8 @@
                   <button
                     class="more-action"
                     type="button"
-                    aria-label="Cancel order"
-                    (click)="cancelOrder(order.id)"
+                    aria-label="More actions"
+                    (click)="showActionPopup($event, order.id)"
                   ></button>
                 </span>
               </td>
@@ -189,7 +192,7 @@
           </div>
           <span class="records-count">{{ orders.length }} records</span>
         </div>
-        
+
         <div class="pagination" aria-label="Pagination">
           <button class="page-edge first" type="button" aria-label="First page"></button>
           <button class="page-edge previous" type="button" aria-label="Previous page"></button>
@@ -413,11 +416,9 @@
                </select>
             <select aria-label="Pick-up distance" [(ngModel)]="pickupDistanceId" name="pickupDistanceId">
                  <option [ngValue]="undefined">Select Distance</option>
-                 <option [ngValue]="1">1 km</option>
-                 <option [ngValue]="2">2 km</option>
-                 <option [ngValue]="3">3 km</option>
+                 <option *ngFor="let band of distanceBands" [ngValue]="band.id">{{ band.label }}</option>
                </select>
-            <strong class="additional-fee">Fee: {{ pickupDistanceId === 1 ? 100 : pickupDistanceId === 2 ? 150 : pickupDistanceId === 3 ? 200 : '-' }}</strong>
+            <strong class="additional-fee">Fee: {{ getPickupFee(pickupDistanceId) }}</strong>
           </section>
 
           <section class="additional-card service-extra-card" aria-label="Drop off details">
@@ -440,11 +441,9 @@
                </select>
               <select aria-label="Drop-off distance" [(ngModel)]="dropoffDistanceId" name="dropoffDistanceId">
                  <option [ngValue]="undefined">Select Distance</option>
-                 <option [ngValue]="1">1 km</option>
-                 <option [ngValue]="2">2 km</option>
-                 <option [ngValue]="3">3 km</option>
+                 <option *ngFor="let band of distanceBands" [ngValue]="band.id">{{ band.label }}</option>
                </select>
-              <strong class="additional-fee">Fee: {{ dropoffDistanceId === 1 ? 100 : dropoffDistanceId === 2 ? 150 : dropoffDistanceId === 3 ? 200 : '-' }}</strong>
+              <strong class="additional-fee">Fee: {{ getDropoffFee(dropoffDistanceId) }}</strong>
             </ng-container>
             <ng-template #handoffFields>
               <p>The hand off location and time will be confirmed later</p>
@@ -460,7 +459,7 @@
 
           <label class="modal-field guest-email-field">
             <span>Guest Email</span>
-            <input type="email" placeholder="Enter Email" />
+            <input type="email" placeholder="Enter Email" [(ngModel)]="guestEmailNewOrder" name="guestEmail" />
           </label>
 
           <div class="guest-counts">
@@ -485,18 +484,22 @@
 
           <label class="modal-field guest-full-field">
             <span>Allergies or Dietary Restrictions</span>
-            <input type="text" placeholder="Enter Allergies or Dietary Restrictions" />
+            <input type="text" placeholder="Enter Allergies or Dietary Restrictions" [(ngModel)]="dietaryRestrictionsNewOrder" name="dietaryRestrictions" />
           </label>
 
           <div class="modal-field guest-full-field">
             <span>Special Requests</span>
-            <button class="special-request-select" type="button" aria-label="Special requests">
-              <span class="special-request-chips">
-                <span>Special Occasion</span>
-                <span>VIP</span>
-              </span>
-              <span class="special-request-chevron" aria-hidden="true"></span>
-            </button>
+            <div class="special-request-options" style="display: flex; gap: 8px; flex-wrap: wrap; margin-top: 8px;">
+              <button *ngFor="let srt of specialRequestTypes"
+                      type="button"
+                      [class.selected]="selectedSpecialRequestIds.includes(srt.id)"
+                      (click)="toggleSpecialRequest(srt.id)"
+                      style="padding: 4px 12px; border-radius: 4px; border: 1px solid #C5A05A; cursor: pointer; color: black;"
+                      [style.background]="selectedSpecialRequestIds.includes(srt.id) ? '#e6dfce' : '#F6F1E6'"
+                      [style.border-color]="selectedSpecialRequestIds.includes(srt.id) ? '#000' : '#C5A05A'">
+                {{srt.label}}
+              </button>
+            </div>
           </div>
         </section>
       </div>
@@ -513,5 +516,259 @@
         <button class="cancel-order" type="button" (click)="closeNewOrderModal()">Cancel</button>
       </footer>
     </section>
+  </div>
+
+  <div *ngIf="actionPopupOpen" class="menu" [style.top.px]="actionPopupPosition.top" [style.left.px]="actionPopupPosition.left" role="menu" aria-label="Actions menu">
+    <div class="menu-item add" role="menuitem" tabindex="0" (click)="addAnother(); closeActionPopup()">
+      <span class="icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="9"/>
+          <line x1="12" y1="8" x2="12" y2="16"/>
+          <line x1="8" y1="12" x2="16" y2="12"/>
+        </svg>
+      </span>
+      Add Another
+    </div>
+
+    <div class="menu-item" role="menuitem" tabindex="0" (click)="viewGuestDetails(); closeActionPopup()">
+      <span class="icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+          <circle cx="9" cy="7" r="4"/>
+          <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+          <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+        </svg>
+      </span>
+      Guests Details
+    </div>
+
+    <div class="menu-item" role="menuitem" tabindex="0" (click)="editOrder(); closeActionPopup()">
+      <span class="icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+          <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+        </svg>
+      </span>
+      Edit
+    </div>
+
+    <div class="menu-item" role="menuitem" tabindex="0" (click)="requestChange(); closeActionPopup()">
+      <span class="icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="17 1 21 5 17 9"/>
+          <path d="M3 11V9a4 4 0 0 1 4-4h14"/>
+          <polyline points="7 23 3 19 7 15"/>
+          <path d="M21 13v2a4 4 0 0 1-4 4H3"/>
+        </svg>
+      </span>
+      Request Change
+    </div>
+
+    <div class="menu-item" role="menuitem" tabindex="0" (click)="editFees(); closeActionPopup()">
+      <span class="icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="2" y="5" width="20" height="14" rx="2"/>
+          <line x1="2" y1="10" x2="22" y2="10"/>
+          <circle cx="7" cy="15" r="1.5" fill="currentColor" stroke="none"/>
+          <line x1="11" y1="15" x2="17" y2="15" stroke-width="2"/>
+        </svg>
+      </span>
+      Edit Fees
+    </div>
+
+    <div class="menu-item" role="menuitem" tabindex="0" (click)="goToAssignment(); closeActionPopup()">
+      <span class="icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+          <polyline points="14 2 14 8 20 8"/>
+          <line x1="8" y1="13" x2="16" y2="13"/>
+          <line x1="8" y1="17" x2="12" y2="17"/>
+        </svg>
+      </span>
+      Go to Assignment
+    </div>
+
+    <div class="menu-item" role="menuitem" tabindex="0" (click)="makeOffer()">
+      <span class="icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="9"/>
+          <path d="M14.5 9.5a3 3 0 1 0 0 5"/>
+          <path d="M12 7v1m0 8v1"/>
+        </svg>
+      </span>
+      Make Offer
+    </div>
+
+    <div class="menu-item confirm" role="menuitem" tabindex="0" (click)="confirmOrder(); closeActionPopup()">
+      <span class="icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="20 6 9 17 4 12"/>
+        </svg>
+      </span>
+      Confirm
+    </div>
+
+    <div class="menu-item link" role="menuitem" tabindex="0" (click)="copyLink(); closeActionPopup()">
+      <span class="icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/>
+          <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>
+        </svg>
+      </span>
+      Link copied
+    </div>
+
+    <div class="menu-item cancel" role="menuitem" tabindex="0" (click)="cancelOrder(orderForAction); closeActionPopup()">
+      <span class="icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="9"/>
+          <line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/>
+        </svg>
+      </span>
+      Cancel
+    </div>
+
+    <div class="menu-item delete" role="menuitem" tabindex="0" (click)="deleteOrder(); closeActionPopup()">
+      <span class="icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="3 6 5 6 21 6"/>
+          <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>
+          <path d="M10 11v6"/>
+          <path d="M14 11v6"/>
+          <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/>
+        </svg>
+      </span>
+      Delete
+    </div>
+  </div>
+
+  <div
+    *ngIf="makeOfferPopupOpen"
+    class="make-offer-overlay"
+    role="presentation"
+    (click)="closeMakeOfferPopup()"
+  >
+    <div
+      class="make-offer-dialog"
+      role="dialog"
+      aria-modal="true"
+      aria-label="Make offer"
+      (click)="$event.stopPropagation()"
+    >
+      <div class="section">
+        <div class="section-title">Service Details</div>
+        <div class="meta-grid">
+          <div class="meta-item"><div class="label">Service Name</div><div class="value">{{ offerOrder?.orderServices?.[0]?.serviceNameSnapshot || 'N/A' }}</div></div>
+          <div class="meta-item"><div class="label">Type</div><div class="value">Group Experience</div></div>
+          <div class="meta-item"><div class="label">Date &amp; Time</div><div class="value">{{ formatDate(offerTargetDate) }}, {{ formatTime(offerStartTime) }}</div></div>
+        </div>
+        <div class="meta-row">
+          <div class="meta-item"><div class="label">Duration</div><div class="value">{{ formatDuration(offerOrder?.orderServices?.[0]?.service?.durationMinutes) }}</div></div>
+          <div class="meta-item"><div class="label">Guests</div><div class="value">{{ offerOrder?.adultCount || 0 }} Adults</div></div>
+        </div>
+        <div class="pickup-row">
+          <div class="label"><i class="ti ti-map-pin" style="font-size:12px;color:#c9a96e" aria-hidden="true"></i> Pick up details</div>
+          <div class="value">{{ getPickupLocation() }}</div>
+        </div>
+        <div class="pickup-row">
+          <div class="label"><i class="ti ti-flag" style="font-size:12px;color:#c9a96e" aria-hidden="true"></i> Drop off details</div>
+          <div class="value">{{ getDropoffLocation() }}</div>
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="inner-card">
+          <div class="select-row">
+            <select [(ngModel)]="selectedServiceForOffer">
+              <option *ngFor="let service of services" [value]="service.id">{{ service.name }}</option>
+            </select>
+            <i class="ti ti-chevron-down chevron" aria-hidden="true"></i>
+          </div>
+          <div class="date-time-row">
+            <label class="dt-input dt-input-editable">
+              <input type="date" [(ngModel)]="offerTargetDate" aria-label="Offer target date">
+            </label>
+            <label class="dt-input dt-input-editable">
+              <input type="time" [(ngModel)]="offerStartTime" aria-label="Offer start time">
+            </label>
+          </div>
+          <div class="find-row">
+            <i class="ti ti-search" aria-hidden="true"></i>
+            <span>Offer with existing assignments before or after</span>
+            <div class="days-input">
+              <input type="number" [(ngModel)]="offerDays" min="0">
+              <span class="days-lbl">Days</span>
+            </div>
+            <div class="divider"></div>
+            <button class="find-btn" type="button" (click)="findMatch()">Find Match</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="section-title">Financial Breakdown</div>
+        <div class="fin-grid">
+          <div class="fin-field">
+            <div class="label">Net Price</div>
+            <div class="fin-input"><span class="sym">&yen;</span><input type="text" [(ngModel)]="offerNetPrice" (input)="calculateTotals()"></div>
+          </div>
+          <div class="fin-field">
+            <div class="label">Discount</div>
+            <div class="disc-combo">
+              <div class="fin-input" style="flex:1"><input type="text" [(ngModel)]="offerDiscountPercent" (input)="calculateTotals()"></div>
+              <span class="disc-pct">%</span>
+              <div class="fin-input" style="width:90px"><span class="sym">&yen;</span><input type="text" [(ngModel)]="offerDiscountAmount" (input)="calculateTotals()"></div>
+            </div>
+          </div>
+          <div class="fin-field">
+            <div class="label">PU/DO Fee</div>
+            <div class="fin-input"><span class="sym">&yen;</span><input type="text" [(ngModel)]="offerPuDoFee" (input)="calculateTotals()"></div>
+          </div>
+          <div class="fin-field">
+            <div class="label">Commission</div>
+            <div class="disc-combo">
+              <div class="fin-input" style="flex:1"><input type="text" [(ngModel)]="offerCommissionPercent" (input)="calculateTotals()"></div>
+              <span class="disc-pct">%</span>
+              <div class="fin-input" style="width:90px"><span class="sym">&yen;</span><input type="text" [(ngModel)]="offerCommissionAmount" (input)="calculateTotals()"></div>
+            </div>
+          </div>
+        </div>
+        <div class="totals-area">
+          <div></div>
+          <div class="totals-right">
+            <div class="total-line">
+              <span class="tl-label">Subtotal</span>
+              <span class="tl-val">&yen;{{ offerSubtotal }}</span>
+            </div>
+            <div class="total-line">
+              <span class="tl-label">Estimated Tax</span>
+              <span class="tl-val">&yen;{{ offerEstimatedTax }}</span>
+            </div>
+            <div class="total-line total-final">
+              <span class="tl-label">Total Amount</span>
+              <span class="tl-val">&yen;{{ offerTotalAmount }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="notes-section">
+        <div class="notes-label">Pricing Notes &amp; Internal Context</div>
+        <textarea [(ngModel)]="offerPricingNotes" placeholder="Add specific notes about this offer or special guest requests..."></textarea>
+      </div>
+
+      <div class="footer">
+        <div class="toggle-wrap">
+          <button class="toggle" type="button" role="switch" [class.active]="hostConfirmationRequired" [attr.aria-checked]="hostConfirmationRequired" (click)="toggleHostConfirmation()" aria-label="Require host confirmation"></button>
+          <span>Require Host Confirmation</span>
+        </div>
+        <div class="actions">
+          <button class="btn-cancel" type="button" (click)="closeMakeOfferPopup()">Cancel</button>
+          <button class="btn-confirm" type="button" [disabled]="isSendingOffer" (click)="sendOffer()">
+            {{ isSendingOffer ? 'Saving...' : (hostConfirmationRequired ? 'Make Offer' : 'Confirm Offer') }}
+          </button>
+        </div>
+      </div>
+    </div>
   </div>
 </div>

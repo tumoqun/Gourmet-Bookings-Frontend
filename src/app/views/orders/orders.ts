@@ -1,4 +1,4 @@
-import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import {
@@ -6,12 +6,15 @@ import {
   Allotment,
   Area,
   Order,
+  OfferCreateRequest,
   OrderAdditionalServiceRequest,
   Service,
   ServiceType,
   Reseller,
   ResellerContact,
   Agent,
+  SpecialRequestType,
+  DistanceBand,
 } from '../../services/api.service';
 
 interface OrderRow {
@@ -59,6 +62,27 @@ export class OrdersView implements OnInit {
   protected totalAdults = 0;
   protected totalChildren = 0;
   protected totalVolume = 0;
+  protected actionPopupOpen = false;
+  protected orderForAction?: number;
+  protected actionPopupPosition = { top: 0, left: 0 };
+  protected makeOfferPopupOpen = false;
+  protected isSendingOffer = false;
+  protected offerPricingNotes = '';
+  protected hostConfirmationRequired = false;
+  protected offerOrder?: Order;
+  protected selectedServiceForOffer?: number;
+  protected offerTargetDate = '';
+  protected offerStartTime = '';
+  protected offerDays = 0;
+  protected offerNetPrice = '';
+  protected offerDiscountPercent = '0';
+  protected offerDiscountAmount = '0.00';
+  protected offerPuDoFee = '0.00';
+  protected offerCommissionPercent = '10';
+  protected offerCommissionAmount = '0.00';
+  protected offerSubtotal = '0.00';
+  protected offerEstimatedTax = '0.00';
+  protected offerTotalAmount = '0.00';
 
   protected readonly timeSlots = ['Any', 'Morning', 'Daytime', 'Evening', 'Night'];
   protected selectedTimeSlot = 'Any';
@@ -74,7 +98,8 @@ export class OrdersView implements OnInit {
   protected serviceTimesMessage = 'Select a target date and service to see start times.';
   protected areas: Area[] = [];
   protected serviceTypes: ServiceType[] = [];
-  
+  protected distanceBands: DistanceBand[] = [];
+
   protected resellers: Reseller[] = [];
   protected contacts: ResellerContact[] = [];
   protected agents: Agent[] = [];
@@ -89,6 +114,7 @@ export class OrdersView implements OnInit {
   protected createdByNameNewOrder = '';
   protected picEmailNewOrder = '';
   protected copyEmailNewOrder = '';
+  protected guestEmailNewOrder = '';
   protected targetDateNewOrder = '';
   protected startTimeNewOrder = '';
   protected selectedAllotmentId?: number;
@@ -99,6 +125,9 @@ export class OrdersView implements OnInit {
   protected dropoffLocationNewOrder = '';
   protected dropoffServiceTypeId?: number;
   protected dropoffDistanceId?: number;
+  protected dietaryRestrictionsNewOrder = '';
+  protected specialRequestTypes: SpecialRequestType[] = [];
+  protected selectedSpecialRequestIds: number[] = [];
   protected handoffTextNewOrder = '';
   protected selectedAreaId?: number;
   protected selectedServiceTypeId?: number;
@@ -128,7 +157,16 @@ export class OrdersView implements OnInit {
     this.loadServices();
     this.loadAreas();
     this.loadServiceTypes();
+    this.loadDistanceBands();
     this.loadResellersData();
+    this.loadSpecialRequestTypes();
+  }
+
+  protected loadSpecialRequestTypes(): void {
+    this.apiService.getSpecialRequestTypes().subscribe({
+      next: (types) => this.specialRequestTypes = types,
+      error: () => this.specialRequestTypes = []
+    });
   }
 
   protected loadOrders(): void {
@@ -195,6 +233,17 @@ export class OrdersView implements OnInit {
       },
       error: () => {
         this.serviceTypes = this.uniqueById(this.services.map((service) => service.serviceType).filter(Boolean));
+      },
+    });
+  }
+
+  protected loadDistanceBands(): void {
+    this.apiService.getDistanceBands().subscribe({
+      next: (distanceBands) => {
+        this.distanceBands = distanceBands;
+      },
+      error: () => {
+        this.distanceBands = [];
       },
     });
   }
@@ -332,6 +381,9 @@ export class OrdersView implements OnInit {
     this.createdByNameNewOrder = '';
     this.picEmailNewOrder = '';
     this.copyEmailNewOrder = '';
+    this.guestEmailNewOrder = '';
+    this.dietaryRestrictionsNewOrder = '';
+    this.selectedSpecialRequestIds = [];
     this.voucherNumberNewOrder = '';
     this.pickupLocationNewOrder = '';
     this.pickupServiceTypeId = undefined;
@@ -389,6 +441,42 @@ export class OrdersView implements OnInit {
 
   protected formatGuestCount(count: number): string {
     return count.toString().padStart(2, '0');
+  }
+
+  protected toggleSpecialRequest(id: number): void {
+    const index = this.selectedSpecialRequestIds.indexOf(id);
+    if (index > -1) {
+      this.selectedSpecialRequestIds.splice(index, 1);
+    } else {
+      this.selectedSpecialRequestIds.push(id);
+    }
+  }
+
+  protected getSpecialRequestTableIcon(code: string): string {
+    const normalizedCode = code.toLowerCase();
+    const iconMap: Record<string, string> = {
+      vip: 'VIP',
+      child: '12',
+      diet: 'D',
+    };
+
+    return iconMap[normalizedCode] ?? '';
+  }
+
+  protected formatSpecialRequestLabel(code: string): string {
+    const normalizedCode = code.toLowerCase();
+    const labelMap: Record<string, string> = {
+      vip: 'VIP Guest',
+      bag: 'Baggage Handling',
+      eye: 'Eye Contact',
+      fork: 'Fork & Spoon',
+      link: 'Linked Orders',
+      wheel: 'Wheelchair Access',
+      child: 'Child Care',
+      diet: 'Dietary Restriction',
+    };
+
+    return labelMap[normalizedCode] ?? code.toUpperCase();
   }
 
   protected selectTimeSlot(slot: string): void {
@@ -546,6 +634,9 @@ export class OrdersView implements OnInit {
       picContactId: this.selectedContactId,
       picEmail: this.picEmailNewOrder,
       copyEmail: this.copyEmailNewOrder,
+      guestEmail: this.guestEmailNewOrder,
+      dietaryRestrictions: this.dietaryRestrictionsNewOrder,
+      specialRequestTypeIds: this.selectedSpecialRequestIds,
       originalAgentId: this.selectedAgentId,
       voucherNumber: this.voucherNumberNewOrder,
       additionalServices: this.buildAdditionalServices(),
@@ -564,7 +655,6 @@ export class OrdersView implements OnInit {
               serviceTypeId: this.selectedService.serviceType.id,
               targetDate: this.targetDateNewOrder || undefined,
               startTime: this.startTimeNewOrder || undefined,
-              isPrivate: false,
               timeSlotCode: this.selectedTimeSlot === 'Any' ? undefined : this.selectedTimeSlot.toUpperCase(),
               timezone: 'Asia/Tokyo',
             },
@@ -611,6 +701,317 @@ export class OrdersView implements OnInit {
     });
   }
 
+  protected showActionPopup(event: Event, orderId?: number): void {
+    if (!orderId) {
+      return;
+    }
+
+    const button = event.currentTarget as HTMLElement;
+    const rect = button.getBoundingClientRect();
+    const popupWidth = 250;
+    const popupHeight = 100;
+    const screenWidth = window.innerWidth;
+    const screenHeight = window.innerHeight;
+
+    let left = rect.left;
+    let top = rect.bottom + 5;
+
+    // Check if popup would go off the right edge
+    if (left + popupWidth > screenWidth) {
+      left = screenWidth - popupWidth - 10;
+    }
+
+    // Check if popup would go off the bottom edge
+    if (top + popupHeight > screenHeight) {
+      top = rect.top - popupHeight - 5;
+    }
+
+    this.orderForAction = orderId;
+    this.actionPopupPosition = { top, left };
+    this.actionPopupOpen = true;
+  }
+
+  protected makeOffer(): void {
+    if (this.orderForAction) {
+      // Load the order details for the offer popup
+      this.apiService.getOrder(this.orderForAction).subscribe({
+        next: (order) => {
+          const firstService = order.orderServices?.[0];
+          this.offerOrder = order;
+          this.offerPricingNotes = '';
+          this.hostConfirmationRequired = false;
+          this.selectedServiceForOffer = firstService?.service?.id;
+          this.offerTargetDate = firstService?.targetDate?.substring(0, 10) || '';
+          this.offerStartTime = firstService?.startTime ? this.normalizeTime(firstService.startTime) : '';
+          this.offerDays = 0;
+          this.offerNetPrice = this.formatCurrency(order.totalFeeAmount || 0);
+          this.offerDiscountPercent = '0';
+          this.offerDiscountAmount = '0.00';
+          this.offerPuDoFee = this.formatCurrency(this.getAdditionalServicesTotal());
+          this.offerCommissionPercent = '10';
+          this.offerCommissionAmount = '0.00';
+          this.calculateTotals();
+          this.makeOfferPopupOpen = true;
+          this.closeActionPopup();
+        },
+        error: () => {
+          this.errorMessage = 'Could not load order details for offer.';
+        }
+      });
+    }
+  }
+
+  protected closeActionPopup(): void {
+    this.actionPopupOpen = false;
+    this.orderForAction = undefined;
+  }
+
+  @HostListener('document:click', ['$event'])
+  onDocumentClick(event: Event): void {
+    if (this.actionPopupOpen) {
+      const target = event.target as HTMLElement;
+      if (!target.closest('.menu') && !target.closest('.more-action')) {
+        this.closeActionPopup();
+      }
+    }
+  }
+
+  protected addAnother(): void {
+    // TODO: Implement add another functionality
+    console.log('Add another for order:', this.orderForAction);
+  }
+
+  protected viewGuestDetails(): void {
+    // TODO: Implement view guest details functionality
+    console.log('View guest details for order:', this.orderForAction);
+  }
+
+  protected editOrder(): void {
+    // TODO: Implement edit order functionality
+    console.log('Edit order:', this.orderForAction);
+  }
+
+  protected requestChange(): void {
+    // TODO: Implement request change functionality
+    console.log('Request change for order:', this.orderForAction);
+  }
+
+  protected editFees(): void {
+    // TODO: Implement edit fees functionality
+    console.log('Edit fees for order:', this.orderForAction);
+  }
+
+  protected goToAssignment(): void {
+    // TODO: Implement go to assignment functionality
+    console.log('Go to assignment for order:', this.orderForAction);
+  }
+
+  protected confirmOrder(): void {
+    if (!this.orderForAction) {
+      return;
+    }
+
+    this.apiService.confirmOrder(this.orderForAction).subscribe({
+      next: () => this.loadOrders(),
+      error: () => {
+        this.errorMessage = 'Could not confirm this order.';
+      },
+    });
+  }
+
+  protected copyLink(): void {
+    // TODO: Implement copy link functionality
+    console.log('Copy link for order:', this.orderForAction);
+  }
+
+  protected deleteOrder(): void {
+    if (!this.orderForAction) {
+      return;
+    }
+
+    this.apiService.deleteOrder(this.orderForAction).subscribe({
+      next: () => this.loadOrders(),
+      error: () => {
+        this.errorMessage = 'Could not delete this order.';
+      },
+    });
+  }
+
+  protected closeMakeOfferPopup(): void {
+    this.makeOfferPopupOpen = false;
+    this.offerOrder = undefined;
+    this.offerPricingNotes = '';
+    this.hostConfirmationRequired = false;
+    this.offerTargetDate = '';
+    this.offerStartTime = '';
+    this.offerNetPrice = '';
+    this.offerDiscountPercent = '0';
+    this.offerDiscountAmount = '0.00';
+    this.offerPuDoFee = '0.00';
+    this.offerCommissionPercent = '10';
+    this.offerCommissionAmount = '0.00';
+  }
+
+  protected getPickupLocation(): string {
+    const pickup = this.offerOrder?.additionalServices?.find(
+      (s) => s.kind.toUpperCase() === 'PICKUP'
+    );
+    if (!pickup) {
+      return 'None required';
+    }
+    return pickup.location?.trim() || '-';
+  }
+
+  protected getDropoffLocation(): string {
+    const dropoff = this.offerOrder?.additionalServices?.find(
+      (s) => s.kind.toUpperCase() === 'DROPOFF'
+    );
+    if (!dropoff) {
+      return 'None required';
+    }
+    return dropoff.location?.trim() || '-';
+  }
+
+  protected formatDuration(minutes?: number): string {
+    if (minutes == null || minutes <= 0) {
+      return 'N/A';
+    }
+    const hours = Math.floor(minutes / 60);
+    const mins = minutes % 60;
+    if (mins === 0) {
+      return hours === 1 ? '1 hour' : `${hours} hours`;
+    }
+    const hourPart = hours > 0 ? (hours === 1 ? '1 hour ' : `${hours} hours `) : '';
+    return `${hourPart}${mins} min`.trim();
+  }
+
+  protected findMatch(): void {
+    // TODO: Implement find match logic
+    console.log('Find match for', this.offerDays, 'days');
+  }
+
+  protected calculateTotals(): void {
+    const netPrice = parseFloat(this.offerNetPrice.replace(/,/g, '')) || 0;
+    const discountPercent = parseFloat(this.offerDiscountPercent) || 0;
+    const discountAmount = parseFloat(this.offerDiscountAmount.replace(/,/g, '')) || 0;
+    const puDoFee = parseFloat(this.offerPuDoFee.replace(/,/g, '')) || 0;
+    const commissionPercent = parseFloat(this.offerCommissionPercent) || 0;
+    const commissionAmount = parseFloat(this.offerCommissionAmount.replace(/,/g, '')) || 0;
+
+    // Discount is based on net price.
+    let calculatedDiscount = discountAmount;
+    if (discountPercent > 0) {
+      calculatedDiscount = netPrice * (discountPercent / 100);
+    }
+    const discountedNet = Math.max(0, netPrice - calculatedDiscount);
+
+    // Commission is based on discounted net price.
+    let calculatedCommission = commissionAmount;
+    if (commissionPercent > 0) {
+      calculatedCommission = discountedNet * (commissionPercent / 100);
+    }
+
+    this.offerDiscountAmount = this.formatCurrency(calculatedDiscount);
+    this.offerCommissionAmount = this.formatCurrency(calculatedCommission);
+
+    const subtotal = discountedNet + puDoFee;
+    const tax = subtotal * 0.08; // 8% tax rate
+    const total = subtotal + tax;
+
+    this.offerSubtotal = this.formatCurrency(subtotal);
+    this.offerEstimatedTax = this.formatCurrency(tax);
+    this.offerTotalAmount = this.formatCurrency(total);
+  }
+
+  protected toggleHostConfirmation(): void {
+    this.hostConfirmationRequired = !this.hostConfirmationRequired;
+  }
+
+  protected sendOffer(): void {
+    if (!this.offerOrder?.id || this.isSendingOffer) {
+      return;
+    }
+
+    this.calculateTotals();
+
+    const request: OfferCreateRequest = {
+      serviceId: this.selectedServiceForOffer ? Number(this.selectedServiceForOffer) : undefined,
+      targetDate: this.offerTargetDate || undefined,
+      startTime: this.offerStartTime ? `${this.offerStartTime}:00` : undefined,
+      netPrice: this.parseCurrencyInput(this.offerNetPrice),
+      discountPercent: this.parseCurrencyInput(this.offerDiscountPercent),
+      discountAmount: this.parseCurrencyInput(this.offerDiscountAmount),
+      puDoFee: this.parseCurrencyInput(this.offerPuDoFee),
+      commissionPercent: this.parseCurrencyInput(this.offerCommissionPercent),
+      commissionAmount: this.parseCurrencyInput(this.offerCommissionAmount),
+      subtotal: this.parseCurrencyInput(this.offerSubtotal),
+      estimatedTax: this.parseCurrencyInput(this.offerEstimatedTax),
+      totalAmount: this.parseCurrencyInput(this.offerTotalAmount),
+      pricingNotes: this.offerPricingNotes,
+      hostConfirmationRequired: this.hostConfirmationRequired,
+    };
+
+    this.isSendingOffer = true;
+    this.errorMessage = '';
+
+    this.apiService.sendOffer(this.offerOrder.id, request).subscribe({
+      next: () => {
+        this.isSendingOffer = false;
+        this.closeMakeOfferPopup();
+        this.loadOrders();
+      },
+      error: () => {
+        this.isSendingOffer = false;
+        this.errorMessage = 'Could not confirm this offer.';
+      },
+    });
+  }
+
+  private parseCurrencyInput(value: string): number {
+    return parseFloat(value.replace(/,/g, '')) || 0;
+  }
+
+  protected getOfferTotalFee(): number {
+    if (!this.offerOrder) {
+      return 0;
+    }
+
+    let total = this.offerOrder.totalFeeAmount || 0;
+
+    // Add additional services fees
+    if (this.offerOrder.additionalServices) {
+      this.offerOrder.additionalServices.forEach(service => {
+        if (service.feeAmount) {
+          total += service.feeAmount;
+        }
+      });
+    }
+
+    return total;
+  }
+
+  protected getAdditionalServicesTotal(): number {
+    if (!this.offerOrder?.additionalServices) {
+      return 0;
+    }
+
+    return this.offerOrder.additionalServices.reduce((sum, service) => {
+      return sum + (service.feeAmount || 0);
+    }, 0);
+  }
+
+  protected getPickupFee(distanceId?: number): string {
+    if (!distanceId) return '-';
+    const band = this.distanceBands.find(b => b.id === distanceId);
+    return band?.feeAmount?.toString() || '-';
+  }
+
+  protected getDropoffFee(distanceId?: number): string {
+    if (!distanceId) return '-';
+    const band = this.distanceBands.find(b => b.id === distanceId);
+    return band?.feeAmount?.toString() || '-';
+  }
+
   protected trackByOrder(index: number, order: OrderRow): number | undefined {
     return order.id ?? index;
   }
@@ -639,7 +1040,7 @@ export class OrdersView implements OnInit {
             return os.isAdminModified ? `[modified]${name}` : name;
           })
         : ['Order only'],
-      type: orderServices[0]?.isPrivate ? 'P' : 'S',
+      type: order.isPrivate ? 'P' : 'S',
       targetDate: targetDates,
       pickup: this.getPickupInfo(order),
       guests: this.formatGuests(order.adultCount, order.childCount),
@@ -653,7 +1054,7 @@ export class OrdersView implements OnInit {
     };
   }
 
-  private formatDate(dateString?: string): string {
+  protected formatDate(dateString?: string): string {
     if (!dateString) {
       return '-';
     }
@@ -682,7 +1083,7 @@ export class OrdersView implements OnInit {
     });
   }
 
-  private formatTime(time?: string): string {
+  protected formatTime(time?: string): string {
     if (!time) {
       return '';
     }
@@ -732,21 +1133,90 @@ export class OrdersView implements OnInit {
 
     if (!pickup && !dropoff && !handoff) return '-/-';
 
-    const puTime = formatTime(pickup?.suggestedTime) || '-';
+    // Get tour start time and service duration from order service
+    const tourStartTime = order.orderServices?.[0]?.startTime;
+    const serviceDuration = order.orderServices?.[0]?.service?.durationMinutes || 0;
+
+    // Calculate time offset based on distance band
+    const getTimeOffset = (distanceBandId?: number): number => {
+      const offsetMap: Record<number, number> = {
+        1: 15,   // <5km
+        2: 30,   // 5km-10km
+        3: 45,   // >10km-15km
+        4: 60,   // >15km
+        5: 75,   // 15km-20km
+      };
+      return offsetMap[distanceBandId || 0] || 0;
+    };
+
+    // Calculate adjusted time
+    const calculateAdjustedTime = (baseTime: string, offsetMinutes: number, isSubtract: boolean): string => {
+      if (!baseTime) return '';
+      const [h, m] = baseTime.split(':');
+      let totalMinutes = parseInt(h, 10) * 60 + parseInt(m || '0', 10);
+
+      if (isSubtract) {
+        totalMinutes -= offsetMinutes;
+      } else {
+        totalMinutes += offsetMinutes;
+      }
+
+      // Handle day rollover
+      if (totalMinutes < 0) totalMinutes += 24 * 60;
+      if (totalMinutes >= 24 * 60) totalMinutes -= 24 * 60;
+
+      const newHour = Math.floor(totalMinutes / 60);
+      const newMinute = totalMinutes % 60;
+      const ampm = newHour >= 12 ? 'PM' : 'AM';
+      const hour12 = newHour % 12 || 12;
+
+      return `${hour12}:${newMinute.toString().padStart(2, '0')}${ampm}`;
+    };
+
+    // Calculate pickup time (tour time - offset)
+    const puOffset = getTimeOffset(pickup?.distanceBand?.id);
+    const puTime = tourStartTime && pickup?.distanceBand
+      ? calculateAdjustedTime(tourStartTime, puOffset, true)
+      : formatTime(pickup?.suggestedTime) || '-';
+
+    // Calculate dropoff time (tour time + service duration + offset)
+    const doOffset = getTimeOffset(dropoff?.distanceBand?.id);
+    const doTime = tourStartTime && dropoff?.distanceBand
+      ? calculateAdjustedTime(tourStartTime, serviceDuration + doOffset, false)
+      : formatTime(dropoff?.suggestedTime) || '-';
+
     if (pickup && handoff && !dropoff) return `${puTime}/${handoff.handoffText || 'Hand Off'}`;
     if (pickup && !dropoff) return `${puTime}/${pickup.location || '-'}`;
     if (!pickup && handoff && !dropoff) return `-/${handoff.handoffText || 'Hand Off'}`;
-    if (!pickup && dropoff) return `${formatTime(dropoff.suggestedTime) || '-'}/${dropoff.location || '-'}`;
+    if (!pickup && dropoff) return `${doTime}/${dropoff.location || '-'}`;
 
-    const doLoc = dropoff?.location || formatTime(dropoff?.suggestedTime) || '-';
-    return `${puTime}/${doLoc}`;
+    return `${puTime}/${doTime}`;
   }
 
   private getSpecialRequests(order: Order): string[] {
     return order.specialRequests?.map((request) => {
       const code = request.code.toLowerCase();
-      return code === 'wheel' ? 'h' : code;
+      if (code === 'for') {
+        return 'fork';
+      }
+
+      return code;
     }) ?? [];
+  }
+
+  protected getSpecialRequestIcon(code: string): string {
+    const iconMap: Record<string, string> = {
+      'vip': '/ui-icons/vip-guest.svg',
+      'bag': '/ui-icons/baggage-handling.svg',
+      'eye': '/ui-icons/eye-contact.svg',
+      'fork': '/ui-icons/fork-and-spoon.svg',
+      'link': '/ui-icons/linked-orders.svg',
+      'wheel': '/ui-icons/wheelchair-access.svg',
+      'h': '/ui-icons/wheelchair-access.svg',
+      'child': '/ui-icons/child-care.svg',
+      'diet': '/ui-icons/dietary-requirements.svg',
+    };
+    return iconMap[code.toLowerCase()] || '';
   }
 
   private getStatusIcon(statusCode: string): string {
@@ -757,6 +1227,7 @@ export class OrdersView implements OnInit {
       active: 'check',
       requested: 'warn',
       pending_offer: 'warn',
+      offered: 'warn',
       cancelled: 'cross',
       tentative: 'circle',
     };
@@ -772,6 +1243,7 @@ export class OrdersView implements OnInit {
       active: 'success',
       requested: 'info',
       pending_offer: 'warning',
+      offered: 'warning',
       cancelled: 'danger',
       tentative: 'info',
     };
@@ -802,8 +1274,9 @@ export class OrdersView implements OnInit {
       }
 
       if (filter.label === 'Pending') {
-        // backend code is PENDING_OFFER
-        return { ...filter, count: (statusCounts['pending_offer'] ?? 0).toString() };
+        const pendingCount =
+          (statusCounts['pending_offer'] ?? 0) + (statusCounts['offered'] ?? 0);
+        return { ...filter, count: pendingCount.toString() };
       }
 
       if (filter.label === 'Tentative') {
@@ -817,7 +1290,7 @@ export class OrdersView implements OnInit {
         const adults = parseInt(order.guests.split('/')[0], 10) || 0;
         return sum + adults;
     }, 0);
-    
+
     this.totalChildren = this.orders.reduce((sum, order) => {
         const children = parseInt(order.guests.split('/')[1], 10) || 0;
         return sum + children;

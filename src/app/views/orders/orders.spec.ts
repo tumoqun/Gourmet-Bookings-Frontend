@@ -1,7 +1,10 @@
 import { TestBed } from '@angular/core/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
+import { environment } from '../../../environments/environment';
 import { OrdersView } from './orders';
+
+environment.apiUrl = '/api';
 
 const mockOrders = [
   {
@@ -83,9 +86,14 @@ describe('OrdersView', () => {
     httpMock.expectOne('/api/services').flush(mockServices);
     httpMock.expectOne('/api/services/areas').flush([{ id: 1, code: 'TOKYO', name: 'Tokyo' }]);
     httpMock.expectOne('/api/services/service-types').flush([{ id: 1, code: 'DINING', name: 'Dining' }]);
+    httpMock.expectOne('/api/services/distance-bands').flush([]);
     httpMock.expectOne('/api/resellers').flush([]);
     httpMock.expectOne('/api/resellers/contacts').flush([]);
     httpMock.expectOne('/api/resellers/agents').flush([]);
+    httpMock.expectOne('/api/special-requests').flush([
+      { id: 1, code: 'VIP', label: 'VIP' },
+      { id: 2, code: 'BAG', label: 'Baggage' }
+    ]);
     fixture.detectChanges();
     return fixture;
   }
@@ -302,7 +310,7 @@ describe('OrdersView', () => {
     expect(compiled.querySelector('#guest-details-title')?.textContent).toContain('Guest Details');
     expect(compiled.querySelector('input[placeholder="Enter Email"]')).toBeTruthy();
     expect(compiled.querySelectorAll('.guest-counter').length).toBe(2);
-    expect(compiled.querySelectorAll('.special-request-chips span').length).toBe(2);
+    expect(compiled.querySelectorAll('.special-request-options button').length).toBe(2);
 
     const requestButton = compiled.querySelector('.request-order') as HTMLButtonElement;
     expect(requestButton.disabled).toBe(false);

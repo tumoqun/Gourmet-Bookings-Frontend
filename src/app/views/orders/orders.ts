@@ -1,4 +1,4 @@
-import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import {
@@ -6,6 +6,7 @@ import {
   Allotment,
   Area,
   Order,
+  OfferCreateRequest,
   OrderAdditionalServiceRequest,
   Service,
   ServiceType,
@@ -65,6 +66,7 @@ export class OrdersView implements OnInit {
   protected orderForAction?: number;
   protected actionPopupPosition = { top: 0, left: 0 };
   protected makeOfferPopupOpen = false;
+  protected isSendingOffer = false;
   protected offerPricingNotes = '';
   protected hostConfirmationRequired = false;
   protected offerOrder?: Order;
@@ -764,6 +766,16 @@ export class OrdersView implements OnInit {
     this.orderForAction = undefined;
   }
 
+  @HostListener('document:click', ['$event'])
+  onDocumentClick(event: Event): void {
+    if (this.actionPopupOpen) {
+      const target = event.target as HTMLElement;
+      if (!target.closest('.menu') && !target.closest('.more-action')) {
+        this.closeActionPopup();
+      }
+    }
+  }
+
   protected addAnother(): void {
     // TODO: Implement add another functionality
     console.log('Add another for order:', this.orderForAction);
@@ -795,8 +807,16 @@ export class OrdersView implements OnInit {
   }
 
   protected confirmOrder(): void {
-    // TODO: Implement confirm order functionality
-    console.log('Confirm order:', this.orderForAction);
+    if (!this.orderForAction) {
+      return;
+    }
+
+    this.apiService.confirmOrder(this.orderForAction).subscribe({
+      next: () => this.loadOrders(),
+      error: () => {
+        this.errorMessage = 'Could not confirm this order.';
+      },
+    });
   }
 
   protected copyLink(): void {
@@ -805,8 +825,16 @@ export class OrdersView implements OnInit {
   }
 
   protected deleteOrder(): void {
-    // TODO: Implement delete order functionality
-    console.log('Delete order:', this.orderForAction);
+    if (!this.orderForAction) {
+      return;
+    }
+
+    this.apiService.deleteOrder(this.orderForAction).subscribe({
+      next: () => this.loadOrders(),
+      error: () => {
+        this.errorMessage = 'Could not delete this order.';
+      },
+    });
   }
 
   protected closeMakeOfferPopup(): void {
@@ -900,17 +928,47 @@ export class OrdersView implements OnInit {
   }
 
   protected sendOffer(): void {
-    if (!this.offerOrder) {
+    if (!this.offerOrder?.id || this.isSendingOffer) {
       return;
     }
 
-    // TODO: Implement send offer API call
-    console.log('Send offer for order:', this.offerOrder.id);
-    console.log('Pricing notes:', this.offerPricingNotes);
-    console.log('Host confirmation required:', this.hostConfirmationRequired);
+    this.calculateTotals();
 
-    this.closeMakeOfferPopup();
-    this.loadOrders();
+    const request: OfferCreateRequest = {
+      serviceId: this.selectedServiceForOffer ? Number(this.selectedServiceForOffer) : undefined,
+      targetDate: this.offerTargetDate || undefined,
+      startTime: this.offerStartTime ? `${this.offerStartTime}:00` : undefined,
+      netPrice: this.parseCurrencyInput(this.offerNetPrice),
+      discountPercent: this.parseCurrencyInput(this.offerDiscountPercent),
+      discountAmount: this.parseCurrencyInput(this.offerDiscountAmount),
+      puDoFee: this.parseCurrencyInput(this.offerPuDoFee),
+      commissionPercent: this.parseCurrencyInput(this.offerCommissionPercent),
+      commissionAmount: this.parseCurrencyInput(this.offerCommissionAmount),
+      subtotal: this.parseCurrencyInput(this.offerSubtotal),
+      estimatedTax: this.parseCurrencyInput(this.offerEstimatedTax),
+      totalAmount: this.parseCurrencyInput(this.offerTotalAmount),
+      pricingNotes: this.offerPricingNotes,
+      hostConfirmationRequired: this.hostConfirmationRequired,
+    };
+
+    this.isSendingOffer = true;
+    this.errorMessage = '';
+
+    this.apiService.sendOffer(this.offerOrder.id, request).subscribe({
+      next: () => {
+        this.isSendingOffer = false;
+        this.closeMakeOfferPopup();
+        this.loadOrders();
+      },
+      error: () => {
+        this.isSendingOffer = false;
+        this.errorMessage = 'Could not confirm this offer.';
+      },
+    });
+  }
+
+  private parseCurrencyInput(value: string): number {
+    return parseFloat(value.replace(/,/g, '')) || 0;
   }
 
   protected getOfferTotalFee(): number {
@@ -1169,6 +1227,7 @@ export class OrdersView implements OnInit {
       active: 'check',
       requested: 'warn',
       pending_offer: 'warn',
+      offered: 'warn',
       cancelled: 'cross',
       tentative: 'circle',
     };
@@ -1184,6 +1243,7 @@ export class OrdersView implements OnInit {
       active: 'success',
       requested: 'info',
       pending_offer: 'warning',
+      offered: 'warning',
       cancelled: 'danger',
       tentative: 'info',
     };
@@ -1214,8 +1274,9 @@ export class OrdersView implements OnInit {
       }
 
       if (filter.label === 'Pending') {
-        // backend code is PENDING_OFFER
-        return { ...filter, count: (statusCounts['pending_offer'] ?? 0).toString() };
+        const pendingCount =
+          (statusCounts['pending_offer'] ?? 0) + (statusCounts['offered'] ?? 0);
+        return { ...filter, count: pendingCount.toString() };
       }
 
       if (filter.label === 'Tentative') {

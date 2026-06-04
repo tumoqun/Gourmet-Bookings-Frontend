@@ -210,6 +210,23 @@ export interface OrderAdditionalServiceRequest {
   currencyCode?: string;
 }
 
+export interface OfferCreateRequest {
+  serviceId?: number;
+  targetDate?: string;
+  startTime?: string;
+  netPrice?: number;
+  discountPercent?: number;
+  discountAmount?: number;
+  puDoFee?: number;
+  commissionPercent?: number;
+  commissionAmount?: number;
+  subtotal?: number;
+  estimatedTax?: number;
+  totalAmount?: number;
+  pricingNotes?: string;
+  hostConfirmationRequired?: boolean;
+}
+
 @Injectable({
   providedIn: 'root'
 })
@@ -274,6 +291,14 @@ export class ApiService {
 
   cancelOrder(id: number, note?: string): Observable<Order> {
     return this.http.post<Order>(`${this.apiUrl}/orders/${id}/cancel`, note || '', this.getHttpOptions());
+  }
+
+  sendOffer(id: number, request: OfferCreateRequest): Observable<Order> {
+    return this.http.post<Order>(`${this.apiUrl}/orders/${id}/offer`, request, this.getHttpOptions());
+  }
+
+  confirmOrder(id: number): Observable<Order> {
+    return this.http.post<Order>(`${this.apiUrl}/orders/${id}/confirm`, {}, this.getHttpOptions());
   }
 
   // Service endpoints

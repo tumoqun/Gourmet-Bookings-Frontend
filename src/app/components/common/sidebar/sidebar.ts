@@ -1,48 +1,90 @@
 import { CommonModule } from '@angular/common';
-import { Component } from '@angular/core';
+import { Component, computed, inject, OnInit } from '@angular/core';
+import { Router, RouterLink, RouterLinkActive } from '@angular/router';
+import { AuthService } from '../../../services/auth.service';
+import { CapabilityService } from '../../../services/capability.service';
 
 interface NavigationItem {
   label: string;
   icon: string;
-  active: boolean;
   path: string;
+  permissions: string[];
 }
 
 @Component({
   selector: 'app-sidebar',
-  imports: [CommonModule],
+  imports: [CommonModule, RouterLink, RouterLinkActive],
   templateUrl: './sidebar.html',
   styleUrl: './sidebar.css',
 })
-export class Sidebar {
+export class Sidebar implements OnInit {
+  private readonly auth = inject(AuthService);
+  private readonly capability = inject(CapabilityService);
+  private readonly router = inject(Router);
+
   protected isSidebarCollapsed = false;
 
-  protected navItems: NavigationItem[] = [
-    { label: 'Catalog', icon: '/nav-icons/catalog.png', active: false, path: '/catalog' },
-    { label: 'Allotments', icon: '/nav-icons/allotments.png', active: false, path: '/allotments' },
-    { label: 'Orders', icon: '/nav-icons/orders.png', active: false, path: '/orders' },
-    { label: 'Works', icon: '/nav-icons/assignments.png', active: false, path: '/works' },
-    { label: 'Accounting', icon: '/nav-icons/job-accounting.png', active: false, path: '/accounting' },
-    { label: 'Management', icon: '/nav-icons/management.png', active: false, path: '/management' },
+  private readonly allNavItems: NavigationItem[] = [
+    { label: 'Catalog', icon: '/nav-icons/catalog.png', path: '/catalog', permissions: ['ASSIGNMENTS_READ'] },
+    { label: 'Allotments', icon: '/nav-icons/allotments.png', path: '/allotments', permissions: ['ASSIGNMENTS_READ'] },
+    { label: 'Orders', icon: '/nav-icons/orders.png', path: '/orders', permissions: ['ORDERS_READ'] },
+    { label: 'Works', icon: '/nav-icons/assignments.png', path: '/works', permissions: ['ASSIGNMENTS_READ'] },
+    { label: 'Accounting', icon: '/nav-icons/job-accounting.png', path: '/accounting', permissions: ['ACCOUNTING_READ'] },
+    { label: 'Management', icon: '/nav-icons/management.png', path: '/management', permissions: ['ASSIGNMENTS_READ'] },
+    { label: 'Tour Guide', icon: '/nav-icons/assignments.png', path: '/guide', permissions: ['GUIDE_TOURS_READ'] },
   ];
 
+  protected readonly navItems = computed(() => {
+    if (this.auth.tourGuideViewMode() && this.capability.isAdmin()) {
+      return this.allNavItems.filter((item) => item.path === '/guide');
+    }
+
+    return this.allNavItems.filter((item) =>
+      item.permissions.some((permission) => this.capability.can(permission)),
+    );
+  });
+
+  protected readonly currentUser = this.auth.currentUser;
+
+  protected readonly initials = computed(() => {
+    const name = this.currentUser()?.fullName || '';
+    return name
+      .split(' ')
+      .filter(Boolean)
+      .slice(0, 2)
+      .map((part) => part[0]?.toUpperCase() || '')
+      .join('');
+  });
+
   ngOnInit(): void {
-    // Set the active navigation item based on the current URL
-    const currentPath = window.location.pathname;
-    this.navItems = this.navItems.map((item) => ({
-      ...item,
-      active: item.path === currentPath,
-    }));
+    if (this.auth.isLoggedIn() && !this.auth.currentUser()?.permissions?.length) {
+      this.auth.me().subscribe();
+    }
   }
 
   protected toggleSidebar(): void {
     this.isSidebarCollapsed = !this.isSidebarCollapsed;
   }
 
-  protected setActiveNav(label: string): void {
-    this.navItems = this.navItems.map((item) => ({
-      ...item,
-      active: item.label === label,
-    }));
+  protected logout(): void {
+    this.auth.logout();
+  }
+
+  protected switchToGuideView(): void {
+    this.auth.setTourGuideViewMode(true);
+    this.router.navigate(['/guide']);
+  }
+
+  protected switchToAdminView(): void {
+    this.auth.setTourGuideViewMode(false);
+    this.auth.navigateHome();
+  }
+
+  protected showViewSwitcher(): boolean {
+    return this.capability.can('VIEW_SWITCH_TOUR_GUIDE');
+  }
+
+  protected inGuideViewMode(): boolean {
+    return this.auth.tourGuideViewMode();
   }
 }

@@ -1,0 +1,94 @@
+:host {
+  display: block;
+  padding: 24px;
+}
+
+.guide-shell {
+  max-width: 960px;
+  margin: 0 auto;
+}
+
+.guide-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.guide-header h1 {
+  margin: 0 0 4px;
+}
+
+.guide-header p {
+  margin: 0;
+  color: #5f6368;
+}
+
+.assignment-list {
+  display: grid;
+  gap: 16px;
+}
+
+.assignment-card {
+  border: 1px solid #e0e0e0;
+  border-radius: 12px;
+  padding: 16px;
+  background: #fff;
+}
+
+.assignment-meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+
+.assignment-meta h2 {
+  margin: 0;
+  font-size: 1.1rem;
+}
+
+.badge {
+  text-transform: capitalize;
+  background: #f1f3f4;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 0.85rem;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.actions button {
+  border: 1px solid #dadce0;
+  background: #fff;
+  border-radius: 8px;
+  padding: 8px 12px;
+  cursor: pointer;
+}
+
+.actions button.danger {
+  color: #b3261e;
+  border-color: #f9dedc;
+}
+
+.secondary-action {
+  border: 1px solid #dadce0;
+  background: #fff;
+  border-radius: 8px;
+  padding: 8px 12px;
+  cursor: pointer;
+}
+
+.status {
+  color: #5f6368;
+}
+
+.status.error {
+  color: #b3261e;
+}

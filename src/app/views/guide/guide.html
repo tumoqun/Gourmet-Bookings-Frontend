@@ -1,0 +1,43 @@
+<section class="guide-shell">
+  <header class="guide-header">
+    <div>
+      <h1>Tour Guide</h1>
+      <p>Your assigned tours and field operations.</p>
+    </div>
+    @if (capability.isAdmin()) {
+      <button type="button" class="secondary-action" (click)="switchToAdminView()">
+        Switch to Admin view
+      </button>
+    }
+  </header>
+
+  @if (loading()) {
+    <p class="status">Loading assignments…</p>
+  } @else if (error()) {
+    <p class="status error">{{ error() }}</p>
+  } @else if (assignments().length === 0) {
+    <p class="status">No assignments found.</p>
+  } @else {
+    <div class="assignment-list">
+      @for (assignment of assignments(); track assignment.id) {
+        <article class="assignment-card">
+          <div class="assignment-meta">
+            <h2>{{ assignment.workNumber || ('Work #' + assignment.workId) }}</h2>
+            <span class="badge">{{ assignment.status }}</span>
+          </div>
+          <p>Guide: {{ assignment.guideName || assignment.guideId }}</p>
+          <div class="actions">
+            @if (assignment.status === 'pending' && capability.can('GUIDE_ASSIGNMENT_RESPOND')) {
+              <button type="button" (click)="accept(assignment.id)">Accept</button>
+              <button type="button" class="danger" (click)="reject(assignment.id)">Reject</button>
+            }
+            @if (capability.can('GUIDE_WORK_LIFECYCLE')) {
+              <button type="button" (click)="startWork(assignment.id)">Start Work</button>
+              <button type="button" (click)="endWork(assignment.id)">End Work</button>
+            }
+          </div>
+        </article>
+      }
+    </div>
+  }
+</section>

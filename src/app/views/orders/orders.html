@@ -576,6 +576,7 @@
       Edit Fees
     </div>
 
+    @if (capability.can('ASSIGNMENTS_READ')) {
     <div class="menu-item" role="menuitem" tabindex="0" (click)="goToAssignment(); closeActionPopup()">
       <span class="icon" aria-hidden="true">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
@@ -587,7 +588,9 @@
       </span>
       Go to Assignment
     </div>
+    }
 
+    @if (capability.can('ORDERS_OFFER')) {
     <div class="menu-item" role="menuitem" tabindex="0" (click)="makeOffer()">
       <span class="icon" aria-hidden="true">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
@@ -598,7 +601,9 @@
       </span>
       Make Offer
     </div>
+    }
 
+    @if (capability.can('ORDERS_CONFIRM')) {
     <div class="menu-item confirm" role="menuitem" tabindex="0" (click)="confirmOrder(); closeActionPopup()">
       <span class="icon" aria-hidden="true">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
@@ -607,6 +612,7 @@
       </span>
       Confirm
     </div>
+    }
 
     <div class="menu-item link" role="menuitem" tabindex="0" (click)="copyLink(); closeActionPopup()">
       <span class="icon" aria-hidden="true">
@@ -628,6 +634,7 @@
       Cancel
     </div>
 
+    @if (capability.can('ORDERS_DELETE')) {
     <div class="menu-item delete" role="menuitem" tabindex="0" (click)="deleteOrder(); closeActionPopup()">
       <span class="icon" aria-hidden="true">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
@@ -640,6 +647,7 @@
       </span>
       Delete
     </div>
+    }
   </div>
 
   <div

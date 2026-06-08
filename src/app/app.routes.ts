@@ -1,9 +1,12 @@
 import { Routes } from '@angular/router';
+import { authGuard } from './guards/auth.guard';
+import { permissionGuard } from './guards/permission.guard';
 
 export const routes: Routes = [
   {
     path: '',
-    loadComponent: () => import('./views/login/login').then((m) => m.LoginView),
+    pathMatch: 'full',
+    redirectTo: 'login',
   },
   {
     path: 'login',
@@ -11,21 +14,29 @@ export const routes: Routes = [
   },
   {
     path: 'orders',
+    canActivate: [authGuard, permissionGuard],
+    data: { permissions: ['ORDERS_READ'] },
     loadComponent: () => import('./views/orders/orders').then((m) => m.OrdersView),
   },
   {
     path: 'works',
+    canActivate: [authGuard, permissionGuard],
+    data: { permissions: ['ASSIGNMENTS_READ'] },
     children: [
       {
         path: '',
-        loadComponent: () =>
-          import('./views/works/works').then((m) => m.Works),
+        loadComponent: () => import('./views/works/works').then((m) => m.Works),
       },
       {
         path: ':id',
-        loadComponent: () =>
-          import('./views/works/detail/detail').then((m) => m.WorkDetail),
+        loadComponent: () => import('./views/works/detail/detail').then((m) => m.WorkDetail),
       },
     ],
+  },
+  {
+    path: 'guide',
+    canActivate: [authGuard, permissionGuard],
+    data: { permissions: ['GUIDE_TOURS_READ'] },
+    loadComponent: () => import('./views/guide/guide').then((m) => m.GuideView),
   },
 ];

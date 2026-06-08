@@ -6,12 +6,23 @@
       <p>Savor the Journey, One Plate at a Time.</p>
     </div>
 
-    <form class="login-card" aria-label="Sign in">
+    <form class="login-card" aria-label="Sign in" (ngSubmit)="onSubmit()">
       <h2>Sign In</h2>
+
+      @if (error()) {
+        <p class="login-error" role="alert">{{ error() }}</p>
+      }
 
       <label class="field">
         <span>Email Address</span>
-        <input type="email" name="email" placeholder="you@example.com" autocomplete="email" />
+        <input
+          type="email"
+          name="email"
+          [(ngModel)]="email"
+          placeholder="you@example.com"
+          autocomplete="email"
+          required
+        />
       </label>
 
       <label class="field">
@@ -22,18 +33,41 @@
         <input
           type="password"
           name="password"
+          [(ngModel)]="password"
           placeholder="********"
           autocomplete="current-password"
           aria-label="Password"
+          required
         />
       </label>
 
       <label class="remember-me">
-        <input type="checkbox" name="remember" />
+        <input type="checkbox" name="remember" [(ngModel)]="remember" />
         <span>Remember me</span>
       </label>
 
-      <button class="primary-action" type="submit">Sign In</button>
+      <button class="primary-action" type="submit" [disabled]="loading()">
+        {{ loading() ? 'Signing in…' : 'Sign In' }}
+      </button>
+
+      <button type="button" class="dev-toggle" (click)="toggleDevAccounts()">
+        {{ showDevAccounts() ? 'Hide' : 'Show' }} dev test accounts
+      </button>
+
+      @if (showDevAccounts()) {
+        <div class="dev-accounts">
+          <p class="dev-hint">Password for all: <code>Gourmet123!</code></p>
+          <ul>
+            @for (account of devAccounts; track account.email) {
+              <li>
+                <button type="button" class="dev-fill" (click)="fillDevAccount(account.email)">
+                  {{ account.label }} — {{ account.email }}
+                </button>
+              </li>
+            }
+          </ul>
+        </div>
+      }
 
       <div class="divider">
         <span>Or continue with</span>

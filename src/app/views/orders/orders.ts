@@ -1,4 +1,4 @@
-import { Component, OnInit, ChangeDetectorRef, HostListener } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef, HostListener, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import {
@@ -16,6 +16,7 @@ import {
   SpecialRequestType,
   DistanceBand,
 } from '../../services/api.service';
+import { CapabilityService } from '../../services/capability.service';
 
 interface OrderRow {
   id?: number;
@@ -52,6 +53,8 @@ interface StatusFilter {
   styleUrl: './orders.css',
 })
 export class OrdersView implements OnInit {
+  protected readonly capability = inject(CapabilityService);
+
   protected isNewOrderOpen = false;
   protected currentNewOrderStep = 1;
   protected adultGuests = 2;

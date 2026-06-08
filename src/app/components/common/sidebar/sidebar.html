@@ -9,9 +9,24 @@
     <span *ngIf="!isSidebarCollapsed" aria-hidden="true">&lsaquo;</span>
   </button>
 
+<!--  @if (showViewSwitcher()) {-->
+<!--    <div class="view-switcher">-->
+<!--      @if (inGuideViewMode()) {-->
+<!--        <button type="button" (click)="switchToAdminView()">Admin view</button>-->
+<!--      } @else {-->
+<!--        <button type="button" (click)="switchToGuideView()">Tour Guide view</button>-->
+<!--      }-->
+<!--    </div>-->
+<!--  }-->
+
   <nav class="nav-list">
-    <a class="nav-item" *ngFor="let item of navItems" [class.active]="item.active" [href]="item.path"
-      [attr.aria-current]="item.active ? 'page' : null" (click)="setActiveNav(item.label)">
+    <a
+      class="nav-item"
+      *ngFor="let item of navItems()"
+      [routerLink]="item.path"
+      routerLinkActive="active"
+      [routerLinkActiveOptions]="{ exact: item.path !== '/works' }"
+    >
       <img class="nav-icon" [src]="item.icon" [alt]="item.label + ' icon'" />
       <span>{{ item.label }}</span>
     </a>
@@ -19,19 +34,19 @@
 
   <div class="sidebar-footer">
     <div class="profile">
-      <span class="avatar">AP</span>
+      <span class="avatar">{{ initials() }}</span>
       <span>
-        <strong>Alexander Pierce</strong>
-        <small>Administrator</small>
+        <strong>{{ currentUser()?.fullName || 'User' }}</strong>
+        <small>{{ currentUser()?.role || 'Role' }}</small>
       </span>
     </div>
     <a href="/">
       <img class="sidebar-link-icon" src="/ui-icons/support.png" alt="Support icon" />
       <span>Support</span>
     </a>
-    <a href="/">
+    <button type="button" class="logout-button" (click)="logout()">
       <img class="sidebar-link-icon" src="/ui-icons/logout.png" alt="Logout icon" />
       <span>Logout</span>
-    </a>
+    </button>
   </div>
 </aside>

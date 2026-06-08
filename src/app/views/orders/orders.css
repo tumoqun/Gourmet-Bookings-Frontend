@@ -1306,10 +1306,8 @@ td strong {
   justify-content: center;
   min-height: 30px;
   padding: 0 12px;
-  border: 1px solid rgba(200, 155, 70, 0.3);
   border-radius: 999px;
   color: #c89b46;
-  background: #fffaf0;
   font-size: 0.82rem;
   font-weight: 700;
   line-height: 1;

@@ -1,6 +1,7 @@
 import { Component, OnInit, ChangeDetectorRef, HostListener, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { Router, RouterModule } from '@angular/router';
 import {
   ApiService,
   Allotment,
@@ -48,7 +49,7 @@ interface StatusFilter {
 
 @Component({
   selector: 'app-orders-view',
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, RouterModule],
   templateUrl: './orders.html',
   styleUrl: './orders.css',
 })
@@ -152,7 +153,8 @@ export class OrdersView implements OnInit {
 
   constructor(
     private apiService: ApiService,
-    private cdr: ChangeDetectorRef
+    private cdr: ChangeDetectorRef,
+    private router: Router
   ) {}
 
   ngOnInit(): void {
@@ -785,8 +787,9 @@ export class OrdersView implements OnInit {
   }
 
   protected viewGuestDetails(): void {
-    // TODO: Implement view guest details functionality
-    console.log('View guest details for order:', this.orderForAction);
+    if (this.orderForAction) {
+      this.router.navigate(['/orders', this.orderForAction]);
+    }
   }
 
   protected editOrder(): void {

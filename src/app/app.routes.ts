@@ -16,7 +16,16 @@ export const routes: Routes = [
     path: 'orders',
     canActivate: [authGuard, permissionGuard],
     data: { permissions: ['ORDERS_READ'] },
-    loadComponent: () => import('./views/orders/orders').then((m) => m.OrdersView),
+    children: [
+      {
+        path: '',
+        loadComponent: () => import('./views/orders/orders').then((m) => m.OrdersView),
+      },
+      {
+        path: ':id',
+        loadComponent: () => import('./views/orders/detail/detail').then((m) => m.OrderDetail),
+      },
+    ],
   },
   {
     path: 'works',

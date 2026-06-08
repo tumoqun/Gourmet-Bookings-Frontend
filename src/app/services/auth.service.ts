@@ -19,6 +19,10 @@ export class AuthService {
   readonly tourGuideViewMode = signal<boolean>(this.loadViewMode());
 
   login(request: LoginRequest): Observable<LoginResponse> {
+    sessionStorage.removeItem(TOKEN_KEY);
+    sessionStorage.removeItem(USER_KEY);
+    this.currentUser.set(null);
+
     return this.http.post<LoginResponse>(`${this.apiUrl}/auth/login`, request).pipe(
       tap((response) => {
         sessionStorage.setItem(TOKEN_KEY, response.token);
@@ -41,8 +45,30 @@ export class AuthService {
     return sessionStorage.getItem(TOKEN_KEY);
   }
 
+  isTokenExpired(): boolean {
+    const token = this.getToken();
+    if (!token) {
+      return true;
+    }
+
+    try {
+      const payload = JSON.parse(atob(token.split('.')[1])) as { exp?: number };
+      if (!payload.exp) {
+        return true;
+      }
+      return payload.exp * 1000 <= Date.now();
+    } catch {
+      return true;
+    }
+  }
+
   isLoggedIn(): boolean {
-    return !!this.getToken() && !!this.currentUser();
+    return !!this.getToken() && !!this.currentUser() && !this.isTokenExpired();
+  }
+
+  handleSessionExpired(): void {
+    sessionStorage.setItem('gb_session_expired', '1');
+    this.logout();
   }
 
   me(): Observable<AuthUser> {

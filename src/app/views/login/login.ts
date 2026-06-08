@@ -13,6 +13,11 @@ export class LoginView implements OnInit {
   private readonly auth = inject(AuthService);
 
   ngOnInit(): void {
+    if (sessionStorage.getItem('gb_session_expired') === '1') {
+      sessionStorage.removeItem('gb_session_expired');
+      this.error.set('Your session expired. Please sign in again.');
+    }
+
     if (this.auth.isLoggedIn()) {
       this.auth.navigateHome();
     }
@@ -42,6 +47,10 @@ export class LoginView implements OnInit {
       },
       error: (err) => {
         this.loading.set(false);
+        if (err?.status === 401 && err?.statusText === 'Session expired') {
+          this.error.set('Your session expired. Please sign in again.');
+          return;
+        }
         this.error.set(err?.error?.message || 'Invalid email or password.');
       },
     });

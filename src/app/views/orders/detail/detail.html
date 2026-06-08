@@ -1,0 +1,397 @@
+<div class="detail-page">
+  <section class="detail-content" aria-labelledby="detail-title">
+
+    <!-- Header -->
+    <header class="detail-topbar">
+      <div class="topbar-left">
+        <button class="back-btn" type="button" (click)="goBack()" aria-label="Back to orders">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <polyline points="15 18 9 12 15 6"/>
+          </svg>
+        </button>
+        <div>
+          <h1 id="detail-title">Guest Detail</h1>
+          <p class="today-label">TODAY IS {{ todayLabel }}</p>
+        </div>
+      </div>
+    </header>
+
+    <!-- Loading / error -->
+    <p class="api-message error" *ngIf="errorMessage && !isLoading">{{ errorMessage }}</p>
+    <div class="loading-state" *ngIf="isLoading" aria-live="polite">Loading order…</div>
+
+    <div *ngIf="!isLoading && order" class="detail-body">
+
+      <!-- Progress / Reseller bar -->
+      <div class="progress-bar-card">
+        <div class="reseller-badge">
+          <span class="reseller-name">{{ reseller }}</span>
+          <span class="group-badge">GROUP</span>
+        </div>
+
+        <div class="progress-track" aria-label="Order progress">
+          <div class="progress-line">
+            <div class="progress-line-fill" [style.width.%]="(progressStep - 1) * 25"></div>
+          </div>
+          <div class="progress-steps">
+            <div class="progress-step" *ngFor="let step of [1,2,3,4,5]" [class.active]="progressStep >= step" [class.current]="progressStep === step">
+              <div class="step-dot">{{ step }}</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="status-label-area">
+          <span class="status-badge requested">{{ statusLabel }}</span>
+        </div>
+      </div>
+
+      <!-- Order info grid -->
+      <div class="info-grid">
+        <div class="info-field">
+          <span class="info-label">REFERENCE NUMBER 1</span>
+          <span class="info-value bold">{{ ref1 }}</span>
+        </div>
+        <div class="info-field">
+          <span class="info-label">REFERENCE NUMBER 2</span>
+          <span class="info-value bold">{{ ref2 }}</span>
+        </div>
+        <div class="info-field">
+          <span class="info-label">TENTATIVE ORDER</span>
+          <span class="info-value">{{ isTentative }}</span>
+        </div>
+
+        <div class="info-field">
+          <span class="info-label">PERSON IN CHARGE (PIC)</span>
+          <span class="info-value bold">{{ picName }}</span>
+        </div>
+        <div class="info-field">
+          <span class="info-label">PIC EMAIL</span>
+          <span class="info-value">{{ picEmail }}</span>
+        </div>
+        <div class="info-field">
+          <span class="info-label">ORIGINAL AGENT</span>
+          <span class="info-value">{{ originalAgent }}</span>
+        </div>
+
+        <div class="info-field">
+          <span class="info-label">RESELLER</span>
+          <span class="info-value">{{ reseller }}</span>
+        </div>
+        <div class="info-field">
+          <span class="info-label">AREA</span>
+          <span class="info-value">{{ area }}</span>
+        </div>
+        <div class="info-field">
+          <span class="info-label">PRODUCT CODE</span>
+          <span class="info-value">{{ productCode }}</span>
+        </div>
+
+        <div class="info-field">
+          <span class="info-label">TOUR DATE</span>
+          <span class="info-value">{{ tourDate }}</span>
+        </div>
+        <div class="info-field">
+          <span class="info-label">START TIME</span>
+          <span class="info-value">{{ startTime }}</span>
+        </div>
+        <div class="info-field">
+          <span class="info-label">END TIME</span>
+          <span class="info-value">{{ endTime }}</span>
+        </div>
+
+        <div class="info-field full-row">
+          <span class="info-label">PICK UP</span>
+          <span class="info-value">{{ pickupInfo }}&nbsp;&nbsp;&nbsp;<strong>{{ pickupTime }}</strong></span>
+        </div>
+
+        <div class="info-field full-row">
+          <span class="info-label">MEETING POINT</span>
+          <span class="info-value">None Specified</span>
+        </div>
+
+        <div class="info-field full-row">
+          <span class="info-label">DROP OFF</span>
+          <span class="info-value">{{ dropoffInfo }}</span>
+        </div>
+      </div>
+
+      <!-- Action bar -->
+      <div class="action-bar">
+        <div class="action-bar-left">
+          <button class="action-btn add-btn" type="button" (click)="addAnother()" id="btn-add-another">
+            <span class="action-icon add-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="9"/>
+                <line x1="12" y1="8" x2="12" y2="16"/>
+                <line x1="8" y1="12" x2="16" y2="12"/>
+              </svg>
+            </span>
+            Add another
+          </button>
+
+          <button class="action-btn confirm-btn" type="button" (click)="confirmOrder()" id="btn-confirm-order">
+            <span class="action-icon confirm-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="20 6 9 17 4 12"/>
+              </svg>
+            </span>
+            Confirm
+          </button>
+
+          <button class="action-btn offer-btn" type="button" (click)="makeOffer()" id="btn-make-offer">
+            <span class="action-icon offer-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="2" y="5" width="20" height="14" rx="2"/>
+                <line x1="2" y1="10" x2="22" y2="10"/>
+                <circle cx="7" cy="15" r="1.5" fill="currentColor" stroke="none"/>
+                <line x1="11" y1="15" x2="17" y2="15" stroke-width="2"/>
+              </svg>
+            </span>
+            Make offer
+          </button>
+
+          <button class="action-btn link-btn" type="button" (click)="copyLink()" id="btn-copy-link">
+            <span class="action-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/>
+                <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>
+              </svg>
+            </span>
+            Copy link
+          </button>
+        </div>
+
+        <div class="action-bar-right">
+          <button class="doc-btn" type="button" [class.active]="signboardAttached" id="btn-attach-signboard">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+              <polyline points="14 2 14 8 20 8"/>
+            </svg>
+            Attach Signboard
+            <svg class="link-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/>
+              <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>
+            </svg>
+          </button>
+
+          <button class="doc-btn signed" type="button" id="btn-waiver">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <polyline points="20 6 9 17 4 12"/>
+            </svg>
+            Waiver · Signed
+            <svg class="link-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/>
+              <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>
+            </svg>
+          </button>
+        </div>
+      </div>
+
+      <!-- Guest Group card -->
+      <section class="guest-group-card" aria-labelledby="guest-group-title">
+        <header class="guest-group-header">
+          <h2 id="guest-group-title" class="guest-group-title">Guest Group: {{ guestGroupLabel }}</h2>
+          <button class="edit-btn" type="button" (click)="openEditGuestGroup()" id="btn-edit-guest-group">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+              <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+            </svg>
+            Edit
+          </button>
+        </header>
+
+        <div class="guest-group-meta">
+          <div class="meta-field">
+            <span class="meta-label">LEADER PHONE NUMBER</span>
+            <span class="meta-value">{{ leaderPhone }}</span>
+          </div>
+          <div class="meta-field">
+            <span class="meta-label">GUEST GROUP NOTES</span>
+            <span class="meta-value">{{ guestGroupNotes }}</span>
+          </div>
+          <div class="meta-field">
+            <span class="meta-label">AVERAGE AGE</span>
+            <span class="meta-value">{{ averageAge }}</span>
+          </div>
+        </div>
+
+        <!-- Guest table -->
+        <div class="guest-table-wrap">
+          <table class="guest-table" aria-label="Guest list">
+            <thead>
+              <tr>
+                <th>NAME</th>
+                <th>PHONE NUMBER</th>
+                <th>AGE</th>
+                <th>GENDER</th>
+                <th>ALLERGIES OR DIETARY RESTRICTIONS</th>
+                <th class="add-guest-th">
+                  <button class="add-guest-btn" type="button" (click)="openAddGuest()" id="btn-add-guest">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                      <circle cx="12" cy="12" r="9"/>
+                      <line x1="12" y1="8" x2="12" y2="16"/>
+                      <line x1="8" y1="12" x2="16" y2="12"/>
+                    </svg>
+                    Add guest
+                  </button>
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let guest of guestMembers; let i = index" class="guest-row">
+                <ng-container *ngIf="editingGuestIndex !== i">
+                  <td>{{ guest.name }}</td>
+                  <td>{{ guest.phone || '—' }}</td>
+                  <td>{{ guest.age }}</td>
+                  <td>{{ guest.gender }}</td>
+                  <td>{{ guest.allergies }}</td>
+                  <td class="guest-actions">
+                    <button class="guest-action-btn edit" type="button" (click)="editGuest(i)" [attr.aria-label]="'Edit ' + guest.name">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+                        <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                      </svg>
+                    </button>
+                    <button class="guest-action-btn delete" type="button" (click)="removeGuest(i)" [attr.aria-label]="'Remove ' + guest.name">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                        <polyline points="3 6 5 6 21 6"/>
+                        <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>
+                        <path d="M10 11v6"/><path d="M14 11v6"/>
+                        <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/>
+                      </svg>
+                    </button>
+                  </td>
+                </ng-container>
+
+                <!-- Inline edit row -->
+                <ng-container *ngIf="editingGuestIndex === i">
+                  <td><input type="text" [(ngModel)]="guestMembers[i].name" [attr.aria-label]="'Name for guest ' + (i+1)" /></td>
+                  <td><input type="text" [(ngModel)]="guestMembers[i].phone" [attr.aria-label]="'Phone for guest ' + (i+1)" /></td>
+                  <td><input type="number" [(ngModel)]="guestMembers[i].age" [attr.aria-label]="'Age for guest ' + (i+1)" /></td>
+                  <td>
+                    <select [(ngModel)]="guestMembers[i].gender" [attr.aria-label]="'Gender for guest ' + (i+1)">
+                      <option value="Male">Male</option>
+                      <option value="Female">Female</option>
+                      <option value="Other">Other</option>
+                    </select>
+                  </td>
+                  <td><input type="text" [(ngModel)]="guestMembers[i].allergies" [attr.aria-label]="'Allergies for guest ' + (i+1)" /></td>
+                  <td class="guest-actions">
+                    <button class="guest-action-btn save" type="button" (click)="saveGuestEdit(i)" aria-label="Save guest">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                        <polyline points="20 6 9 17 4 12"/>
+                      </svg>
+                    </button>
+                    <button class="guest-action-btn cancel" type="button" (click)="cancelGuestEdit()" aria-label="Cancel edit">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+                      </svg>
+                    </button>
+                  </td>
+                </ng-container>
+              </tr>
+
+              <tr *ngIf="guestMembers.length === 0">
+                <td class="empty-guests" colspan="6">No guests added yet. Click "Add guest" to begin.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Special occasion -->
+        <div class="special-occasion" *ngIf="specialOccasion">
+          <span>Special Occasion: {{ specialOccasion }}</span>
+        </div>
+      </section>
+
+      <!-- Add guest inline form modal -->
+      <div class="add-guest-overlay" *ngIf="isAddingGuest" role="dialog" aria-modal="true" aria-label="Add guest">
+        <div class="add-guest-dialog">
+          <h3>Add Guest</h3>
+          <div class="add-guest-form">
+            <label class="ag-field">
+              <span>Name</span>
+              <input type="text" [(ngModel)]="newGuestName" placeholder="Full name" id="new-guest-name" />
+            </label>
+            <label class="ag-field">
+              <span>Phone Number</span>
+              <input type="text" [(ngModel)]="newGuestPhone" placeholder="Phone number" id="new-guest-phone" />
+            </label>
+            <label class="ag-field">
+              <span>Age</span>
+              <input type="number" [(ngModel)]="newGuestAge" placeholder="Age" id="new-guest-age" />
+            </label>
+            <label class="ag-field">
+              <span>Gender</span>
+              <select [(ngModel)]="newGuestGender" id="new-guest-gender">
+                <option value="">Select gender</option>
+                <option value="Male">Male</option>
+                <option value="Female">Female</option>
+                <option value="Other">Other</option>
+              </select>
+            </label>
+            <label class="ag-field full">
+              <span>Allergies or Dietary Restrictions</span>
+              <input type="text" [(ngModel)]="newGuestAllergies" placeholder="E.g. Peanut, Gluten-free" id="new-guest-allergies" />
+            </label>
+          </div>
+          <div class="add-guest-actions">
+            <button type="button" class="ag-cancel" (click)="closeAddGuest()">Cancel</button>
+            <button type="button" class="ag-save" (click)="confirmAddGuest()">Add Guest</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Related Orders -->
+      <section class="related-orders-card" aria-labelledby="related-orders-title">
+        <h2 id="related-orders-title" class="related-title">Related Orders</h2>
+
+        <div class="related-table-wrap">
+          <table class="related-table" aria-label="Related orders">
+            <thead>
+              <tr>
+                <th>PIC</th>
+                <th>REF 1</th>
+                <th>REF 2</th>
+                <th>SERVICE NAME</th>
+                <th>P/S</th>
+                <th>DATE-TIME</th>
+                <th>#GUESTS</th>
+                <th>FEE (INC.TAX)</th>
+                <th>STATUS</th>
+                <th>NOTES</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let ro of relatedOrders" class="related-row">
+                <td>{{ ro.pic }}</td>
+                <td><strong>{{ ro.ref1 }}</strong></td>
+                <td>{{ ro.ref2 }}</td>
+                <td>
+                  <span class="service-pill">{{ ro.serviceName }}</span>
+                </td>
+                <td><strong>{{ ro.type }}</strong></td>
+                <td>
+                  <span class="date-pill">{{ ro.dateTime }}</span>
+                </td>
+                <td>{{ ro.guests }}</td>
+                <td><strong>{{ ro.fee }}</strong></td>
+                <td>
+                  <span class="status-pill {{ ro.statusTone }}">{{ ro.status }}</span>
+                </td>
+                <td class="notes-cell">
+                  <a href="#" class="notes-link">{{ ro.notes }}</a>
+                  <a href="#" class="order-details-link">Order Details</a>
+                </td>
+              </tr>
+              <tr *ngIf="relatedOrders.length === 0">
+                <td colspan="10" class="empty-related">No related orders found.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+    </div>
+  </section>
+</div>

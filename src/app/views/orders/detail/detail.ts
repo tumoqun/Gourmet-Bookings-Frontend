@@ -230,7 +230,6 @@ export class OrderDetail implements OnInit {
     const map: Record<string, number> = {
       requested: 1,
       tentative: 1,
-      pending_offer: 2,
       offered: 2,
       confirmed: 3,
       active: 4,

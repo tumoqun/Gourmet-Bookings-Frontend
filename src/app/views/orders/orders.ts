@@ -145,11 +145,13 @@ export class OrdersView implements OnInit {
     { label: 'Problem Reports', count: '0', active: false },
     { label: 'Tour Reports', count: '0', active: false },
     { label: 'Tentative', count: '0', active: false },
-    { label: 'Pending', count: '0', active: false },
+    { label: 'Offered', count: '0', active: false },
     { label: 'Requests', count: '0', active: false },
   ];
 
   protected orders: OrderRow[] = [];
+  protected allOrders: OrderRow[] = [];
+  protected filteredOrders: OrderRow[] = [];
 
   constructor(
     private apiService: ApiService,
@@ -181,7 +183,8 @@ export class OrdersView implements OnInit {
     this.apiService.getOrders().subscribe({
       next: (orders) => {
         Promise.resolve().then(() => {
-          this.orders = orders.map((order) => this.mapOrderToRow(order));
+          this.allOrders = orders.map((order) => this.mapOrderToRow(order));
+          this.applyActiveFilter();
           this.updateFilterCounts();
           this.isLoading = false;
           this.cdr.detectChanges();
@@ -190,7 +193,9 @@ export class OrdersView implements OnInit {
       error: () => {
         Promise.resolve().then(() => {
           this.errorMessage = 'Could not load orders from the backend.';
+          this.allOrders = [];
           this.orders = [];
+          this.filteredOrders = [];
           this.updateFilterCounts();
           this.isLoading = false;
           this.cdr.detectChanges();
@@ -625,6 +630,70 @@ export class OrdersView implements OnInit {
       ...filter,
       active: filter.label === filterLabel,
     }));
+    this.applyActiveFilter();
+  }
+
+  private applyActiveFilter(): void {
+    const activeFilter = this.filters.find(f => f.active);
+    if (!activeFilter) {
+      this.filteredOrders = [...this.allOrders];
+      this.orders = this.filteredOrders;
+      return;
+    }
+
+    switch (activeFilter.label) {
+      case 'All Orders':
+        this.filteredOrders = [...this.allOrders];
+        break;
+      case 'Tentative':
+        this.filteredOrders = this.allOrders.filter(order => {
+          // Filter by isTentative flag - need to check if this data is available
+          // For now, we'll check if the order has isTentative in the original data
+          return false; // Placeholder - needs actual data
+        });
+        break;
+      case 'Offered':
+        this.filteredOrders = this.allOrders.filter(order => {
+          const code = order.statusCode.toLowerCase();
+          return code === 'offered';
+        });
+        break;
+      case 'Requests':
+        this.filteredOrders = this.allOrders.filter(order => {
+          const code = order.statusCode.toLowerCase();
+          return code === 'requested';
+        });
+        break;
+      case 'Guide Changes':
+      case 'Problem Reports':
+      case 'Tour Reports':
+        // These filters need additional data/flags that aren't currently available
+        // For now, show no orders for these filters
+        this.filteredOrders = [];
+        break;
+      default:
+        this.filteredOrders = [...this.allOrders];
+    }
+
+    this.orders = this.filteredOrders;
+    this.updateTotals();
+  }
+
+  private updateTotals(): void {
+    this.totalAdults = this.orders.reduce((sum, order) => {
+      const adults = parseInt(order.guests.split('/')[0], 10) || 0;
+      return sum + adults;
+    }, 0);
+
+    this.totalChildren = this.orders.reduce((sum, order) => {
+      const children = parseInt(order.guests.split('/')[1], 10) || 0;
+      return sum + children;
+    }, 0);
+
+    this.totalVolume = this.orders.reduce((sum, order) => {
+      const fee = parseFloat(order.fee.replace(/,/g, '')) || 0;
+      return sum + fee;
+    }, 0);
   }
 
   protected createOrder(): void {
@@ -1232,7 +1301,6 @@ export class OrdersView implements OnInit {
       confirmed: 'check',
       active: 'check',
       requested: 'warn',
-      pending_offer: 'warn',
       offered: 'warn',
       cancelled: 'cross',
       tentative: 'circle',
@@ -1248,7 +1316,6 @@ export class OrdersView implements OnInit {
       confirmed: 'success',
       active: 'success',
       requested: 'info',
-      pending_offer: 'warning',
       offered: 'warning',
       cancelled: 'danger',
       tentative: 'info',
@@ -1259,7 +1326,7 @@ export class OrdersView implements OnInit {
 
   private updateFilterCounts(): void {
     // Count by canonical status code for reliable counts
-    const statusCounts = this.orders.reduce(
+    const statusCounts = this.allOrders.reduce(
       (acc, order) => {
         const code = order.statusCode.toLowerCase();
         if (code) {
@@ -1272,40 +1339,26 @@ export class OrdersView implements OnInit {
 
     this.filters = this.filters.map((filter) => {
       if (filter.label === 'All Orders') {
-        return { ...filter, count: this.orders.length.toString() };
+        return { ...filter, count: this.allOrders.length.toString() };
       }
 
       if (filter.label === 'Requests') {
         return { ...filter, count: (statusCounts['requested'] ?? 0).toString() };
       }
 
-      if (filter.label === 'Pending') {
-        const pendingCount =
-          (statusCounts['pending_offer'] ?? 0) + (statusCounts['offered'] ?? 0);
-        return { ...filter, count: pendingCount.toString() };
+      if (filter.label === 'Offered') {
+        return { ...filter, count: (statusCounts['offered'] ?? 0).toString() };
       }
 
       if (filter.label === 'Tentative') {
         return { ...filter, count: (statusCounts['tentative'] ?? 0).toString() };
       }
 
+      // Guide Changes, Problem Reports, Tour Reports - no data available yet
       return { ...filter, count: '0' };
     });
 
-    this.totalAdults = this.orders.reduce((sum, order) => {
-        const adults = parseInt(order.guests.split('/')[0], 10) || 0;
-        return sum + adults;
-    }, 0);
-
-    this.totalChildren = this.orders.reduce((sum, order) => {
-        const children = parseInt(order.guests.split('/')[1], 10) || 0;
-        return sum + children;
-    }, 0);
-
-    this.totalVolume = this.orders.reduce((sum, order) => {
-        const fee = parseFloat(order.fee.replace(/,/g, '')) || 0;
-        return sum + fee;
-    }, 0);
+    this.updateTotals();
   }
 
   private uniqueById<T extends { id: number }>(items: T[]): T[] {

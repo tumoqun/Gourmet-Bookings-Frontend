@@ -1380,15 +1380,16 @@ td strong {
   background: #fde5e5;
 }
 
-.table-footer {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
+.table-tfoot {
+  background: #fafaf9;
+}
+
+.table-tfoot td {
   padding: 16px 24px;
   border-top: 1px solid #ebe8e3;
-  background: #fafaf9;
   color: #8a837a;
   font-size: 0.92rem;
+  vertical-align: middle;
 }
 
 .footer-left,
@@ -1402,6 +1403,10 @@ td strong {
   display: flex;
   gap: 8px;
   align-items: center;
+}
+
+.rows-control span {
+  width: 100px;
 }
 
 .rows-control select {
@@ -1538,7 +1543,6 @@ td strong {
 .summary {
   display: flex;
   flex-direction: column;
-  align-items: flex-end;
   gap: 4px;
   text-transform: uppercase;
 }
@@ -1574,10 +1578,6 @@ td strong {
 
 .summary.guests strong::after {
   display: none;
-}
-
-.summary.value {
-  margin-left: 160px;
 }
 
 .new-order-overlay {

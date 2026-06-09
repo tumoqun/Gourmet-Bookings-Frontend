@@ -62,7 +62,7 @@ export class OrdersView implements OnInit {
   protected childGuests = 1;
   protected isLoading = false;
   protected errorMessage = '';
-  protected selectedRows = 100;
+  protected selectedRows = 5;
   protected totalAdults = 0;
   protected totalChildren = 0;
   protected totalVolume = 0;
@@ -152,6 +152,8 @@ export class OrdersView implements OnInit {
   protected orders: OrderRow[] = [];
   protected allOrders: OrderRow[] = [];
   protected filteredOrders: OrderRow[] = [];
+  protected currentPage = 1;
+  protected totalPages = 1;
 
   constructor(
     private apiService: ApiService,
@@ -204,9 +206,42 @@ export class OrdersView implements OnInit {
     });
   }
 
-  protected onRowsChange(event: Event): void {
-    const select = event.target as HTMLSelectElement;
-    this.selectedRows = Number(select.value) || 100;
+  protected onRowsChange(value: number): void {
+    this.selectedRows = value || 5;
+    this.currentPage = 1; // Reset to first page when rows per page changes
+    this.applyPagination();
+  }
+
+  protected goToPage(page: number): void {
+    if (page < 1 || page > this.totalPages) {
+      return;
+    }
+    this.currentPage = page;
+    this.applyPagination();
+  }
+
+  protected goToFirstPage(): void {
+    this.goToPage(1);
+  }
+
+  protected goToLastPage(): void {
+    this.goToPage(this.totalPages);
+  }
+
+  protected goToPreviousPage(): void {
+    this.goToPage(this.currentPage - 1);
+  }
+
+  protected goToNextPage(): void {
+    this.goToPage(this.currentPage + 1);
+  }
+
+  protected getPageNumbers(): number[] {
+    const pages: number[] = [];
+    for (let i = 1; i <= this.totalPages; i++) {
+      pages.push(i);
+    }
+    return pages;
   }
 
   protected loadServices(): void {
@@ -637,46 +672,62 @@ export class OrdersView implements OnInit {
     const activeFilter = this.filters.find(f => f.active);
     if (!activeFilter) {
       this.filteredOrders = [...this.allOrders];
-      this.orders = this.filteredOrders;
-      return;
+    } else {
+      switch (activeFilter.label) {
+        case 'All Orders':
+          this.filteredOrders = [...this.allOrders];
+          break;
+        case 'Tentative':
+          this.filteredOrders = this.allOrders.filter(order => {
+            // Filter by isTentative flag - need to check if this data is available
+            // For now, we'll check if the order has isTentative in the original data
+            return false; // Placeholder - needs actual data
+          });
+          break;
+        case 'Offered':
+          this.filteredOrders = this.allOrders.filter(order => {
+            const code = order.statusCode.toLowerCase();
+            return code === 'offered';
+          });
+          break;
+        case 'Requests':
+          this.filteredOrders = this.allOrders.filter(order => {
+            const code = order.statusCode.toLowerCase();
+            return code === 'requested';
+          });
+          break;
+        case 'Guide Changes':
+        case 'Problem Reports':
+        case 'Tour Reports':
+          // These filters need additional data/flags that aren't currently available
+          // For now, show no orders for these filters
+          this.filteredOrders = [];
+          break;
+        default:
+          this.filteredOrders = [...this.allOrders];
+      }
     }
 
-    switch (activeFilter.label) {
-      case 'All Orders':
-        this.filteredOrders = [...this.allOrders];
-        break;
-      case 'Tentative':
-        this.filteredOrders = this.allOrders.filter(order => {
-          // Filter by isTentative flag - need to check if this data is available
-          // For now, we'll check if the order has isTentative in the original data
-          return false; // Placeholder - needs actual data
-        });
-        break;
-      case 'Offered':
-        this.filteredOrders = this.allOrders.filter(order => {
-          const code = order.statusCode.toLowerCase();
-          return code === 'offered';
-        });
-        break;
-      case 'Requests':
-        this.filteredOrders = this.allOrders.filter(order => {
-          const code = order.statusCode.toLowerCase();
-          return code === 'requested';
-        });
-        break;
-      case 'Guide Changes':
-      case 'Problem Reports':
-      case 'Tour Reports':
-        // These filters need additional data/flags that aren't currently available
-        // For now, show no orders for these filters
-        this.filteredOrders = [];
-        break;
-      default:
-        this.filteredOrders = [...this.allOrders];
-    }
-
-    this.orders = this.filteredOrders;
+    // Reset to page 1 when filter changes
+    this.currentPage = 1;
+    this.applyPagination();
     this.updateTotals();
+  }
+
+  private applyPagination(): void {
+    this.totalPages = Math.ceil(this.filteredOrders.length / this.selectedRows) || 1;
+
+    // Ensure currentPage is valid
+    if (this.currentPage > this.totalPages) {
+      this.currentPage = this.totalPages;
+    }
+    if (this.currentPage < 1) {
+      this.currentPage = 1;
+    }
+
+    const startIndex = (this.currentPage - 1) * this.selectedRows;
+    const endIndex = startIndex + this.selectedRows;
+    this.orders = this.filteredOrders.slice(startIndex, endIndex);
   }
 
   private updateTotals(): void {

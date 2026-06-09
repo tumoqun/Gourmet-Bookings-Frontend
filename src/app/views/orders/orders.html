@@ -151,11 +151,12 @@
                     *ngFor="let special of order.special"
                     [src]="getSpecialRequestIcon(special)"
                     [alt]="special === 'vip' ? 'VIP' : special"
+                    [title]="formatSpecialRequestLabel(special)"
                     class="special-icon"
                   />
                 </span>
               </td>
-              <td><span class="tr {{ order.tr }}" aria-label="{{ order.tr }}"></span></td>
+              <td>-</td>
               <td><strong>&yen;{{ order.fee }}</strong></td>
               <td><span class="status {{ order.statusTone }}">{{ order.status }}</span></td>
               <td>
@@ -177,42 +178,48 @@
               </td>
             </tr>
           </tbody>
+          <tfoot class="table-tfoot">
+            <tr>
+              <td colspan="10">
+                <div style="display: flex; align-items: center; justify-content: flex-start; padding-right: 16px;">
+                  <div class="footer-left">
+                    <div class="rows-control">
+                      <span>Rows per page</span>
+                      <select [(ngModel)]="selectedRows" (ngModelChange)="onRowsChange($event)">
+                        <option [value]="5">5</option>
+                        <option [value]="10">10</option>
+                        <option [value]="15">15</option>
+                      </select>
+                    </div>
+                    <span class="records-count">{{ orders.length }} records</span>
+                  </div>
+                  <div class="pagination" aria-label="Pagination">
+                    <button class="page-edge first" type="button" aria-label="First page" (click)="goToFirstPage()" [disabled]="currentPage === 1"></button>
+                    <button class="page-edge previous" type="button" aria-label="Previous page" (click)="goToPreviousPage()" [disabled]="currentPage === 1"></button>
+                    <button *ngFor="let page of getPageNumbers()" type="button" [class.active]="page === currentPage" (click)="goToPage(page)">{{ page }}</button>
+                    <button class="page-edge next" type="button" aria-label="Next page" (click)="goToNextPage()" [disabled]="currentPage === totalPages"></button>
+                    <button class="page-edge last" type="button" aria-label="Last page" (click)="goToLastPage()" [disabled]="currentPage === totalPages"></button>
+                  </div>
+                </div>
+              </td>
+              <td style="padding-left:0">
+                <div class="summary guests">
+                  <span style="font-size: 0.75rem; color: #b9b4ac; font-weight:700; text-transform:uppercase; letter-spacing:0.05em; display:block;">Total Guests</span>
+                  <strong style="color: #1f2345; font-size: 1.05rem; display:block; margin-top:4px;">{{ totalAdults }} / {{ totalChildren }}</strong>
+                </div>
+              </td>
+              <td colspan="2"></td>
+              <td style="padding-left:0">
+                <div class="summary value">
+                  <span style="font-size: 0.75rem; color: #b9b4ac; font-weight:700; text-transform:uppercase; letter-spacing:0.05em; display:block;">Total Volume</span>
+                  <strong style="color: #1f2345; font-size: 1.05rem; display:block; margin-top:4px;">&yen;{{ formatCurrency(totalVolume) }}</strong>
+                </div>
+              </td>
+              <td colspan="3"></td>
+            </tr>
+          </tfoot>
         </table>
       </div>
-
-      <footer class="table-footer">
-        <div class="footer-left">
-          <div class="rows-control">
-            <span>Rows per page</span>
-            <select [(ngModel)]="selectedRows" (ngModelChange)="onRowsChange($event)">
-              <option [value]="100">100</option>
-              <option [value]="150">150</option>
-              <option [value]="200">200</option>
-            </select>
-          </div>
-          <span class="records-count">{{ orders.length }} records</span>
-        </div>
-
-        <div class="pagination" aria-label="Pagination">
-          <button class="page-edge first" type="button" aria-label="First page"></button>
-          <button class="page-edge previous" type="button" aria-label="Previous page"></button>
-          <button class="active" type="button">1</button>
-          <button type="button">2</button>
-          <button class="page-edge next" type="button" aria-label="Next page"></button>
-          <button class="page-edge last" type="button" aria-label="Last page"></button>
-        </div>
-
-        <div class="footer-right">
-          <div class="summary guests">
-            <span>Total Guests</span>
-            <strong>{{ totalAdults }} / {{ totalChildren }}</strong>
-          </div>
-          <div class="summary value">
-            <span>Total Volume</span>
-            <strong>&yen;{{ formatCurrency(totalVolume) }}</strong>
-          </div>
-        </div>
-      </footer>
     </section>
   </section>
 

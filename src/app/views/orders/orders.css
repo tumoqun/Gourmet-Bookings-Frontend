@@ -1833,6 +1833,10 @@ td strong {
     calc(100% - 21px) calc(50% - 3px);
 }
 
+.new-order-dialog select.has-value {
+  color: #5f6673;
+}
+
 .service-details .date-icon {
   top: 44px;
   right: 18px;

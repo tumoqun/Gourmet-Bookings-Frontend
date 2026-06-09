@@ -63,6 +63,25 @@ const mockAllotments = [
   },
 ];
 
+const mockReseller = { id: 1, name: 'Gourmet Travel', status: 'ACTIVE' };
+const mockContact = {
+  id: 1,
+  reseller: mockReseller,
+  name: 'Mina Sato',
+  email: 'mina@example.com',
+  isPrimary: true,
+};
+const mockAgent = {
+  id: 1,
+  reseller: mockReseller,
+  name: 'Yuki Tanaka',
+  email: 'yuki@example.com',
+};
+const mockDistanceBands = [
+  { id: 1, label: '<5km', sortOrder: 1, feeAmount: 1500 },
+  { id: 2, label: '5-10km', sortOrder: 2, feeAmount: 3000 },
+];
+
 describe('OrdersView', () => {
   let httpMock: HttpTestingController;
 
@@ -86,16 +105,133 @@ describe('OrdersView', () => {
     httpMock.expectOne('/api/services').flush(mockServices);
     httpMock.expectOne('/api/services/areas').flush([{ id: 1, code: 'TOKYO', name: 'Tokyo' }]);
     httpMock.expectOne('/api/services/service-types').flush([{ id: 1, code: 'DINING', name: 'Dining' }]);
-    httpMock.expectOne('/api/services/distance-bands').flush([]);
-    httpMock.expectOne('/api/resellers').flush([]);
-    httpMock.expectOne('/api/resellers/contacts').flush([]);
-    httpMock.expectOne('/api/resellers/agents').flush([]);
+    httpMock.expectOne('/api/services/distance-bands').flush(mockDistanceBands);
+    httpMock.expectOne('/api/resellers').flush([mockReseller]);
+    httpMock.expectOne('/api/resellers/contacts').flush([mockContact]);
+    httpMock.expectOne('/api/resellers/agents').flush([mockAgent]);
     httpMock.expectOne('/api/special-requests').flush([
       { id: 1, code: 'VIP', label: 'VIP' },
       { id: 2, code: 'BAG', label: 'Baggage' }
     ]);
     fixture.detectChanges();
     return fixture;
+  }
+
+  function openNewOrderDialog(fixture: ReturnType<typeof createFixture>) {
+    const compiled = fixture.nativeElement as HTMLElement;
+    const newBookingButton = compiled.querySelector('.new-booking') as HTMLButtonElement;
+    newBookingButton.click();
+    fixture.detectChanges();
+    return compiled;
+  }
+
+  function setInputValue(input: HTMLInputElement, value: string) {
+    input.value = value;
+    input.dispatchEvent(new Event('input'));
+  }
+
+  function getDialog(compiled: HTMLElement) {
+    return compiled.querySelector('.new-order-dialog') as HTMLElement;
+  }
+
+  function selectOptionByText(select: HTMLSelectElement, text: string) {
+    const index = Array.from(select.options).findIndex((option) => option.textContent?.trim() === text);
+    expect(index).toBeGreaterThan(-1);
+    select.selectedIndex = index;
+    select.dispatchEvent(new Event('change'));
+  }
+
+  function clickPrimaryAction(compiled: HTMLElement, fixture: ReturnType<typeof createFixture>) {
+    const requestButton = getDialog(compiled).querySelector('.request-order') as HTMLButtonElement;
+    requestButton.click();
+    fixture.detectChanges();
+    return requestButton;
+  }
+
+  function fillStepOne(compiled: HTMLElement, fixture: ReturnType<typeof createFixture>) {
+    const dialog = getDialog(compiled);
+    setInputValue(dialog.querySelector('input[placeholder="Enter Name"]') as HTMLInputElement, 'Alexander Pierce');
+    selectOptionByText(dialog.querySelector('#new-order-reseller') as HTMLSelectElement, mockReseller.name);
+    fixture.detectChanges();
+    selectOptionByText(dialog.querySelector('#new-order-agent') as HTMLSelectElement, mockAgent.name);
+    selectOptionByText(dialog.querySelector('select:not(#new-order-reseller):not(#new-order-agent)') as HTMLSelectElement, mockContact.name);
+    setInputValue(dialog.querySelector('input[type="email"][placeholder="Enter Email"]') as HTMLInputElement, mockContact.email);
+    setInputValue(dialog.querySelectorAll('input[type="email"][placeholder="Enter Email"]')[1] as HTMLInputElement, 'copy@example.com');
+    setInputValue(dialog.querySelectorAll('input[placeholder="Enter Reference Number"]')[0] as HTMLInputElement, 'REF-1');
+    setInputValue(dialog.querySelectorAll('input[placeholder="Enter Reference Number"]')[1] as HTMLInputElement, 'REF-2');
+    fixture.detectChanges();
+  }
+
+  function goToStepTwo(compiled: HTMLElement, fixture: ReturnType<typeof createFixture>) {
+    fillStepOne(compiled, fixture);
+    clickPrimaryAction(compiled, fixture);
+  }
+
+  function fillStepTwo(compiled: HTMLElement, fixture: ReturnType<typeof createFixture>) {
+    const dialog = getDialog(compiled);
+    const targetDateInput = dialog.querySelector('input[name="targetDate"]') as HTMLInputElement;
+    setInputValue(targetDateInput, '2026-06-01');
+    httpMock.expectOne('/api/allotments/date/2026-06-01').flush(mockAllotments);
+    fixture.detectChanges();
+
+    selectOptionByText(dialog.querySelector('select[name="selectedAreaId"]') as HTMLSelectElement, 'Tokyo');
+    selectOptionByText(dialog.querySelector('select[name="selectedServiceTypeId"]') as HTMLSelectElement, 'Dining');
+    fixture.detectChanges();
+
+    const selectButton = dialog.querySelector('.service-list-row button') as HTMLButtonElement;
+    selectButton.click();
+    httpMock.expectOne('/api/allotments/service/1/date/2026-06-01').flush(mockAllotments);
+    fixture.detectChanges();
+
+    const timeButton = dialog.querySelector('.service-time-options button:not(:disabled)') as HTMLButtonElement;
+    timeButton.click();
+    fixture.detectChanges();
+  }
+
+  function goToStepThree(compiled: HTMLElement, fixture: ReturnType<typeof createFixture>) {
+    goToStepTwo(compiled, fixture);
+    fillStepTwo(compiled, fixture);
+    clickPrimaryAction(compiled, fixture);
+  }
+
+  function fillStepThreeDropoff(compiled: HTMLElement, fixture: ReturnType<typeof createFixture>) {
+    const dialog = getDialog(compiled);
+    setInputValue(dialog.querySelector('input[name="voucherNumber"]') as HTMLInputElement, 'VOUCH-1');
+    setInputValue(dialog.querySelector('input[name="pickupLocation"]') as HTMLInputElement, 'Hotel lobby');
+    selectOptionByText(dialog.querySelector('select[name="pickupServiceTypeId"]') as HTMLSelectElement, 'Dining');
+    selectOptionByText(dialog.querySelector('select[name="pickupDistanceId"]') as HTMLSelectElement, '<5km');
+    setInputValue(dialog.querySelector('input[name="dropoffLocation"]') as HTMLInputElement, 'Station');
+    selectOptionByText(dialog.querySelector('select[name="dropoffServiceTypeId"]') as HTMLSelectElement, 'Dining');
+    selectOptionByText(dialog.querySelector('select[name="dropoffDistanceId"]') as HTMLSelectElement, '5-10km');
+    fixture.detectChanges();
+  }
+
+  function fillStepThreeHandoff(compiled: HTMLElement, fixture: ReturnType<typeof createFixture>) {
+    const dialog = getDialog(compiled);
+    setInputValue(dialog.querySelector('input[name="voucherNumber"]') as HTMLInputElement, 'VOUCH-1');
+    setInputValue(dialog.querySelector('input[name="pickupLocation"]') as HTMLInputElement, 'Hotel lobby');
+    selectOptionByText(dialog.querySelector('select[name="pickupServiceTypeId"]') as HTMLSelectElement, 'Dining');
+    selectOptionByText(dialog.querySelector('select[name="pickupDistanceId"]') as HTMLSelectElement, '<5km');
+    const handoffRadio = dialog.querySelectorAll('input[name="drop-service-type"]')[1] as HTMLInputElement;
+    handoffRadio.click();
+    fixture.detectChanges();
+    setInputValue(getDialog(compiled).querySelector('input[name="handoffText"]') as HTMLInputElement, 'Meet at the hotel lobby after confirmation');
+    fixture.detectChanges();
+  }
+
+  function goToStepFour(compiled: HTMLElement, fixture: ReturnType<typeof createFixture>) {
+    goToStepThree(compiled, fixture);
+    fillStepThreeDropoff(compiled, fixture);
+    clickPrimaryAction(compiled, fixture);
+  }
+
+  function fillStepFour(compiled: HTMLElement, fixture: ReturnType<typeof createFixture>) {
+    const dialog = getDialog(compiled);
+    setInputValue(dialog.querySelector('input[name="guestEmail"]') as HTMLInputElement, 'guest@example.com');
+    setInputValue(dialog.querySelector('input[name="dietaryRestrictions"]') as HTMLInputElement, 'No shellfish');
+    const specialButton = dialog.querySelector('.special-request-options button') as HTMLButtonElement;
+    specialButton.click();
+    fixture.detectChanges();
   }
 
   it('should create the view', () => {
@@ -134,24 +270,103 @@ describe('OrdersView', () => {
     expect(compiled.querySelector('[role="dialog"]')).toBeFalsy();
   });
 
+  it('should enable Next on step one only after all visible fields are filled', async () => {
+    const fixture = createFixture();
+    await fixture.whenStable();
+
+    const compiled = openNewOrderDialog(fixture);
+    let primaryButton = getDialog(compiled).querySelector('.request-order') as HTMLButtonElement;
+    expect(primaryButton.textContent?.trim()).toBe('Next');
+    expect(primaryButton.disabled).toBe(true);
+
+    fillStepOne(compiled, fixture);
+    primaryButton = getDialog(compiled).querySelector('.request-order') as HTMLButtonElement;
+    expect(primaryButton.disabled).toBe(false);
+
+    primaryButton.click();
+    fixture.detectChanges();
+
+    expect(getDialog(compiled).querySelector('#service-details-title')?.textContent).toContain('Service Details');
+    expect(httpMock.match('/api/orders').length).toBe(0);
+  });
+
+  it('should use Next on steps two and three before Request Order on step four', async () => {
+    const fixture = createFixture();
+    await fixture.whenStable();
+
+    const compiled = openNewOrderDialog(fixture);
+    goToStepTwo(compiled, fixture);
+
+    let primaryButton = getDialog(compiled).querySelector('.request-order') as HTMLButtonElement;
+    expect(primaryButton.textContent?.trim()).toBe('Next');
+    expect(primaryButton.disabled).toBe(true);
+
+    fillStepTwo(compiled, fixture);
+    primaryButton = getDialog(compiled).querySelector('.request-order') as HTMLButtonElement;
+    expect(primaryButton.disabled).toBe(false);
+    primaryButton.click();
+    fixture.detectChanges();
+
+    expect(getDialog(compiled).querySelector('#additional-services-title')?.textContent).toContain('Additional Services');
+    primaryButton = getDialog(compiled).querySelector('.request-order') as HTMLButtonElement;
+    expect(primaryButton.textContent?.trim()).toBe('Next');
+    expect(primaryButton.disabled).toBe(true);
+
+    fillStepThreeDropoff(compiled, fixture);
+    primaryButton = getDialog(compiled).querySelector('.request-order') as HTMLButtonElement;
+    expect(primaryButton.disabled).toBe(false);
+    primaryButton.click();
+    fixture.detectChanges();
+
+    primaryButton = getDialog(compiled).querySelector('.request-order') as HTMLButtonElement;
+    expect(getDialog(compiled).querySelector('#guest-details-title')?.textContent).toContain('Guest Details');
+    expect(primaryButton.textContent?.trim()).toBe('Request Order');
+    expect(primaryButton.disabled).toBe(true);
+    expect(httpMock.match('/api/orders').length).toBe(0);
+  });
+
+  it('should gate forward stepper navigation but allow going back', async () => {
+    const fixture = createFixture();
+    await fixture.whenStable();
+
+    const compiled = openNewOrderDialog(fixture);
+    const stepTwoButton = getDialog(compiled).querySelector('.order-stepper li:nth-child(2) button') as HTMLButtonElement;
+    const stepThreeButton = getDialog(compiled).querySelector('.order-stepper li:nth-child(3) button') as HTMLButtonElement;
+    const stepFourButton = getDialog(compiled).querySelector('.order-stepper li:nth-child(4) button') as HTMLButtonElement;
+
+    expect(stepTwoButton.disabled).toBe(true);
+    expect(stepThreeButton.disabled).toBe(true);
+    expect(stepFourButton.disabled).toBe(true);
+
+    fillStepOne(compiled, fixture);
+    fixture.detectChanges();
+    expect(stepTwoButton.disabled).toBe(false);
+    expect(stepThreeButton.disabled).toBe(true);
+
+    stepTwoButton.click();
+    fixture.detectChanges();
+    expect(getDialog(compiled).querySelector('#service-details-title')).toBeTruthy();
+
+    const stepOneButton = getDialog(compiled).querySelector('.order-stepper li:nth-child(1) button') as HTMLButtonElement;
+    expect(stepOneButton.disabled).toBe(false);
+    stepOneButton.click();
+    fixture.detectChanges();
+    expect(getDialog(compiled).querySelector('.new-order-form')).toBeTruthy();
+  });
+
   it('should show service details on step two of the new order dialog', async () => {
     const fixture = createFixture();
     await fixture.whenStable();
 
-    const compiled = fixture.nativeElement as HTMLElement;
-    const newBookingButton = compiled.querySelector('.new-booking') as HTMLButtonElement;
-    newBookingButton.click();
-    fixture.detectChanges();
-
-    const stepTwoButton = compiled.querySelector('.order-stepper li:nth-child(2) button') as HTMLButtonElement;
-    stepTwoButton.click();
-    fixture.detectChanges();
+    const compiled = openNewOrderDialog(fixture);
+    goToStepTwo(compiled, fixture);
     await fixture.whenStable();
 
-    expect(compiled.querySelector('#service-details-title')?.textContent).toContain('Service Details');
-    expect(compiled.querySelectorAll('.service-list-row').length).toBe(2);
+    const dialog = getDialog(compiled);
+    expect(dialog.querySelector('#service-details-title')?.textContent).toContain('Service Details');
+    expect(dialog.querySelectorAll('.service-list-row').length).toBe(2);
 
-    const eveningButton = Array.from(compiled.querySelectorAll('.time-slot-options button')).find(
+    const eveningButton = Array.from(dialog.querySelectorAll('.time-slot-options button')).find(
       (button) => button.textContent?.trim() === 'Evening',
     ) as HTMLButtonElement;
     eveningButton.click();
@@ -164,29 +379,23 @@ describe('OrdersView', () => {
     const fixture = createFixture();
     await fixture.whenStable();
 
-    const compiled = fixture.nativeElement as HTMLElement;
-    const newBookingButton = compiled.querySelector('.new-booking') as HTMLButtonElement;
-    newBookingButton.click();
-    fixture.detectChanges();
-
-    const stepTwoButton = compiled.querySelector('.order-stepper li:nth-child(2) button') as HTMLButtonElement;
-    stepTwoButton.click();
-    fixture.detectChanges();
+    const compiled = openNewOrderDialog(fixture);
+    goToStepTwo(compiled, fixture);
     await fixture.whenStable();
 
-    const targetDateInput = compiled.querySelector('input[name="targetDate"]') as HTMLInputElement;
-    targetDateInput.value = '2026-06-01';
-    targetDateInput.dispatchEvent(new Event('input'));
+    const dialog = getDialog(compiled);
+    const targetDateInput = dialog.querySelector('input[name="targetDate"]') as HTMLInputElement;
+    setInputValue(targetDateInput, '2026-06-01');
     httpMock.expectOne('/api/allotments/date/2026-06-01').flush(mockAllotments);
     fixture.detectChanges();
 
-    const selectButton = compiled.querySelector('.service-list-row button') as HTMLButtonElement;
+    const selectButton = dialog.querySelector('.service-list-row button') as HTMLButtonElement;
     selectButton.click();
     httpMock.expectOne('/api/allotments/service/1/date/2026-06-01').flush(mockAllotments);
     fixture.detectChanges();
     await fixture.whenStable();
 
-    const timeButtons = compiled.querySelectorAll('.service-time-options button');
+    const timeButtons = dialog.querySelectorAll('.service-time-options button');
     expect(timeButtons.length).toBe(2);
     expect(timeButtons[0].textContent).toContain('9:00AM');
     expect((timeButtons[1] as HTMLButtonElement).disabled).toBe(true);
@@ -196,29 +405,23 @@ describe('OrdersView', () => {
     const fixture = createFixture();
     await fixture.whenStable();
 
-    const compiled = fixture.nativeElement as HTMLElement;
-    const newBookingButton = compiled.querySelector('.new-booking') as HTMLButtonElement;
-    newBookingButton.click();
-    fixture.detectChanges();
-
-    const stepTwoButton = compiled.querySelector('.order-stepper li:nth-child(2) button') as HTMLButtonElement;
-    stepTwoButton.click();
-    fixture.detectChanges();
+    const compiled = openNewOrderDialog(fixture);
+    goToStepTwo(compiled, fixture);
     await fixture.whenStable();
 
-    const targetDateInput = compiled.querySelector('input[name="targetDate"]') as HTMLInputElement;
-    targetDateInput.value = '2026-06-01';
-    targetDateInput.dispatchEvent(new Event('input'));
+    const dialog = getDialog(compiled);
+    const targetDateInput = dialog.querySelector('input[name="targetDate"]') as HTMLInputElement;
+    setInputValue(targetDateInput, '2026-06-01');
     httpMock.expectOne('/api/allotments/date/2026-06-01').flush(mockAllotments);
     fixture.detectChanges();
 
-    const morningButton = Array.from(compiled.querySelectorAll('.time-slot-options button')).find(
+    const morningButton = Array.from(dialog.querySelectorAll('.time-slot-options button')).find(
       (button) => button.textContent?.trim() === 'Morning',
     ) as HTMLButtonElement;
     morningButton.click();
     fixture.detectChanges();
 
-    const serviceRows = compiled.querySelectorAll('.service-list-row');
+    const serviceRows = dialog.querySelectorAll('.service-list-row');
     expect(serviceRows.length).toBe(1);
     expect(serviceRows[0].textContent).toContain('The Drunken Tiger');
   });
@@ -227,58 +430,37 @@ describe('OrdersView', () => {
     const fixture = createFixture();
     await fixture.whenStable();
 
-    const compiled = fixture.nativeElement as HTMLElement;
-    const newBookingButton = compiled.querySelector('.new-booking') as HTMLButtonElement;
-    newBookingButton.click();
-    fixture.detectChanges();
-
-    const stepThreeButton = compiled.querySelector('.order-stepper li:nth-child(3) button') as HTMLButtonElement;
-    stepThreeButton.click();
-    fixture.detectChanges();
+    const compiled = openNewOrderDialog(fixture);
+    goToStepThree(compiled, fixture);
     await fixture.whenStable();
 
-    expect(compiled.querySelector('#additional-services-title')?.textContent).toContain('Additional Services');
-    expect(compiled.querySelector('input[placeholder="Enter Voucher Number"]')).toBeTruthy();
-    expect(compiled.querySelectorAll('.service-extra-card').length).toBe(2);
-    expect(compiled.querySelectorAll('.additional-fee').length).toBe(2);
+    const dialog = getDialog(compiled);
+    expect(dialog.querySelector('#additional-services-title')?.textContent).toContain('Additional Services');
+    expect(dialog.querySelector('input[placeholder="Enter Voucher Number"]')).toBeTruthy();
+    expect(dialog.querySelectorAll('.service-extra-card').length).toBe(2);
+    expect(dialog.querySelectorAll('.additional-fee').length).toBe(2);
 
-    const handoffRadio = compiled.querySelectorAll('input[name="drop-service-type"]')[1] as HTMLInputElement;
+    const handoffRadio = dialog.querySelectorAll('input[name="drop-service-type"]')[1] as HTMLInputElement;
     handoffRadio.click();
     fixture.detectChanges();
 
-    expect(compiled.textContent).toContain('The hand off location and time will be confirmed later');
-    expect(compiled.querySelector('input[placeholder="Enter Hand Off Details"]')).toBeTruthy();
-    expect(compiled.querySelector('input[placeholder="Enter Drop-off Location"]')).toBeFalsy();
-    expect(compiled.querySelectorAll('.service-extra-card')[1].querySelector('.additional-fee')).toBeFalsy();
+    expect(dialog.textContent).toContain('The hand off location and time will be confirmed later');
+    expect(dialog.querySelector('input[placeholder="Enter Hand Off Details"]')).toBeTruthy();
+    expect(dialog.querySelector('input[placeholder="Enter Drop-off Location"]')).toBeFalsy();
+    expect(dialog.querySelectorAll('.service-extra-card')[1].querySelector('.additional-fee')).toBeFalsy();
   });
 
   it('should submit hand off as a distinct additional service', async () => {
     const fixture = createFixture();
     await fixture.whenStable();
 
-    const compiled = fixture.nativeElement as HTMLElement;
-    const newBookingButton = compiled.querySelector('.new-booking') as HTMLButtonElement;
-    newBookingButton.click();
-    fixture.detectChanges();
+    const compiled = openNewOrderDialog(fixture);
+    goToStepThree(compiled, fixture);
+    fillStepThreeHandoff(compiled, fixture);
+    clickPrimaryAction(compiled, fixture);
+    fillStepFour(compiled, fixture);
 
-    const stepThreeButton = compiled.querySelector('.order-stepper li:nth-child(3) button') as HTMLButtonElement;
-    stepThreeButton.click();
-    fixture.detectChanges();
-
-    const handoffRadio = compiled.querySelectorAll('input[name="drop-service-type"]')[1] as HTMLInputElement;
-    handoffRadio.click();
-    fixture.detectChanges();
-
-    const handoffInput = compiled.querySelector('input[name="handoffText"]') as HTMLInputElement;
-    handoffInput.value = 'Meet at the hotel lobby after confirmation';
-    handoffInput.dispatchEvent(new Event('input'));
-    fixture.detectChanges();
-
-    const stepFourButton = compiled.querySelector('.order-stepper li:nth-child(4) button') as HTMLButtonElement;
-    stepFourButton.click();
-    fixture.detectChanges();
-
-    const requestButton = compiled.querySelector('.request-order') as HTMLButtonElement;
+    const requestButton = getDialog(compiled).querySelector('.request-order') as HTMLButtonElement;
     requestButton.click();
 
     const request = httpMock.expectOne('/api/orders');
@@ -297,45 +479,39 @@ describe('OrdersView', () => {
     const fixture = createFixture();
     await fixture.whenStable();
 
-    const compiled = fixture.nativeElement as HTMLElement;
-    const newBookingButton = compiled.querySelector('.new-booking') as HTMLButtonElement;
-    newBookingButton.click();
-    fixture.detectChanges();
-
-    const stepFourButton = compiled.querySelector('.order-stepper li:nth-child(4) button') as HTMLButtonElement;
-    stepFourButton.click();
-    fixture.detectChanges();
+    const compiled = openNewOrderDialog(fixture);
+    goToStepFour(compiled, fixture);
     await fixture.whenStable();
 
-    expect(compiled.querySelector('#guest-details-title')?.textContent).toContain('Guest Details');
-    expect(compiled.querySelector('input[placeholder="Enter Email"]')).toBeTruthy();
-    expect(compiled.querySelectorAll('.guest-counter').length).toBe(2);
-    expect(compiled.querySelectorAll('.special-request-options button').length).toBe(2);
+    const dialog = getDialog(compiled);
+    expect(dialog.querySelector('#guest-details-title')?.textContent).toContain('Guest Details');
+    expect(dialog.querySelector('input[placeholder="Enter Email"]')).toBeTruthy();
+    expect(dialog.querySelectorAll('.guest-counter').length).toBe(2);
+    expect(dialog.querySelectorAll('.special-request-options button').length).toBe(2);
 
-    const requestButton = compiled.querySelector('.request-order') as HTMLButtonElement;
+    const requestButton = dialog.querySelector('.request-order') as HTMLButtonElement;
+    expect(requestButton.textContent?.trim()).toBe('Request Order');
+    expect(requestButton.disabled).toBe(true);
+
+    fillStepFour(compiled, fixture);
     expect(requestButton.disabled).toBe(false);
 
-    const increaseAdultsButton = compiled.querySelector('[aria-label="Increase adults"]') as HTMLButtonElement;
+    const increaseAdultsButton = dialog.querySelector('[aria-label="Increase adults"]') as HTMLButtonElement;
     increaseAdultsButton.click();
     fixture.detectChanges();
 
-    expect(compiled.querySelector('.guest-counter strong')?.textContent?.trim()).toBe('03');
+    expect(dialog.querySelector('.guest-counter strong')?.textContent?.trim()).toBe('03');
   });
 
   it('should hide the new order dialog after creating an order successfully', async () => {
     const fixture = createFixture();
     await fixture.whenStable();
 
-    const compiled = fixture.nativeElement as HTMLElement;
-    const newBookingButton = compiled.querySelector('.new-booking') as HTMLButtonElement;
-    newBookingButton.click();
-    fixture.detectChanges();
+    const compiled = openNewOrderDialog(fixture);
+    goToStepFour(compiled, fixture);
+    fillStepFour(compiled, fixture);
 
-    const stepFourButton = compiled.querySelector('.order-stepper li:nth-child(4) button') as HTMLButtonElement;
-    stepFourButton.click();
-    fixture.detectChanges();
-
-    const requestButton = compiled.querySelector('.request-order') as HTMLButtonElement;
+    const requestButton = getDialog(compiled).querySelector('.request-order') as HTMLButtonElement;
     requestButton.click();
 
     httpMock.expectOne('/api/orders').flush(mockOrders[0]);

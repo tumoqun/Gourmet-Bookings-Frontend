@@ -468,11 +468,114 @@ export class OrdersView implements OnInit {
   }
 
   protected setNewOrderStep(step: number): void {
-    if (step > 4) {
+    if (step < 1 || step > 4 || !this.canAccessNewOrderStep(step)) {
       return;
     }
 
     this.currentNewOrderStep = step;
+  }
+
+  protected canAccessNewOrderStep(step: number): boolean {
+    if (step <= this.currentNewOrderStep) {
+      return true;
+    }
+
+    for (let currentStep = 1; currentStep < step; currentStep += 1) {
+      if (!this.isNewOrderStepValid(currentStep)) {
+        return false;
+      }
+    }
+
+    return true;
+  }
+
+  protected getNewOrderPrimaryActionLabel(): string {
+    return this.currentNewOrderStep === 4 ? 'Request Order' : 'Next';
+  }
+
+  protected handleNewOrderPrimaryAction(): void {
+    if (!this.isCurrentNewOrderStepValid()) {
+      return;
+    }
+
+    if (this.currentNewOrderStep < 4) {
+      this.currentNewOrderStep += 1;
+      return;
+    }
+
+    this.createOrder();
+  }
+
+  protected isCurrentNewOrderStepValid(): boolean {
+    return this.isNewOrderStepValid(this.currentNewOrderStep);
+  }
+
+  private isNewOrderStepValid(step: number): boolean {
+    switch (step) {
+      case 1:
+        return this.isStepOneValid();
+      case 2:
+        return this.isStepTwoValid();
+      case 3:
+        return this.isStepThreeValid();
+      case 4:
+        return this.isStepFourValid();
+      default:
+        return false;
+    }
+  }
+
+  private isStepOneValid(): boolean {
+    return [
+      this.createdByNameNewOrder,
+      this.picEmailNewOrder,
+      this.copyEmailNewOrder,
+      this.ref1NewOrder,
+      this.ref2NewOrder,
+    ].every((value) => this.hasValue(value))
+      && this.selectedResellerId != null
+      && this.selectedAgentId != null
+      && this.selectedContactId != null;
+  }
+
+  private isStepTwoValid(): boolean {
+    return this.hasValue(this.targetDateNewOrder)
+      && this.selectedAreaId != null
+      && this.selectedServiceTypeId != null
+      && this.selectedService != null
+      && this.selectedAllotmentId != null
+      && this.hasValue(this.startTimeNewOrder);
+  }
+
+  private isStepThreeValid(): boolean {
+    const pickupValid = this.hasValue(this.voucherNumberNewOrder)
+      && this.hasValue(this.pickupLocationNewOrder)
+      && this.pickupServiceTypeId != null
+      && this.pickupDistanceId != null;
+
+    if (!pickupValid) {
+      return false;
+    }
+
+    if (this.dropoffSelected === 'HAND') {
+      return this.hasValue(this.handoffTextNewOrder);
+    }
+
+    return this.hasValue(this.dropoffLocationNewOrder)
+      && this.dropoffServiceTypeId != null
+      && this.dropoffDistanceId != null;
+  }
+
+  private isStepFourValid(): boolean {
+    return this.hasValue(this.guestEmailNewOrder)
+      && this.adultGuests >= 0
+      && this.childGuests >= 0
+      && this.hasValue(this.dietaryRestrictionsNewOrder)
+      && this.selectedSpecialRequestIds.length > 0;
+  }
+
+  private hasValue(value?: string): boolean {
+    return !!value?.trim();
   }
 
   protected adjustGuestCount(type: 'adult' | 'child', change: number): void {

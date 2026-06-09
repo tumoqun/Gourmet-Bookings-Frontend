@@ -236,16 +236,16 @@
 
       <ol class="order-stepper step-{{ currentNewOrderStep }}" aria-label="New order progress">
         <li [class.active]="currentNewOrderStep === 1" [class.completed]="currentNewOrderStep > 1">
-          <button type="button" (click)="setNewOrderStep(1)">1</button>
+          <button type="button" [disabled]="!canAccessNewOrderStep(1)" (click)="setNewOrderStep(1)">1</button>
         </li>
         <li [class.active]="currentNewOrderStep === 2" [class.completed]="currentNewOrderStep > 2">
-          <button type="button" (click)="setNewOrderStep(2)">2</button>
+          <button type="button" [disabled]="!canAccessNewOrderStep(2)" (click)="setNewOrderStep(2)">2</button>
         </li>
         <li [class.active]="currentNewOrderStep === 3" [class.completed]="currentNewOrderStep > 3">
-          <button type="button" (click)="setNewOrderStep(3)">3</button>
+          <button type="button" [disabled]="!canAccessNewOrderStep(3)" (click)="setNewOrderStep(3)">3</button>
         </li>
         <li [class.active]="currentNewOrderStep === 4">
-          <button type="button" (click)="setNewOrderStep(4)">4</button>
+          <button type="button" [disabled]="!canAccessNewOrderStep(4)" (click)="setNewOrderStep(4)">4</button>
         </li>
       </ol>
 
@@ -269,7 +269,12 @@
                 <input type="checkbox" [checked]="isTentativeNewOrder" (change)="isTentativeNewOrder = $any($event.target).checked" />
               </label>
             </div>
-            <select id="new-order-reseller" (change)="onResellerChange($event)">
+            <select
+              id="new-order-reseller"
+              [class.has-value]="selectedResellerId"
+              (change)="onResellerChange($event)"
+              [value]="selectedResellerId || ''"
+            >
               <option value="">Select Reseller</option>
               <option *ngFor="let reseller of resellers" [value]="reseller.id">{{ reseller.name }}</option>
             </select>
@@ -280,7 +285,12 @@
               <label for="new-order-agent">Original Agent</label>
               <a href="/">Add New</a>
             </div>
-            <select id="new-order-agent" (change)="onAgentChange($event)" [value]="selectedAgentId || ''">
+            <select
+              id="new-order-agent"
+              [class.has-value]="selectedAgentId"
+              (change)="onAgentChange($event)"
+              [value]="selectedAgentId || ''"
+            >
               <option value="">Select Agent Name</option>
               <option *ngFor="let agent of filteredAgents" [value]="agent.id">{{ agent.name }}</option>
             </select>
@@ -288,7 +298,11 @@
 
           <label class="modal-field">
             <span>Person In Charge (PIC)</span>
-            <select (change)="onContactChange($event)" [value]="selectedContactId || ''">
+            <select
+              [class.has-value]="selectedContactId"
+              (change)="onContactChange($event)"
+              [value]="selectedContactId || ''"
+            >
               <option value="">Select Person In Charge</option>
               <option *ngFor="let contact of filteredContacts" [value]="contact.id">{{ contact.name }}</option>
             </select>
@@ -515,10 +529,10 @@
         <button
           class="request-order"
           type="button"
-          [disabled]="currentNewOrderStep !== 4 || isLoading"
-          (click)="createOrder()"
+          [disabled]="isLoading || !isCurrentNewOrderStepValid()"
+          (click)="handleNewOrderPrimaryAction()"
         >
-          Request Order
+          {{ getNewOrderPrimaryActionLabel() }}
         </button>
         <button class="cancel-order" type="button" (click)="closeNewOrderModal()">Cancel</button>
       </footer>

@@ -32,8 +32,9 @@
       <div class="filter-grid top">
         <label>
           <span>Reseller</span>
-          <select aria-label="Reseller">
-            <option>Reseller</option>
+          <select aria-label="Reseller" [(ngModel)]="selectedFilterReseller">
+            <option value="">Reseller</option>
+            <option *ngFor="let reseller of resellerOptions" [value]="reseller">{{ reseller }}</option>
           </select>
         </label>
         <label>
@@ -44,43 +45,106 @@
         </label>
         <label>
           <span>Person In Charge</span>
-          <select aria-label="Person In Charge">
-            <option>Person In Charge</option>
+          <select aria-label="Person In Charge" [(ngModel)]="selectedFilterPic">
+            <option value="">Person In Charge</option>
+            <option *ngFor="let pic of picOptions" [value]="pic">{{ pic }}</option>
           </select>
         </label>
         <label>
           <span>Service</span>
-          <select aria-label="Service">
-            <option>Service</option>
+          <select aria-label="Service" [(ngModel)]="selectedFilterService">
+            <option value="">Service</option>
+            <option *ngFor="let service of serviceOptions" [value]="service">{{ service }}</option>
           </select>
         </label>
         <label>
-          <span>All Statuses</span>
-          <select aria-label="All Statuses">
-            <option>All Statuses</option>
+          <span>Status</span>
+          <select aria-label="Status" [(ngModel)]="selectedFilterStatus">
+            <option *ngFor="let option of statusOptions" [value]="option.code">{{ option.label }}</option>
           </select>
         </label>
       </div>
 
       <div class="filter-grid bottom">
-        <label class="date-field">
+        <label class="date-field" (click)="openDateCalendar('requested', $event)">
           <span>Requested Date</span>
-          <input type="text" placeholder="Requested Date" aria-label="Requested Date" />
+          <input
+            type="text"
+            placeholder="Requested Date"
+            aria-label="Requested Date"
+            [(ngModel)]="selectedFilterRequestedDate"
+            readonly
+          />
           <img class="date-icon" src="/ui-icons/date.png" alt="Date icon" />
+          <div class="calendar-popover" *ngIf="activeCalendarField === 'requested'">
+            <div class="calendar-header">
+              <button type="button" (click)="changeCalendarMonth(-1, $event)">&lt;</button>
+              <span>{{ calendarMonthNames[calendarMonth] }} {{ calendarYear }}</span>
+              <button type="button" (click)="changeCalendarMonth(1, $event)">&gt;</button>
+            </div>
+            <div class="calendar-weekdays">
+              <span *ngFor="let day of calendarWeekdays">{{ day }}</span>
+            </div>
+            <div class="calendar-dates">
+              <button
+                type="button"
+                *ngFor="let date of buildCalendarDays(calendarYear, calendarMonth)"
+                [disabled]="date === 0"
+                [class.selected]="isSelectedCalendarDate('requested', date)"
+                (click)="selectCalendarDate('requested', date, $event)"
+              >
+                {{ date > 0 ? date : '' }}
+              </button>
+            </div>
+          </div>
         </label>
-        <label class="date-field">
+        <label class="date-field" (click)="openDateCalendar('offered', $event)">
           <span>Offered Date</span>
-          <input type="text" placeholder="Offered Date" aria-label="Offered Date" />
+          <input
+            type="text"
+            placeholder="Offered Date"
+            aria-label="Offered Date"
+            [(ngModel)]="selectedFilterOfferedDate"
+            readonly
+          />
           <img class="date-icon" src="/ui-icons/date.png" alt="Date icon" />
+          <div class="calendar-popover" *ngIf="activeCalendarField === 'offered'">
+            <div class="calendar-header">
+              <button type="button" (click)="changeCalendarMonth(-1, $event)">&lt;</button>
+              <span>{{ calendarMonthNames[calendarMonth] }} {{ calendarYear }}</span>
+              <button type="button" (click)="changeCalendarMonth(1, $event)">&gt;</button>
+            </div>
+            <div class="calendar-weekdays">
+              <span *ngFor="let day of calendarWeekdays">{{ day }}</span>
+            </div>
+            <div class="calendar-dates">
+              <button
+                type="button"
+                *ngFor="let date of buildCalendarDays(calendarYear, calendarMonth)"
+                [disabled]="date === 0"
+                [class.selected]="isSelectedCalendarDate('offered', date)"
+                (click)="selectCalendarDate('offered', date, $event)"
+              >
+                {{ date > 0 ? date : '' }}
+              </button>
+            </div>
+          </div>
         </label>
         <div class="filter-toggles">
-          <button class="private-toggle" type="button">Private</button>
+          <button
+            class="private-toggle"
+            type="button"
+            [class.active]="filterPrivateOnly"
+            (click)="togglePrivateFilter()"
+          >
+            Private
+          </button>
           <button class="allotment-toggle" type="button" aria-label="Allotment Only">
             <span class="checkbox-indicator" aria-hidden="true"></span>
             <span>Allotment Only</span>
           </button>
-          <button class="apply" type="button">Apply</button>
-          <button class="clear" type="button">Clear Filters</button>
+          <button class="apply" type="button" (click)="applySearchFilters()">Apply</button>
+          <button class="clear" type="button" (click)="clearSearchFilters()">Clear Filters</button>
         </div>
       </div>
     </section>

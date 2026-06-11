@@ -21,11 +21,14 @@ import { CapabilityService } from '../../services/capability.service';
 
 interface OrderRow {
   id?: number;
+  resellerId?: number;
   reseller: string;
   pic: string;
   ref1: string;
   ref2: string;
   requestedDate: string;
+  requestedAtRaw?: string;
+  offeredDateRaw?: string;
   area: string;
   service: string[];
   type: string;
@@ -39,6 +42,7 @@ interface OrderRow {
   statusTone: string;
   statusCode: string;
   guide: string;
+  isPrivate?: boolean;
 }
 
 interface StatusFilter {
@@ -109,6 +113,24 @@ export class OrdersView implements OnInit {
   protected agents: Agent[] = [];
   protected filteredContacts: ResellerContact[] = [];
   protected filteredAgents: Agent[] = [];
+
+  protected selectedFilterReseller = '';
+  protected selectedFilterPic = '';
+  protected selectedFilterService = '';
+  protected selectedFilterStatus = 'all';
+  protected selectedFilterRequestedDate = '';
+  protected selectedFilterOfferedDate = '';
+  protected filterPrivateOnly = false;
+  protected activeCalendarField: 'requested' | 'offered' | null = null;
+  protected calendarMonth = new Date().getMonth();
+  protected calendarYear = new Date().getFullYear();
+  protected calendarMonthNames = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+  protected calendarWeekdays = ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'];
+
+  protected resellerOptions: string[] = [];
+  protected picOptions: string[] = [];
+  protected serviceOptions: string[] = [];
+  protected statusOptions: { code: string; label: string }[] = [{ code: 'all', label: 'All Statuses' }];
 
   protected selectedResellerId?: number;
   protected selectedContactId?: number;
@@ -187,7 +209,8 @@ export class OrdersView implements OnInit {
       next: (orders) => {
         Promise.resolve().then(() => {
           this.allOrders = orders.map((order) => this.mapOrderToRow(order));
-          this.applyActiveFilter();
+          this.buildFilterOptions();
+          this.applySearchFilters();
           this.updateFilterCounts();
           this.isLoading = false;
           this.cdr.detectChanges();
@@ -199,12 +222,210 @@ export class OrdersView implements OnInit {
           this.allOrders = [];
           this.orders = [];
           this.filteredOrders = [];
+          this.buildFilterOptions();
           this.updateFilterCounts();
           this.isLoading = false;
           this.cdr.detectChanges();
         });
       },
     });
+  }
+
+  private buildFilterOptions(): void {
+    const resellers = new Set<string>();
+    const pics = new Set<string>();
+    const services = new Set<string>();
+    const statuses = new Map<string, string>();
+
+    this.allOrders.forEach((order) => {
+      if (order.reseller) {
+        resellers.add(order.reseller);
+      }
+      if (order.pic) {
+        pics.add(order.pic);
+      }
+      order.service.forEach((service) => {
+        const normalizedService = service.startsWith('[modified]') ? service.slice(10) : service;
+        services.add(normalizedService);
+      });
+      if (order.statusCode) {
+        const code = order.statusCode.toLowerCase();
+        statuses.set(code, order.status || order.statusCode);
+      }
+    });
+
+    this.resellerOptions = [...resellers].sort((a, b) => a.localeCompare(b));
+    this.picOptions = [...pics].sort((a, b) => a.localeCompare(b));
+    this.serviceOptions = [...services].sort((a, b) => a.localeCompare(b));
+    this.statusOptions = [
+      { code: 'all', label: 'All Statuses' },
+      ...Array.from(statuses.entries()).map(([code, label]) => ({ code, label })),
+    ];
+  }
+
+  protected applySearchFilters(): void {
+    let filtered = [...this.allOrders];
+    const activeFilter = this.filters.find((filter) => filter.active);
+
+    if (activeFilter && activeFilter.label !== 'All Orders') {
+      filtered = filtered.filter((order) => {
+        switch (activeFilter.label) {
+          case 'Tentative':
+            return false;
+          case 'Offered':
+            return order.statusCode.toLowerCase() === 'offered';
+          case 'Requests':
+            return order.statusCode.toLowerCase() === 'requested';
+          case 'Guide Changes':
+          case 'Problem Reports':
+          case 'Tour Reports':
+            return false;
+          default:
+            return true;
+        }
+      });
+    }
+
+    if (this.selectedFilterReseller) {
+      filtered = filtered.filter((order) => order.reseller === this.selectedFilterReseller);
+    }
+
+    if (this.selectedFilterPic) {
+      filtered = filtered.filter((order) => order.pic === this.selectedFilterPic);
+    }
+
+    if (this.selectedFilterService) {
+      filtered = filtered.filter((order) =>
+        order.service.some((service) => {
+          const normalizedService = service.startsWith('[modified]') ? service.slice(10) : service;
+          return normalizedService === this.selectedFilterService;
+        }),
+      );
+    }
+
+    if (this.selectedFilterStatus && this.selectedFilterStatus !== 'all') {
+      filtered = filtered.filter(
+        (order) => order.statusCode.toLowerCase() === this.selectedFilterStatus.toLowerCase(),
+      );
+    }
+
+    if (this.selectedFilterRequestedDate) {
+      filtered = filtered.filter((order) =>
+        this.matchesDate(order.requestedAtRaw, this.selectedFilterRequestedDate),
+      );
+    }
+
+    if (this.selectedFilterOfferedDate) {
+      filtered = filtered.filter((order) =>
+        this.matchesDate(order.offeredDateRaw, this.selectedFilterOfferedDate),
+      );
+    }
+
+    if (this.filterPrivateOnly) {
+      filtered = filtered.filter((order) => order.type === "P");
+    }
+
+    this.filteredOrders = filtered;
+    this.currentPage = 1;
+    this.applyPagination();
+    this.updateTotals();
+  }
+
+  private matchesDate(rawValue: string | undefined, filterValue: string): boolean {
+    if (!rawValue) {
+      return false;
+    }
+
+    const rawDate = rawValue.substring(0, 10);
+    const normalizedFilter = filterValue.trim();
+    return rawDate === normalizedFilter;
+  }
+
+  protected clearSearchFilters(): void {
+    this.selectedFilterReseller = '';
+    this.selectedFilterPic = '';
+    this.selectedFilterService = '';
+    this.selectedFilterStatus = 'all';
+    this.selectedFilterRequestedDate = '';
+    this.selectedFilterOfferedDate = '';
+    this.filterPrivateOnly = false;
+    this.activeCalendarField = null;
+    this.applySearchFilters();
+  }
+
+  protected openDateCalendar(field: 'requested' | 'offered', event: MouseEvent): void {
+    event.stopPropagation();
+    if (this.activeCalendarField === field) {
+      this.activeCalendarField = null;
+      return;
+    }
+
+    this.activeCalendarField = field;
+    const selected = field === 'requested' ? this.selectedFilterRequestedDate : this.selectedFilterOfferedDate;
+    if (selected) {
+      const [year, month] = selected.split('-').map(Number);
+      if (!Number.isNaN(year) && !Number.isNaN(month)) {
+        this.calendarYear = year;
+        this.calendarMonth = month - 1;
+      }
+    }
+  }
+
+  protected changeCalendarMonth(monthDelta: number, event: MouseEvent): void {
+    event.stopPropagation();
+    const newMonth = this.calendarMonth + monthDelta;
+    if (newMonth < 0) {
+      this.calendarMonth = 11;
+      this.calendarYear -= 1;
+    } else if (newMonth > 11) {
+      this.calendarMonth = 0;
+      this.calendarYear += 1;
+    } else {
+      this.calendarMonth = newMonth;
+    }
+  }
+
+  protected buildCalendarDays(year: number, month: number): number[] {
+    const firstDay = new Date(year, month, 1).getDay();
+    const length = new Date(year, month + 1, 0).getDate();
+    const days: number[] = [];
+    for (let i = 0; i < firstDay; i++) {
+      days.push(0);
+    }
+    for (let day = 1; day <= length; day++) {
+      days.push(day);
+    }
+    while (days.length % 7 !== 0) {
+      days.push(0);
+    }
+    return days;
+  }
+
+  protected selectCalendarDate(field: 'requested' | 'offered', date: number, event: MouseEvent): void {
+    event.stopPropagation();
+    if (date <= 0) {
+      return;
+    }
+    const formatted = `${this.calendarYear.toString().padStart(4, '0')}-${(this.calendarMonth + 1).toString().padStart(2, '0')}-${date.toString().padStart(2, '0')}`;
+    if (field === 'requested') {
+      this.selectedFilterRequestedDate = formatted;
+    } else {
+      this.selectedFilterOfferedDate = formatted;
+    }
+    this.activeCalendarField = null;
+  }
+
+  protected isSelectedCalendarDate(field: 'requested' | 'offered', date: number): boolean {
+    if (date <= 0) {
+      return false;
+    }
+    const selected = field === 'requested' ? this.selectedFilterRequestedDate : this.selectedFilterOfferedDate;
+    return selected === `${this.calendarYear.toString().padStart(4, '0')}-${(this.calendarMonth + 1).toString().padStart(2, '0')}-${date.toString().padStart(2, '0')}`;
+  }
+
+  protected togglePrivateFilter(): void {
+    this.filterPrivateOnly = !this.filterPrivateOnly;
+    this.applySearchFilters();
   }
 
   protected onRowsChange(value: number): void {
@@ -774,7 +995,7 @@ export class OrdersView implements OnInit {
       ...filter,
       active: filter.label === filterLabel,
     }));
-    this.applyActiveFilter();
+    this.applySearchFilters();
   }
 
   private applyActiveFilter(): void {
@@ -787,11 +1008,7 @@ export class OrdersView implements OnInit {
           this.filteredOrders = [...this.allOrders];
           break;
         case 'Tentative':
-          this.filteredOrders = this.allOrders.filter(order => {
-            // Filter by isTentative flag - need to check if this data is available
-            // For now, we'll check if the order has isTentative in the original data
-            return false; // Placeholder - needs actual data
-          });
+          this.filteredOrders = this.allOrders.filter(order => false);
           break;
         case 'Offered':
           this.filteredOrders = this.allOrders.filter(order => {
@@ -808,8 +1025,6 @@ export class OrdersView implements OnInit {
         case 'Guide Changes':
         case 'Problem Reports':
         case 'Tour Reports':
-          // These filters need additional data/flags that aren't currently available
-          // For now, show no orders for these filters
           this.filteredOrders = [];
           break;
         default:
@@ -817,7 +1032,6 @@ export class OrdersView implements OnInit {
       }
     }
 
-    // Reset to page 1 when filter changes
     this.currentPage = 1;
     this.applyPagination();
     this.updateTotals();
@@ -1002,11 +1216,14 @@ export class OrdersView implements OnInit {
 
   @HostListener('document:click', ['$event'])
   onDocumentClick(event: Event): void {
-    if (this.actionPopupOpen) {
-      const target = event.target as HTMLElement;
-      if (!target.closest('.menu') && !target.closest('.more-action')) {
-        this.closeActionPopup();
-      }
+    const target = event.target as HTMLElement;
+
+    if (this.actionPopupOpen && !target.closest('.menu') && !target.closest('.more-action')) {
+      this.closeActionPopup();
+    }
+
+    if (this.activeCalendarField && !target.closest('.calendar-popover') && !target.closest('.date-field')) {
+      this.activeCalendarField = null;
     }
   }
 
@@ -1268,6 +1485,8 @@ export class OrdersView implements OnInit {
       ref1: order.ref1 ?? order.orderNumber,
       ref2: order.ref2 ?? '',
       requestedDate: this.formatDate(order.requestedAt ?? order.createdAt),
+      requestedAtRaw: order.requestedAt ?? order.createdAt,
+      offeredDateRaw: order.submittedAt ?? order.updatedAt ?? order.createdAt,
       area: orderServices[0]?.area?.code ?? '-',
       service: orderServices.length
         ? orderServices.map((os) => {

@@ -361,10 +361,10 @@
           <section class="time-slots-card" aria-label="Available time slots">
             <div class="time-slots-header">
               <span>Available Time Slots</span>
-              <span class="private-badge">
-                <span class="private-label">Private</span>
-                <img class="private-icon" src="/ui-icons/person.png" alt="" aria-hidden="true" />
-              </span>
+              <button type="button" class="private-badge" [class.group]="!isPrivateNewOrder" (click)="togglePrivateGroup()">
+                <span class="private-label">{{ isPrivateNewOrder ? 'Private' : 'Group' }}</span>
+                <img class="private-icon" [src]="isPrivateNewOrder ? '/ui-icons/person.png' : '/ui-icons/group.png'" alt="" aria-hidden="true" />
+              </button>
             </div>
 
             <div class="time-slot-options" role="group" aria-label="Available time slot filters">

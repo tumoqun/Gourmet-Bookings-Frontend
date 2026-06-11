@@ -136,6 +136,7 @@ export class OrdersView implements OnInit {
   protected selectedAreaId?: number;
   protected selectedServiceTypeId?: number;
   protected dropoffSelected: 'DROP' | 'HAND' = 'DROP';
+  protected isPrivateNewOrder = true;
   protected ref1NewOrder = '';
   protected ref2NewOrder = '';
 
@@ -438,6 +439,7 @@ export class OrdersView implements OnInit {
     this.dropoffDistanceId = undefined;
     this.handoffTextNewOrder = '';
     this.dropoffSelected = 'DROP';
+    this.isPrivateNewOrder = true;
     this.ref1NewOrder = '';
     this.ref2NewOrder = '';
     this.selectedResellerId = undefined;
@@ -634,6 +636,10 @@ export class OrdersView implements OnInit {
     this.selectedAllotmentId = undefined;
     this.serviceAllotments = [];
     this.applyServiceFilters();
+  }
+
+  protected togglePrivateGroup(): void {
+    this.isPrivateNewOrder = !this.isPrivateNewOrder;
   }
 
   private applyServiceFilters(): void {

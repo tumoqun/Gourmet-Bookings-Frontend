@@ -1875,6 +1875,14 @@ td strong {
   color: #c48f36;
   background: #ffffff;
   line-height: 1;
+  cursor: pointer;
+  transition: border-color 0.25s, color 0.25s, background 0.25s;
+}
+
+.private-badge.group {
+  border-color: #3b7dd8;
+  color: #3b7dd8;
+  background: #eef4fd;
 }
 
 .private-label {
@@ -1887,6 +1895,11 @@ td strong {
   font-weight: 400;
   letter-spacing: 0;
   text-transform: uppercase;
+  transition: border-color 0.25s;
+}
+
+.private-badge.group .private-label {
+  border-right-color: #3b7dd8;
 }
 
 .private-icon {

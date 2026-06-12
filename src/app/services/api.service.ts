@@ -101,6 +101,7 @@ export interface OrderAdditionalService {
   isEnabled: boolean;
   location?: string;
   handoffText?: string;
+  vehicleType?: string;
   serviceType?: ServiceType;
   distanceBand?: DistanceBand;
   suggestedTime?: string;
@@ -203,6 +204,7 @@ export interface OrderAdditionalServiceRequest {
   isEnabled?: boolean;
   location?: string;
   handoffText?: string;
+  vehicleType?: string;
   serviceTypeId?: number;
   distanceBandId?: number;
   suggestedTime?: string;

@@ -17,6 +17,7 @@ import {
   SpecialRequestType,
   DistanceBand,
 } from '../../services/api.service';
+import { AuthService } from '../../services/auth.service';
 import { CapabilityService } from '../../services/capability.service';
 
 interface OrderRow {
@@ -107,6 +108,7 @@ export class OrdersView implements OnInit {
   protected areas: Area[] = [];
   protected serviceTypes: ServiceType[] = [];
   protected distanceBands: DistanceBand[] = [];
+  protected vehicleTypes = ['Taxi', 'Hired Car', 'Grabbike'];
 
   protected resellers: Reseller[] = [];
   protected contacts: ResellerContact[] = [];
@@ -145,11 +147,12 @@ export class OrdersView implements OnInit {
   protected startTimeNewOrder = '';
   protected selectedAllotmentId?: number;
   protected voucherNumberNewOrder = '';
+  protected pickupEnabled = false;
   protected pickupLocationNewOrder = '';
-  protected pickupServiceTypeId?: number;
+  protected pickupVehicleType?: string;
   protected pickupDistanceId?: number;
   protected dropoffLocationNewOrder = '';
-  protected dropoffServiceTypeId?: number;
+  protected dropoffVehicleType?: string;
   protected dropoffDistanceId?: number;
   protected dietaryRestrictionsNewOrder = '';
   protected specialRequestTypes: SpecialRequestType[] = [];
@@ -180,6 +183,7 @@ export class OrdersView implements OnInit {
 
   constructor(
     private apiService: ApiService,
+    private auth: AuthService,
     private cdr: ChangeDetectorRef,
     private router: Router
   ) {}
@@ -632,7 +636,7 @@ export class OrdersView implements OnInit {
 
     if (this.dropoffSelected === 'HAND') {
       this.dropoffLocationNewOrder = '';
-      this.dropoffServiceTypeId = undefined;
+      this.dropoffVehicleType = undefined;
       this.dropoffDistanceId = undefined;
       return;
     }
@@ -645,18 +649,19 @@ export class OrdersView implements OnInit {
     this.currentNewOrderStep = 1;
     this.errorMessage = '';
     this.isTentativeNewOrder = false;
-    this.createdByNameNewOrder = '';
+    this.createdByNameNewOrder = this.getDefaultNewOrderCreator();
     this.picEmailNewOrder = '';
     this.copyEmailNewOrder = '';
     this.guestEmailNewOrder = '';
     this.dietaryRestrictionsNewOrder = '';
     this.selectedSpecialRequestIds = [];
     this.voucherNumberNewOrder = '';
+    this.pickupEnabled = false;
     this.pickupLocationNewOrder = '';
-    this.pickupServiceTypeId = undefined;
+    this.pickupVehicleType = undefined;
     this.pickupDistanceId = undefined;
     this.dropoffLocationNewOrder = '';
-    this.dropoffServiceTypeId = undefined;
+    this.dropoffVehicleType = undefined;
     this.dropoffDistanceId = undefined;
     this.handoffTextNewOrder = '';
     this.dropoffSelected = 'DROP';
@@ -688,6 +693,34 @@ export class OrdersView implements OnInit {
   protected closeNewOrderModal(): void {
     this.isNewOrderOpen = false;
     this.currentNewOrderStep = 1;
+  }
+
+  protected togglePickupEnabled(event: Event): void {
+    const target = event.target as HTMLInputElement;
+    this.pickupEnabled = target.checked;
+    if (!this.pickupEnabled) {
+      this.pickupLocationNewOrder = '';
+      this.pickupVehicleType = undefined;
+      this.pickupDistanceId = undefined;
+    }
+  }
+
+  private getDefaultNewOrderCreator(): string {
+    const user = this.auth.currentUser();
+    if (!user) {
+      return '';
+    }
+
+    if (this.capability.isAdmin()) {
+      return 'Tour Admin';
+    }
+
+    if (this.capability.isAgent()) {
+      const agent = this.agents.find((a) => a.email === user.email);
+      return agent?.reseller?.name ?? user.fullName;
+    }
+
+    return user.fullName;
   }
 
   protected setNewOrderStep(step: number): void {
@@ -771,13 +804,14 @@ export class OrdersView implements OnInit {
   }
 
   private isStepThreeValid(): boolean {
-    const pickupValid = this.hasValue(this.voucherNumberNewOrder)
-      && this.hasValue(this.pickupLocationNewOrder)
-      && this.pickupServiceTypeId != null
-      && this.pickupDistanceId != null;
-
-    if (!pickupValid) {
+    if (!this.hasValue(this.voucherNumberNewOrder)) {
       return false;
+    }
+
+    if (this.pickupEnabled) {
+      if (!this.hasValue(this.pickupLocationNewOrder) || !this.pickupVehicleType || this.pickupDistanceId == null) {
+        return false;
+      }
     }
 
     if (this.dropoffSelected === 'HAND') {
@@ -785,7 +819,7 @@ export class OrdersView implements OnInit {
     }
 
     return this.hasValue(this.dropoffLocationNewOrder)
-      && this.dropoffServiceTypeId != null
+      && !!this.dropoffVehicleType
       && this.dropoffDistanceId != null;
   }
 
@@ -1453,15 +1487,37 @@ export class OrdersView implements OnInit {
   }
 
   protected getPickupFee(distanceId?: number): string {
-    if (!distanceId) return '-';
-    const band = this.distanceBands.find(b => b.id === distanceId);
-    return band?.feeAmount?.toString() || '-';
+    return this.getAdditionalServiceFee(distanceId, this.pickupVehicleType);
   }
 
   protected getDropoffFee(distanceId?: number): string {
-    if (!distanceId) return '-';
-    const band = this.distanceBands.find(b => b.id === distanceId);
-    return band?.feeAmount?.toString() || '-';
+    return this.getAdditionalServiceFee(distanceId, this.dropoffVehicleType);
+  }
+
+  private getAdditionalServiceFee(distanceId?: number, vehicleType?: string): string {
+    if (!distanceId || !vehicleType) {
+      return '-';
+    }
+
+    const band = this.distanceBands.find((b) => b.id === distanceId);
+    if (!band) {
+      return '-';
+    }
+
+    const multiplier = this.getVehicleTypeMultiplier(vehicleType);
+    const fee = Math.round((band.feeAmount || 0) * multiplier);
+    return fee.toString();
+  }
+
+  private getVehicleTypeMultiplier(vehicleType: string): number {
+    switch (vehicleType) {
+      case 'Hired Car':
+        return 1.5;
+      case 'Grabbike':
+        return 0.75;
+      default:
+        return 1;
+    }
   }
 
   protected trackByOrder(index: number, order: OrderRow): number | undefined {
@@ -1752,7 +1808,7 @@ export class OrdersView implements OnInit {
         kind: 'PICKUP',
         isEnabled: true,
         location: this.pickupLocationNewOrder,
-        serviceTypeId: this.pickupServiceTypeId,
+        vehicleType: this.pickupVehicleType,
         distanceBandId: this.pickupDistanceId,
       });
     }
@@ -1770,7 +1826,7 @@ export class OrdersView implements OnInit {
         kind: 'DROPOFF',
         isEnabled: true,
         location: this.dropoffLocationNewOrder,
-        serviceTypeId: this.dropoffServiceTypeId,
+        vehicleType: this.dropoffVehicleType,
         distanceBandId: this.dropoffDistanceId,
       });
     }

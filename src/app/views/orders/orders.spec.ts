@@ -198,10 +198,10 @@ describe('OrdersView', () => {
     const dialog = getDialog(compiled);
     setInputValue(dialog.querySelector('input[name="voucherNumber"]') as HTMLInputElement, 'VOUCH-1');
     setInputValue(dialog.querySelector('input[name="pickupLocation"]') as HTMLInputElement, 'Hotel lobby');
-    selectOptionByText(dialog.querySelector('select[name="pickupServiceTypeId"]') as HTMLSelectElement, 'Dining');
+    selectOptionByText(dialog.querySelector('select[name="pickupVehicleType"]') as HTMLSelectElement, 'Taxi');
     selectOptionByText(dialog.querySelector('select[name="pickupDistanceId"]') as HTMLSelectElement, '<5km');
     setInputValue(dialog.querySelector('input[name="dropoffLocation"]') as HTMLInputElement, 'Station');
-    selectOptionByText(dialog.querySelector('select[name="dropoffServiceTypeId"]') as HTMLSelectElement, 'Dining');
+    selectOptionByText(dialog.querySelector('select[name="dropoffVehicleType"]') as HTMLSelectElement, 'Taxi');
     selectOptionByText(dialog.querySelector('select[name="dropoffDistanceId"]') as HTMLSelectElement, '5-10km');
     fixture.detectChanges();
   }
@@ -210,7 +210,7 @@ describe('OrdersView', () => {
     const dialog = getDialog(compiled);
     setInputValue(dialog.querySelector('input[name="voucherNumber"]') as HTMLInputElement, 'VOUCH-1');
     setInputValue(dialog.querySelector('input[name="pickupLocation"]') as HTMLInputElement, 'Hotel lobby');
-    selectOptionByText(dialog.querySelector('select[name="pickupServiceTypeId"]') as HTMLSelectElement, 'Dining');
+    selectOptionByText(dialog.querySelector('select[name="pickupVehicleType"]') as HTMLSelectElement, 'Taxi');
     selectOptionByText(dialog.querySelector('select[name="pickupDistanceId"]') as HTMLSelectElement, '<5km');
     const handoffRadio = dialog.querySelectorAll('input[name="drop-service-type"]')[1] as HTMLInputElement;
     handoffRadio.click();

@@ -316,7 +316,7 @@
       <div *ngIf="currentNewOrderStep === 1">
         <div class="order-details-heading">
           <h3>Order Details</h3>
-          <button class="direct-order" type="button">Direct Order</button>
+<!--          <button class="direct-order" type="button">Direct Order</button>-->
         </div>
 
         <form class="new-order-form">
@@ -328,10 +328,10 @@
           <div class="modal-field">
             <div class="modal-label-row">
               <label for="new-order-reseller">Reseller</label>
-              <label class="tentative-toggle">
-                <span>Tentative</span>
-                <input type="checkbox" [checked]="isTentativeNewOrder" (change)="isTentativeNewOrder = $any($event.target).checked" />
-              </label>
+<!--              <label class="tentative-toggle">-->
+<!--                <span>Tentative</span>-->
+<!--                <input type="checkbox" [checked]="isTentativeNewOrder" (change)="isTentativeNewOrder = $any($event.target).checked" />-->
+<!--              </label>-->
             </div>
             <select
               id="new-order-reseller"
@@ -347,7 +347,7 @@
           <div class="modal-field">
             <div class="modal-label-row">
               <label for="new-order-agent">Original Agent</label>
-              <a href="/">Add New</a>
+<!--              <a href="/">Add New</a>-->
             </div>
             <select
               id="new-order-agent"
@@ -491,15 +491,32 @@
           <section class="additional-card service-extra-card" aria-label="Pick up details">
             <label class="additional-toggle checked-toggle">
               <span>Pick Up</span>
-              <input type="checkbox" checked />
+              <input type="checkbox" [checked]="pickupEnabled" (change)="togglePickupEnabled($event)" />
             </label>
             <p>The suggested pick-up time will be included in the order offer or confirmation</p>
-            <input type="text" placeholder="Enter Pick-up Location" aria-label="Pick-up location" [(ngModel)]="pickupLocationNewOrder" name="pickupLocation" />
-            <select aria-label="Pick-up service type" [(ngModel)]="pickupServiceTypeId" name="pickupServiceTypeId">
-                 <option [ngValue]="undefined">Select Service Type</option>
-                 <option *ngFor="let type of serviceTypes" [ngValue]="type.id">{{ type.name }}</option>
+            <input
+              type="text"
+              placeholder="Enter Pick-up Location"
+              aria-label="Pick-up location"
+              [(ngModel)]="pickupLocationNewOrder"
+              name="pickupLocation"
+              [disabled]="!pickupEnabled"
+            />
+            <select
+              aria-label="Pick-up vehicle type"
+              [(ngModel)]="pickupVehicleType"
+              name="pickupVehicleType"
+              [disabled]="!pickupEnabled"
+            >
+                 <option [ngValue]="undefined">Select Vehicle Type</option>
+                 <option *ngFor="let type of vehicleTypes" [ngValue]="type">{{ type }}</option>
                </select>
-            <select aria-label="Pick-up distance" [(ngModel)]="pickupDistanceId" name="pickupDistanceId">
+            <select
+              aria-label="Pick-up distance"
+              [(ngModel)]="pickupDistanceId"
+              name="pickupDistanceId"
+              [disabled]="!pickupEnabled"
+            >
                  <option [ngValue]="undefined">Select Distance</option>
                  <option *ngFor="let band of distanceBands" [ngValue]="band.id">{{ band.label }}</option>
                </select>
@@ -520,9 +537,9 @@
             <ng-container *ngIf="dropoffSelected === 'DROP'; else handoffFields">
               <p>The suggested drop-off time will be included in the order offer or confirmation</p>
               <input type="text" placeholder="Enter Drop-off Location" aria-label="Drop-off location" [(ngModel)]="dropoffLocationNewOrder" name="dropoffLocation" />
-              <select aria-label="Drop-off service type" [(ngModel)]="dropoffServiceTypeId" name="dropoffServiceTypeId">
-                 <option [ngValue]="undefined">Select Service Type</option>
-                 <option *ngFor="let type of serviceTypes" [ngValue]="type.id">{{ type.name }}</option>
+              <select aria-label="Drop-off vehicle type" [(ngModel)]="dropoffVehicleType" name="dropoffVehicleType">
+                 <option [ngValue]="undefined">Select Vehicle Type</option>
+                 <option *ngFor="let type of vehicleTypes" [ngValue]="type">{{ type }}</option>
                </select>
               <select aria-label="Drop-off distance" [(ngModel)]="dropoffDistanceId" name="dropoffDistanceId">
                  <option [ngValue]="undefined">Select Distance</option>

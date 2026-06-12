@@ -769,10 +769,10 @@
         <div class="section-title">Service Details</div>
         <div class="meta-grid">
           <div class="meta-item"><div class="label">Service Name</div><div class="value">{{ offerOrder?.orderServices?.[0]?.serviceNameSnapshot || 'N/A' }}</div></div>
-          <div class="meta-item"><div class="label">Type</div><div class="value">Group Experience</div></div>
+          <div class="meta-item"><div class="label">Type</div><div class="value">{{ offerOrder?.isPrivate ? 'Private' : 'Group Experience' }}</div></div>
           <div class="meta-item"><div class="label">Date &amp; Time</div><div class="value">{{ formatDate(offerTargetDate) }}, {{ formatTime(offerStartTime) }}</div></div>
         </div>
-        <div class="meta-row">
+        <div class="meta-grid">
           <div class="meta-item"><div class="label">Duration</div><div class="value">{{ formatDuration(offerOrder?.orderServices?.[0]?.service?.durationMinutes) }}</div></div>
           <div class="meta-item"><div class="label">Guests</div><div class="value">{{ offerOrder?.adultCount || 0 }} Adults</div></div>
         </div>
@@ -802,16 +802,16 @@
               <input type="time" [(ngModel)]="offerStartTime" aria-label="Offer start time">
             </label>
           </div>
-          <div class="find-row">
-            <i class="ti ti-search" aria-hidden="true"></i>
-            <span>Offer with existing assignments before or after</span>
-            <div class="days-input">
-              <input type="number" [(ngModel)]="offerDays" min="0">
-              <span class="days-lbl">Days</span>
-            </div>
-            <div class="divider"></div>
-            <button class="find-btn" type="button" (click)="findMatch()">Find Match</button>
-          </div>
+<!--          <div class="find-row">-->
+<!--            <i class="ti ti-search" aria-hidden="true"></i>-->
+<!--            <span>Offer with existing assignments before or after</span>-->
+<!--            <div class="days-input">-->
+<!--              <input type="number" [(ngModel)]="offerDays" min="0">-->
+<!--              <span class="days-lbl">Days</span>-->
+<!--            </div>-->
+<!--            <div class="divider"></div>-->
+<!--            <button class="find-btn" type="button" (click)="findMatch()">Find Match</button>-->
+<!--          </div>-->
         </div>
       </div>
 
@@ -825,9 +825,9 @@
           <div class="fin-field">
             <div class="label">Discount</div>
             <div class="disc-combo">
-              <div class="fin-input" style="flex:1"><input type="text" [(ngModel)]="offerDiscountPercent" (input)="calculateTotals()"></div>
+              <div class="fin-input" style="flex:1"><input type="text" [(ngModel)]="offerDiscountPercent" (input)="onDiscountPercentInput()"></div>
               <span class="disc-pct">%</span>
-              <div class="fin-input" style="width:90px"><span class="sym">&yen;</span><input type="text" [(ngModel)]="offerDiscountAmount" (input)="calculateTotals()"></div>
+              <div class="fin-input" style="width:90px"><span class="sym">&yen;</span><input type="text" [(ngModel)]="offerDiscountAmount" (input)="onDiscountAmountInput()"></div>
             </div>
           </div>
           <div class="fin-field">
@@ -837,9 +837,9 @@
           <div class="fin-field">
             <div class="label">Commission</div>
             <div class="disc-combo">
-              <div class="fin-input" style="flex:1"><input type="text" [(ngModel)]="offerCommissionPercent" (input)="calculateTotals()"></div>
+              <div class="fin-input" style="flex:1"><input type="text" [(ngModel)]="offerCommissionPercent" (input)="onCommissionPercentInput()"></div>
               <span class="disc-pct">%</span>
-              <div class="fin-input" style="width:90px"><span class="sym">&yen;</span><input type="text" [(ngModel)]="offerCommissionAmount" (input)="calculateTotals()"></div>
+              <div class="fin-input" style="width:90px"><span class="sym">&yen;</span><input type="text" [(ngModel)]="offerCommissionAmount" (input)="onCommissionAmountInput()"></div>
             </div>
           </div>
         </div>

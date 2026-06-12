@@ -511,6 +511,7 @@ describe('OrdersView', () => {
     goToStepFour(compiled, fixture);
     fillStepFour(compiled, fixture);
 
+    const routerNavigateSpy = spyOn((fixture.componentInstance as any).router, 'navigate');
     const requestButton = getDialog(compiled).querySelector('.request-order') as HTMLButtonElement;
     requestButton.click();
 
@@ -519,6 +520,7 @@ describe('OrdersView', () => {
     fixture.detectChanges();
     await fixture.whenStable();
 
+    expect(routerNavigateSpy).toHaveBeenCalledWith(['/orders', mockOrders[0].id]);
     expect(compiled.querySelector('[role="dialog"]')).toBeFalsy();
   });
 });

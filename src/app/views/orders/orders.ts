@@ -92,6 +92,8 @@ export class OrdersView implements OnInit {
   protected offerSubtotal = '0.00';
   protected offerEstimatedTax = '0.00';
   protected offerTotalAmount = '0.00';
+  protected offerDiscountInputSource: 'percent' | 'amount' | null = null;
+  protected offerCommissionInputSource: 'percent' | 'amount' | null = null;
 
   protected readonly timeSlots = ['Any', 'Morning', 'Daytime', 'Evening', 'Night'];
   protected selectedTimeSlot = 'Any';
@@ -1111,6 +1113,7 @@ export class OrdersView implements OnInit {
       orderNumber: `ORD-${Date.now()}`,
       orderChannel: 'frontend',
       isTentative: this.isTentativeNewOrder,
+      isPrivate: this.isPrivateNewOrder,
       createdByName: this.createdByNameNewOrder || 'Alexander Pierce',
       resellerId: this.selectedResellerId,
       picContactId: this.selectedContactId,
@@ -1146,9 +1149,9 @@ export class OrdersView implements OnInit {
 
     this.isLoading = true;
     this.apiService.createOrder(orderData).subscribe({
-      next: () => {
+      next: (createdOrder) => {
         this.closeNewOrderModal();
-        this.loadOrders();
+        this.router.navigate(['/orders', createdOrder.id]);
       },
       error: () => {
         this.errorMessage = 'Could not create the order in the backend.';
@@ -1379,34 +1382,71 @@ export class OrdersView implements OnInit {
   protected calculateTotals(): void {
     const netPrice = parseFloat(this.offerNetPrice.replace(/,/g, '')) || 0;
     const discountPercent = parseFloat(this.offerDiscountPercent) || 0;
-    const discountAmount = parseFloat(this.offerDiscountAmount.replace(/,/g, '')) || 0;
+    const discountAmount = this.parseCurrencyInput(this.offerDiscountAmount);
     const puDoFee = parseFloat(this.offerPuDoFee.replace(/,/g, '')) || 0;
     const commissionPercent = parseFloat(this.offerCommissionPercent) || 0;
-    const commissionAmount = parseFloat(this.offerCommissionAmount.replace(/,/g, '')) || 0;
+    const commissionAmount = this.parseCurrencyInput(this.offerCommissionAmount);
 
-    // Discount is based on net price.
     let calculatedDiscount = discountAmount;
-    if (discountPercent > 0) {
+    let calculatedDiscountPercent = discountPercent;
+
+    if (this.offerDiscountInputSource === 'percent') {
+      calculatedDiscount = netPrice * (discountPercent / 100);
+      calculatedDiscountPercent = discountPercent;
+    } else if (this.offerDiscountInputSource === 'amount') {
+      calculatedDiscount = discountAmount;
+      calculatedDiscountPercent = netPrice > 0 ? (discountAmount / netPrice) * 100 : 0;
+    } else if (discountPercent > 0) {
       calculatedDiscount = netPrice * (discountPercent / 100);
     }
+
     const discountedNet = Math.max(0, netPrice - calculatedDiscount);
 
-    // Commission is based on discounted net price.
     let calculatedCommission = commissionAmount;
-    if (commissionPercent > 0) {
+    let calculatedCommissionPercent = commissionPercent;
+    if (this.offerCommissionInputSource === 'percent') {
+      calculatedCommission = discountedNet * (commissionPercent / 100);
+      calculatedCommissionPercent = commissionPercent;
+    } else if (this.offerCommissionInputSource === 'amount') {
+      calculatedCommission = commissionAmount;
+      calculatedCommissionPercent = discountedNet > 0 ? (commissionAmount / discountedNet) * 100 : 0;
+    } else if (commissionPercent > 0) {
       calculatedCommission = discountedNet * (commissionPercent / 100);
     }
 
+    this.offerDiscountPercent = this.formatPercent(calculatedDiscountPercent);
     this.offerDiscountAmount = this.formatCurrency(calculatedDiscount);
+    this.offerCommissionPercent = this.formatPercent(calculatedCommissionPercent);
     this.offerCommissionAmount = this.formatCurrency(calculatedCommission);
 
-    const subtotal = discountedNet + puDoFee;
-    const tax = subtotal * 0.08; // 8% tax rate
-    const total = subtotal + tax;
+    const subtotal = discountedNet + puDoFee - calculatedCommission;
+    const safeSubtotal = Math.max(0, subtotal);
+    const tax = safeSubtotal * 0.08; // 8% tax rate
+    const total = safeSubtotal + tax;
 
-    this.offerSubtotal = this.formatCurrency(subtotal);
+    this.offerSubtotal = this.formatCurrency(safeSubtotal);
     this.offerEstimatedTax = this.formatCurrency(tax);
     this.offerTotalAmount = this.formatCurrency(total);
+  }
+
+  protected onDiscountPercentInput(): void {
+    this.offerDiscountInputSource = 'percent';
+    this.calculateTotals();
+  }
+
+  protected onDiscountAmountInput(): void {
+    this.offerDiscountInputSource = 'amount';
+    this.calculateTotals();
+  }
+
+  protected onCommissionPercentInput(): void {
+    this.offerCommissionInputSource = 'percent';
+    this.calculateTotals();
+  }
+
+  protected onCommissionAmountInput(): void {
+    this.offerCommissionInputSource = 'amount';
+    this.calculateTotals();
   }
 
   protected toggleHostConfirmation(): void {
@@ -1625,6 +1665,14 @@ export class OrdersView implements OnInit {
 
   protected formatCurrency(amount?: number): string {
     return (amount ?? 0).toLocaleString();
+  }
+
+  private formatPercent(value: number): string {
+    if (!Number.isFinite(value) || value === 0) {
+      return '0';
+    }
+    const rounded = Math.round(value * 100) / 100;
+    return rounded.toString();
   }
 
   private getPickupInfo(order: Order): string {

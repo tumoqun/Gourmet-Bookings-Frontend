@@ -706,7 +706,7 @@
     }
 
     @if (capability.can('ORDERS_CONFIRM')) {
-    <div class="menu-item confirm" role="menuitem" tabindex="0" (click)="confirmOrder(); closeActionPopup()">
+    <div class="menu-item confirm" role="menuitem" tabindex="0" (click)="openConfirmOrderDialog(); closeActionPopup()">
       <span class="icon" aria-hidden="true">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
           <polyline points="20 6 9 17 4 12"/>
@@ -750,6 +750,30 @@
       Delete
     </div>
     }
+  </div>
+
+  <div
+    *ngIf="confirmOrderPromptOpen"
+    class="make-offer-overlay"
+    role="presentation"
+    (click)="closeConfirmOrderDialog()"
+  >
+    <div
+      class="make-offer-dialog confirm-dialog"
+      role="dialog"
+      aria-modal="true"
+      aria-label="Confirm order"
+      (click)="$event.stopPropagation()"
+    >
+      <div class="section">
+        <div class="section-title">Confirm order</div>
+        <p>Are you sure you want to confirm this order?</p>
+      </div>
+      <footer class="new-order-footer">
+        <button class="request-order" type="button" (click)="confirmOrder()">Yes</button>
+        <button class="cancel-order" type="button" (click)="closeConfirmOrderDialog()">No</button>
+      </footer>
+    </div>
   </div>
 
   <div

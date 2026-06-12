@@ -930,6 +930,68 @@ td strong {
   flex-shrink: 0;
 }
 
+.confirm-dialog {
+  width: min(420px, 100%);
+  max-width: 420px;
+  border-radius: 14px;
+}
+
+.confirm-dialog .section {
+  padding: 26px 28px;
+  border-bottom: none;
+}
+
+.confirm-dialog .section-title {
+  font-size: 18px;
+  font-weight: 600;
+  margin-bottom: 14px;
+}
+
+.confirm-dialog p {
+  margin: 0;
+  color: #424242;
+  font-size: 15px;
+  line-height: 1.7;
+}
+
+.confirm-dialog .new-order-footer {
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: 0;
+  padding: 18px 24px 24px;
+  border-top: 1px solid #f0ece2;
+}
+
+.confirm-dialog .request-order,
+.confirm-dialog .cancel-order {
+  min-width: 110px;
+  height: 42px;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.confirm-dialog .request-order {
+  background: #c9a96e;
+  color: #ffffff;
+  border: none;
+  box-shadow: 0 8px 20px rgba(201, 169, 110, 0.18);
+}
+
+.confirm-dialog .request-order:hover {
+  background: #b8955a;
+}
+
+.confirm-dialog .cancel-order {
+  background: #ffffff;
+  border: 1px solid #d6c8a6;
+  color: #2f2d2a;
+}
+
+.confirm-dialog .cancel-order:hover {
+  background: #f7f4ed;
+}
+
 .section {
   padding: 20px 24px;
   border-bottom: 0.5px solid #e0e0e0;

@@ -75,6 +75,7 @@ export class OrdersView implements OnInit {
   protected orderForAction?: number;
   protected actionPopupPosition = { top: 0, left: 0 };
   protected makeOfferPopupOpen = false;
+  protected confirmOrderPromptOpen = false;
   protected isSendingOffer = false;
   protected offerPricingNotes = '';
   protected hostConfirmationRequired = false;
@@ -1248,7 +1249,9 @@ export class OrdersView implements OnInit {
 
   protected closeActionPopup(): void {
     this.actionPopupOpen = false;
-    this.orderForAction = undefined;
+    if (!this.confirmOrderPromptOpen) {
+      this.orderForAction = undefined;
+    }
   }
 
   @HostListener('document:click', ['$event'])
@@ -1295,12 +1298,25 @@ export class OrdersView implements OnInit {
     console.log('Go to assignment for order:', this.orderForAction);
   }
 
+  protected openConfirmOrderDialog(): void {
+    this.confirmOrderPromptOpen = true;
+  }
+
+  protected closeConfirmOrderDialog(): void {
+    this.confirmOrderPromptOpen = false;
+    this.orderForAction = undefined;
+  }
+
   protected confirmOrder(): void {
     if (!this.orderForAction) {
+      this.closeConfirmOrderDialog();
       return;
     }
 
-    this.apiService.confirmOrder(this.orderForAction).subscribe({
+    this.confirmOrderPromptOpen = false;
+    const orderId = this.orderForAction;
+    this.orderForAction = undefined;
+    this.apiService.confirmOrder(orderId).subscribe({
       next: () => this.loadOrders(),
       error: () => {
         this.errorMessage = 'Could not confirm this order.';

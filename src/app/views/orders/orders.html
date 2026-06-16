@@ -221,7 +221,7 @@
                 </span>
               </td>
               <td>-</td>
-              <td><strong>&yen;{{ order.fee }}</strong></td>
+              <td><strong>VND {{ order.fee }}</strong></td>
               <td><span class="status {{ order.statusTone }}">{{ order.status }}</span></td>
               <td>
                 <span class="guide">
@@ -276,7 +276,7 @@
               <td style="padding-left:0">
                 <div class="summary value">
                   <span style="font-size: 0.75rem; color: #b9b4ac; font-weight:700; text-transform:uppercase; letter-spacing:0.05em; display:block;">Total Volume</span>
-                  <strong style="color: #1f2345; font-size: 1.05rem; display:block; margin-top:4px;">&yen;{{ formatCurrency(totalVolume) }}</strong>
+                  <strong style="color: #1f2345; font-size: 1.05rem; display:block; margin-top:4px;">VND {{ formatCurrency(totalVolume) }}</strong>
                 </div>
               </td>
               <td colspan="3"></td>
@@ -844,26 +844,26 @@
         <div class="fin-grid">
           <div class="fin-field">
             <div class="label">Net Price</div>
-            <div class="fin-input"><span class="sym">&yen;</span><input type="text" [(ngModel)]="offerNetPrice" (input)="calculateTotals()"></div>
+            <div class="fin-input"><span class="sym">VND </span><input type="text" [(ngModel)]="offerNetPrice" (input)="calculateTotals()"></div>
           </div>
           <div class="fin-field">
             <div class="label">Discount</div>
             <div class="disc-combo">
               <div class="fin-input" style="flex:1"><input type="text" [(ngModel)]="offerDiscountPercent" (input)="onDiscountPercentInput()"></div>
               <span class="disc-pct">%</span>
-              <div class="fin-input" style="width:90px"><span class="sym">&yen;</span><input type="text" [(ngModel)]="offerDiscountAmount" (input)="onDiscountAmountInput()"></div>
+              <div class="fin-input" style="width:90px"><span class="sym">VND </span><input type="text" [(ngModel)]="offerDiscountAmount" (input)="onDiscountAmountInput()"></div>
             </div>
           </div>
           <div class="fin-field">
             <div class="label">PU/DO Fee</div>
-            <div class="fin-input"><span class="sym">&yen;</span><input type="text" [(ngModel)]="offerPuDoFee" (input)="calculateTotals()"></div>
+            <div class="fin-input"><span class="sym">VND </span><input type="text" [(ngModel)]="offerPuDoFee" (input)="calculateTotals()"></div>
           </div>
           <div class="fin-field">
             <div class="label">Commission</div>
             <div class="disc-combo">
               <div class="fin-input" style="flex:1"><input type="text" [(ngModel)]="offerCommissionPercent" (input)="onCommissionPercentInput()"></div>
               <span class="disc-pct">%</span>
-              <div class="fin-input" style="width:90px"><span class="sym">&yen;</span><input type="text" [(ngModel)]="offerCommissionAmount" (input)="onCommissionAmountInput()"></div>
+              <div class="fin-input" style="width:90px"><span class="sym">VND </span><input type="text" [(ngModel)]="offerCommissionAmount" (input)="onCommissionAmountInput()"></div>
             </div>
           </div>
         </div>
@@ -872,15 +872,15 @@
           <div class="totals-right">
             <div class="total-line">
               <span class="tl-label">Subtotal</span>
-              <span class="tl-val">&yen;{{ offerSubtotal }}</span>
+              <span class="tl-val">VND {{ offerSubtotal }}</span>
             </div>
             <div class="total-line">
               <span class="tl-label">Estimated Tax</span>
-              <span class="tl-val">&yen;{{ offerEstimatedTax }}</span>
+              <span class="tl-val">VND {{ offerEstimatedTax }}</span>
             </div>
             <div class="total-line total-final">
               <span class="tl-label">Total Amount</span>
-              <span class="tl-val">&yen;{{ offerTotalAmount }}</span>
+              <span class="tl-val">VND {{ offerTotalAmount }}</span>
             </div>
           </div>
         </div>

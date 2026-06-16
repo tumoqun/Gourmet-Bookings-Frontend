@@ -246,11 +246,7 @@ export class WorkDetail {
   }
 
   formatCurrency(value: number): string {
-    return new Intl.NumberFormat('ja-JP', {
-      style: 'currency',
-      currency: 'JPY',
-      maximumFractionDigits: 0,
-    }).format(value);
+    return `VND ${value.toLocaleString()}`;
   }
 
   openReceiptPhoto(receipt: Receipt): void {

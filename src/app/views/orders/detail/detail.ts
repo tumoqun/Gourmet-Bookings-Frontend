@@ -99,7 +99,7 @@ export class OrderDetail implements OnInit {
         type: 'P',
         dateTime: 'Sat, 07-Dec-24 - 5:30PM',
         guests: '5/0',
-        fee: '¥90,488',
+        fee: 'VND 90,488',
         status: 'Completed',
         statusTone: 'neutral',
         notes: 'View Notes',

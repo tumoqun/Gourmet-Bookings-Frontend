@@ -5,14 +5,14 @@
       <p>TODAY IS THURSDAY, MARCH 12, 2026</p>
     </div>
     <div class="top-actions">
-      <button class="refresh" type="button" [disabled]="isLoading" (click)="loadWorks(this.pageNumber, this.pageSize)">
+      <button class="refresh" type="button" [disabled]="isLoading" (click)="handleRefesh()">
         <span aria-hidden="true">&#8635;</span> Refresh
       </button>
     </div>
   </header>
 
   <div class="status-tabs" aria-label="Order status filters">
-    <button type="button" *ngFor="let filter of filters" [class.active]="filter.active"
+    <button type="button" *ngFor="let filter of filterTabs" [class.active]="filter.active"
       (click)="setActiveFilter(filter.label)">
       <span>{{ filter.label }}</span>
       <strong>{{ filter.count }}</strong>
@@ -23,59 +23,85 @@
     <div class="filter-grid top">
       <label>
         <span>Reseller</span>
-        <select aria-label="Reseller">
-          <option>Reseller</option>
+        <select aria-label="Reseller" (change)="loadResellerContacts($event)" [value]="filters.resellerId || ''">
+          <option value="">Reseller</option>
+          <option *ngFor="let reseller of resellers" [value]="reseller.id">{{ reseller.name }}</option>
         </select>
       </label>
       <label>
         <span>Ref</span>
-        <select aria-label="Ref">
-          <option>Ref</option>
-        </select>
+        <input type="text" placeholder="Ref" aria-label="Ref" [(ngModel)]="filters.ref" />
       </label>
       <label>
         <span>Person In Charge</span>
-        <select aria-label="Person In Charge">
-          <option>Person In Charge</option>
+        <select aria-label="Person In Charge" [(ngModel)]="filters.personInChargeId">
+          <option value="undefined">Person In Charge</option>
+          <option *ngFor="let contact of resellerContacts" [value]="contact.id">{{ contact.name }}</option>
         </select>
       </label>
       <label>
         <span>Area</span>
-        <select aria-label="Area">
-          <option>Area</option>
+        <select aria-label="Area" [(ngModel)]="filters.areaId">
+          <option [value]="undefined">Area</option>
+          <option *ngFor="let area of areas" [value]="area.id">{{ area.name }}</option>
         </select>
       </label>
       <label>
         <span>Service Name</span>
-        <select aria-label="Service Name">
-          <option>Service Name</option>
-        </select>
+        <input type="text" placeholder="Service Name" aria-label="Service Name" [(ngModel)]="filters.serviceName" />
       </label>
       <label>
         <span>Guide Name</span>
-        <select aria-label="Guide Name">
-          <option>Guide Name</option>
-        </select>
+        <input type="text" placeholder="Guide Name" aria-label="Guide Name" [(ngModel)]="filters.guideName" />
       </label>
     </div>
     <div class="filter-grid bottom">
-      <label class="tour-date-field">
+      <label class="date-field" (click)="openDateCalendar($event)">
         <span>Tour Date</span>
-        <input type="text" placeholder="Tour Date" aria-label="Tour Date" />
+        <input type="text" placeholder="Tour Date" aria-label="Tour Date" [(ngModel)]="filters.tourDate" readonly />
         <img class="date-icon" src="/ui-icons/date.png" alt="Date icon" />
+        <div class="calendar-popover" *ngIf="activeCalendar">
+          <div class="calendar-header">
+            <button type="button" (click)="changeCalendarMonth(-1, $event)">
+              &lt;
+            </button>
+            <span>
+              {{ calendarMonthNames[calendarMonth] }}
+              {{ calendarYear }}
+            </span>
+            <button type="button" (click)="changeCalendarMonth(1, $event)">
+              &gt;
+            </button>
+          </div>
+          <div class="calendar-weekdays">
+            <span *ngFor="let day of calendarWeekdays">
+              {{ day }}
+            </span>
+          </div>
+          <div class="calendar-dates">
+            <button type="button" *ngFor="let date of buildCalendarDays(calendarYear, calendarMonth)" [disabled]="date === 0"
+              [class.selected]="isSelectedCalendarDate(date)" (click)="selectCalendarDate(date, $event)">
+              {{ date > 0 ? date : '' }}
+            </button>
+          </div>
+        </div>
       </label>
       <label>
         <span>All Statuses</span>
-        <select aria-label="All Statuses">
-          <option>All Statuses</option>
+        <select aria-label="All Statuses" [(ngModel)]="filters.status">
+          <option value="undefined">All Statuses</option>
+          <option *ngFor="let status of statuses" [value]="status.value.toLowerCase()">{{ status.label }}</option>
         </select>
       </label>
       <div class="filter-toggles">
-        <button class="private-toggle" type="button">
-          <span>Private</span>
+        <button class="private-toggle" type="button" (click)="filters.isPrivate = !filters.isPrivate">
+          <span [class.active]="filters.isPrivate === true">Private</span>
         </button>
-        <button class="apply" type="button">Apply</button>
-        <button class="clear" type="button">Clear Filters</button>
+        <button class="private-toggle" type="button" (click)="filters.isShared = !filters.isShared">
+          <span [class.active]="filters.isShared === true">Shared</span>
+        </button>
+        <button class="apply" type="button" (click)="applySearchFilters()">Apply</button>
+        <button class="clear" type="button" (click)="clearSearchFilters()">Clear Filters</button>
       </div>
     </div>
   </section>
@@ -135,13 +161,17 @@
                 <span>{{ work.tourDate }}</span>
               </span>
             </td>
-            <td><span class="guests">{{ work.orders[0].adultCount }}/{{ work.orders[0].childCount }}</span></td>
+            <td><span class="guests">{{ getGuestSummaryForWork(work) }}</span></td>
             <td><span [class]="getStatusClass(work.status.toUpperCase())">{{ work.status.toUpperCase() }}</span></td>
             <td>
-              <span class="guide">
+              <span *ngIf="work.guides" class="guide">
                 <img *ngIf="work.guides[0]?.avatar" class="guide-icon" [src]="work.guides[0].avatar" alt="Guide icon" />
                 <img *ngIf="!work.guides[0]?.avatar" class="guide-icon" src="/ui-icons/image-default.png" alt="Guide icon" />
                 <strong>{{ work.guides[0].fullName }}</strong>
+              </span>
+              <span *ngIf="!work.guides" class="guide">
+                <img class="guide-icon" src="/ui-icons/image-default.png" alt="Guide icon" />
+                <strong>Unassigned</strong>
               </span>
             </td>
             <td>
@@ -197,7 +227,7 @@
         <span>Total Guests</span>
         <div class="guest-summary">
           <img class="guest-icon" src="/ui-icons/guests.png" alt="Guest icon" />
-          <strong>{{ guestsSummary.totalAdults }} / {{ guestsSummary.totalChildren }}</strong>
+          <strong>{{ workData.totalAdultCount }} / {{ workData.totalChildCount }}</strong>
         </div>
       </div>
     </footer>

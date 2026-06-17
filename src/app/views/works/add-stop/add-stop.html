@@ -39,15 +39,20 @@
     <div class="form-row">
       <div *ngIf="activeTab !== 'additional'" class="form-group flex-1">
         <label for="stopLocation">Stop</label>
-        <select id="stopLocation" formControlName="stopLocation" class="form-control">
+        <!-- Select -->
+        <select *ngIf="!isCustomStop" id="stopLocation" formControlName="stopLocation" class="form-control"
+          (change)="onStopLocationChange($event)">
           <option value="">Select Stop Location</option>
-          <!-- <option *ngFor="let stop of stopLocations" [value]="stop.id">
-            {{ stop.supplierName }}
-          </option> -->
-          <option *ngIf="activeTab === 'other'">
+          <option *ngFor="let supplier of supplierList" [value]="supplier.id">
+            {{ supplier.name }}
+          </option>
+          <option *ngIf="activeTab === 'other'" value="CUSTOM_STOP">
             Add Order Stop
           </option>
         </select>
+        <!-- Input -->
+        <input *ngIf="isCustomStop" type="text" formControlName="stopLocation" class="form-control"
+          placeholder="Enter stop location" />
       </div>
 
       <div class="form-group flex-1" style="position: relative;">

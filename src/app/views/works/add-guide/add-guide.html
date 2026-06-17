@@ -20,8 +20,8 @@
     </div>
     <!-- Guide List -->
     <div class="guide-grid">
-      <div class="guide-card" *ngFor="let guide of guides" [class.selected]="isSelected(guide.id)"
-        (click)="toggleGuide(guide.id)">
+      <div class="guide-card" *ngFor="let guide of guides" [class.selected]="isSelected(guide.id)" [class.disabled]="isDisabledGuide(guide.id)"
+        (click)="!isDisabledGuide(guide.id) && toggleGuide(guide.id)">
         <div class="guide-icon">
           <img src="/ui-icons/image-default.png" alt="Guide icon" />
         </div>
@@ -30,7 +30,7 @@
         </div>
       </div>
     </div>
-    <div *ngIf="selectedGuideIds.length > 0" class="guide-notes">
+    <div *ngIf="selectedGuideId !== null" class="guide-notes">
       <div class="guide-options">
         <label class="checkbox-wrapper">
           <span>Calendar Invite</span>
@@ -50,7 +50,7 @@
     </div>
     <!-- Footer -->
     <div class="modal-footer">
-      <button type="button" class="add-button" [disabled]="selectedGuideIds.length === 0" (click)="addGuide()">
+      <button type="button" class="add-button" [disabled]="!selectedGuideId" (click)="addGuide()">
         ADD GUIDE
       </button>
       <button type="button" class="cancel-button" (click)="closeModal()">

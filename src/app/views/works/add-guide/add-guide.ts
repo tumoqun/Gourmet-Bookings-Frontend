@@ -1,9 +1,10 @@
 import { CommonModule } from '@angular/common';
-import { ChangeDetectorRef, Component, EventEmitter, Input, Output } from '@angular/core';
+import { ChangeDetectorRef, Component, EventEmitter, inject, Input, Output } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Guide, GuideService } from '../../../services/guide.service';
 import { Subject } from 'rxjs';
 import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
+import { ActivatedRoute } from '@angular/router';
 
 @Component({
   selector: 'app-add-guide',
@@ -13,14 +14,18 @@ import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
 })
 export class AddGuide {
   @Input() visible = false;
+  @Input() currentGuides: number[] = [];
 
   @Output() close = new EventEmitter<void>();
+  @Output() reload = new EventEmitter<void>();
 
   private searchSubject = new Subject<string>();
 
+  private route = inject(ActivatedRoute);
+  workId = this.route.snapshot.paramMap.get('id');
   activeTab: 'available' | 'unavailable' = 'available';
   searchKeyword = '';
-  selectedGuideIds: number[] = [];
+  selectedGuideId: number | null = null;
   availableGuides: Guide[] = [];
   unavailableGuides: Guide[] = [];
   calendarInvite = false;
@@ -33,6 +38,7 @@ export class AddGuide {
   ) {}
 
   ngOnInit(): void {
+    console.log('currentGuides', this.currentGuides);
     this.setTab('available');
     this.searchSubject.pipe(debounceTime(500), distinctUntilChanged()).subscribe((keyword) => {
       this.searchGuides(keyword);
@@ -49,6 +55,10 @@ export class AddGuide {
     const guides = (await this.guideService.getUnavailableGuides(searchKeyword).toPromise()) ?? [];
     this.unavailableGuides = guides;
     this.cdr.detectChanges();
+  }
+
+  isDisabledGuide(guideId: number): boolean {
+    return this.currentGuides.includes(guideId);
   }
 
   searchGuides(keyword: string): void {
@@ -73,7 +83,7 @@ export class AddGuide {
 
   setTab(tab: 'available' | 'unavailable'): void {
     this.activeTab = tab;
-    this.selectedGuideIds = [];
+    this.selectedGuideId = null;
     this.searchKeyword = '';
     if (tab === 'available') {
       this.loadAvailableGuides(this.searchKeyword);
@@ -83,26 +93,34 @@ export class AddGuide {
   }
 
   toggleGuide(guideId: number): void {
-    if (this.selectedGuideIds.includes(guideId)) {
-      this.selectedGuideIds = this.selectedGuideIds.filter((id) => id !== guideId);
-      return;
-    }
-
-    this.selectedGuideIds.push(guideId);
+    this.selectedGuideId = guideId;
   }
 
   isSelected(guideId: number): boolean {
-    return this.selectedGuideIds.includes(guideId);
+    return this.selectedGuideId === guideId;
   }
 
   addGuide(): void {
     console.log({
-      selectedGuideIds: this.selectedGuideIds,
+      selectedGuideId: this.selectedGuideId,
       calendarInvite: this.calendarInvite,
       isLeader: this.isLeader,
       managerNote: this.managerNote,
     });
-    this.close.emit();
+    // Here you would typically call the service to assign the guide to the work
+    this.guideService
+      .assignGuideToWork({
+        workId: Number(this.workId),
+        guideId: this.selectedGuideId!,
+        role: this.isLeader ? 'leader' : 'guide',
+        isCalendarInvitation: this.calendarInvite,
+        note: this.managerNote,
+        status: 'PENDING',
+      })
+      .subscribe(() => {
+        this.close.emit();
+        this.reload.emit();
+      });
   }
 
   closeModal(): void {

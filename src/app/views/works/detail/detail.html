@@ -17,20 +17,20 @@
     <!-- STEPS -->
     <div class="tour-steps">
       <div class="step-item" *ngFor="
-          let step of workSteps;
+          let status of workStatuses;
           let i = index;
           let last = last
         ">
         <div style="display: flex;">
-          <div class="step" [class.active]="isStepActive(step)">
+          <div class="step" [class.active]="isStepActive(status.value)">
             <div class="circle">
               {{ i + 1 }}
             </div>
           </div>
-          <div class="line" *ngIf="!last" [class.active]="isStepActive(step)"></div>
+          <div class="line" *ngIf="!last" [class.active]="isStepActive(status.value)"></div>
         </div>
         <span>
-          {{ isStepActive(step) ? step : '' }}
+          {{ isStepActive(status.value) ? status.label.toUpperCase() : '' }}
         </span>
       </div>
     </div>
@@ -80,13 +80,12 @@
       <label>MEETING POINT</label>
       <p *ngIf="workDetail.locationAddress">{{ workDetail.locationAddress }}</p>
     </div>
-    <a class="migration-link">Migration Notes</a>
   </div>
   <div class="table-card">
     <!-- HEADER -->
     <div class="table-header">
       <h2>Orders</h2>
-      <select class="status-select" [(ngModel)]="selectedStatus">
+      <select class="status-select" [(ngModel)]="selectedStatus" (ngModelChange)="filteredOrders($event)" aria-label="Filter orders by status">
         <option *ngFor="let option of statusOptions" [value]="option.value">
           {{ option.label }}
         </option>
@@ -106,7 +105,10 @@
         <div></div>
       </div>
       <!-- BODY -->
-      <div class="order-row" *ngFor="let order of filteredOrders">
+      <div *ngIf="loadingOrders" class="loading-state">
+        <p>Loading...</p>
+      </div>
+      <div class="order-row" *ngFor="let order of orders">
         <div>
           {{ order.reseller || '--' }}
         </div>
@@ -120,17 +122,13 @@
           {{ order.adultCount }}/{{ order.childCount }}
         </div>
         <div class="bold">
-          {{ order.totalFeeAmount || '--' }}
+          {{ formatCurrency(order.totalFeeAmount)  || '--' }}
         </div>
         <div class="special-cell">
-          <span>
-            <span *ngIf="!order.special">--</span>
-            <span *ngIf="order.special" class="vip-badge">{{ order.special }}</span>
-            <span *ngIf="order.special">{{ order.specialIcon }}</span>
+          <span *ngIf="!order.specialRequests || order.specialRequests.length === 0">--</span>
+          <span *ngFor="let request of order.specialRequests; let last = last">
+            <img [src]="getSpecialRequestIcon(request.code)" [alt]="request.label" class="special-request-icon" />
           </span>
-          <a *ngIf="order.special" [href]="order.specialLink" target="_blank">
-            {{ order.specialNote }}
-          </a>
         </div>
         <div>
           <span class="status" [class]="getStatusClass(order.status)">
@@ -164,6 +162,12 @@
         <div>ACTIONS</div>
       </div>
       <!-- TABLE BODY -->
+      <div *ngIf="loadingGuides" class="guide-row">
+        <p>Loading...</p>
+      </div>
+      <div *ngIf="!loadingGuides && guides.length === 0" class="guide-row">
+        <p>No guides found.</p>
+      </div>
       <div class="guide-row" *ngFor="let guide of guides">
         <!-- NAME -->
         <div>
@@ -175,10 +179,15 @@
         </div>
         <!-- NOTE -->
         <div class="note-cell">
-          <span>
-            {{ guide.rejectionReason || '--' }}
+          <span *ngIf="!guide.isEditNote">
+            {{ guide.note || '--' }}
           </span>
-          <button class="icon-btn">
+        
+          <textarea *ngIf="guide.isEditNote" [(ngModel)]="guide.note" rows="3" placeholder="Enter note"
+            (keydown.enter)="saveNote(guide); $event.preventDefault()">
+            </textarea>
+        
+          <button *ngIf="!guide.isEditNote" class="icon-btn" (click)="guide.isEditNote = true">
             ✏️
           </button>
         </div>
@@ -198,14 +207,17 @@
         </div>
         <!-- ACTIONS -->
         <div class="actions-cell">
-          <button class="action-btn accept" (click)="approveGuide(guide)">
+          <button *ngIf="guide.status !== 'accepted' && guide.status !== 'removed'" class="action-btn accept" (click)="changeStatusGuide(guide, 'accepted')">
             <img class="approve-icon" src="/ui-icons/accept.png" alt="accept icon" />
           </button>
-          <button class="action-btn reject" (click)="rejectGuide(guide)">
+          <button *ngIf="guide.status !== 'rejected' && guide.status !== 'removed'" class="action-btn reject" (click)="changeStatusGuide(guide, 'rejected')">
             <img class="reject-icon" src="/ui-icons/reject.png" alt="reject icon" />
           </button>
-          <button class="action-btn remove" (click)="removeGuide(guide)">
+          <button *ngIf="guide.status !== 'removed'" class="action-btn remove" (click)="changeStatusGuide(guide, 'removed')">
             <img class="remove-icon" src="/ui-icons/remove.png" alt="remove icon" />
+          </button>
+          <button *ngIf="guide.status === 'removed'" class="action-btn re-assign" (click)="changeStatusGuide(guide, 'pending')">
+            <img class="remove-icon" src="/ui-icons/reassign.png" alt="remove icon" />
           </button>
         </div>
       </div>
@@ -216,9 +228,6 @@
     <div class="table-header">
       <h2>Itinerary</h2>
       <div class="header-actions">
-        <button class="copy-btn" (click)="copyItinerary()">
-          Copy Itinerary
-        </button>
         <button class="notes-btn" (click)="openTourNotes()">
           <span class="notes-text">Tour Notes</span>
           <img class="link-icon" src="/ui-icons/link.png" alt="link icon" />
@@ -242,6 +251,12 @@
         <div>ACTIONS</div>
       </div>
       <!-- BODY -->
+      <div *ngIf="loadingItineraries" class="itinerary-row">
+        <p>Loading...</p>
+      </div>
+      <div *ngIf="!loadingItineraries && itineraryList.length === 0" class="itinerary-row">
+        <p>No itinerary found.</p>
+      </div>
       <div class="itinerary-row" *ngFor="let item of itineraryList">
         <!-- NAME -->
         <div>
@@ -249,7 +264,7 @@
         </div>
         <!-- SCHEDULE -->
         <div>
-          {{ item.scheduledTime || '--' }}
+          {{ formatTime(item.scheduledTime) || '--' }}
         </div>
         <!-- PHONE -->
         <div>
@@ -261,7 +276,7 @@
         </div>
         <!-- ADDED AT -->
         <div>
-          {{ item.addedAt || '--' }}
+          {{ item.createdAt | date:'dd/MM/yyyy HH:mm' }}
         </div>
         <!-- STATUS -->
         <div>
@@ -273,10 +288,10 @@
         </div>
         <!-- ACTIONS -->
         <div class="actions-cell">
-          <button class="action-btn accept" (click)="approveItineraryItem(item)">
+          <button *ngIf="item.status === 'SCHEDULED'" class="action-btn accept" (click)="changeStopStatus(item, 'CONFIRMED')">
             <img class="approve-icon" src="/ui-icons/accept.png" alt="accept icon" />
           </button>
-          <button class="action-btn remove" (click)="removeItineraryItem(item)">
+          <button *ngIf="item.status !== 'CANCELLED'" class="action-btn remove" (click)="changeStopStatus(item, 'CANCELLED')">
             <img class="remove-icon" src="/ui-icons/remove.png" alt="remove icon" />
           </button>
         </div>
@@ -299,6 +314,12 @@
         <div>PHOTO</div>
         <div>SUBMITTED BY</div>
         <div>SUBMITTED AT</div>
+      </div>
+      <div *ngIf="loadingReceipts" class="receipt-row">
+        <p>Loading...</p>
+      </div>
+      <div *ngIf="!loadingReceipts && receipts.length === 0" class="receipt-row">
+        <p>No receipts found.</p>
       </div>
       <div class="receipt-row" *ngFor="let receipt of receipts">
         <div>
@@ -345,8 +366,8 @@
     </div>
   </div>
 
-  <app-add-guide *ngIf="showGuideModal" [visible]="showGuideModal"
-    (close)="closeGuideModal()"></app-add-guide>
+  <app-add-guide *ngIf="showGuideModal" [visible]="showGuideModal" [currentGuides]="currentGuides"
+    (close)="closeGuideModal()" (reload)="getWorkGuides(workId)"></app-add-guide>
   
-  <app-add-stop *ngIf="showStopModal" [visible]="showStopModal" [serviceInfo]="stopService" (close)="closeStopModal()"></app-add-stop>
+  <app-add-stop *ngIf="showStopModal" [visible]="showStopModal" [serviceInfo]="stopService" (close)="closeStopModal()" (reload)="loadItineraryStops(workId)"></app-add-stop>
 </section>

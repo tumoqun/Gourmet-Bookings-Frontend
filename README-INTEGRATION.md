@@ -1,12 +1,12 @@
 # Frontend-Backend Integration Guide
 
 ## Overview
-This document outlines the integration between the Angular frontend and Spring Boot backend for the Gourmet Bookings system.
+This document outlines the integration between the Angular frontend and Spring Boot backend for the TMA Tour Management system.
 
 ## Architecture
 - **Frontend**: Angular 21+ running on `http://localhost:4200`
 - **Backend**: Spring Boot 3.2.5 running on `http://localhost:8080`
-- **Database**: MySQL 8+ with `gourmet_bookings` schema
+- **Database**: PostgreSQL 15+ with `tma_tour_management` schema
 
 ## Integration Components
 
@@ -33,7 +33,7 @@ This document outlines the integration between the Angular frontend and Spring B
 ## Development Setup
 
 ### Prerequisites
-1. MySQL database with `gourmet_bookings` schema
+1. PostgreSQL database with `tma_tour_management` schema
 2. Java 17+ and Maven for backend
 3. Node.js and npm for frontend
 
@@ -41,13 +41,13 @@ This document outlines the integration between the Angular frontend and Spring B
 
 1. **Start Backend**:
    ```bash
-   cd Gourmet-Bookings-Backend
+   cd TMA-Tour-Management-Backend
    mvn spring-boot:run
    ```
 
 2. **Start Frontend**:
    ```bash
-   cd Gourmet-Bookings-Frontend
+   cd TMA-Tour-Management-Frontend
    npm install
    npm start
    ```
@@ -119,7 +119,7 @@ This document outlines the integration between the Angular frontend and Spring B
 ### Connection Issues
 - Verify backend is running on port 8080
 - Check proxy.conf.json configuration
-- Ensure MySQL database is accessible
+- Ensure PostgreSQL database is accessible
 
 ### Build Issues
 - Run `npm install` after adding new dependencies

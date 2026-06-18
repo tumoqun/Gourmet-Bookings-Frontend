@@ -1,6 +1,6 @@
-# Gourmet Bookings Frontend
+# TMA Tour Management Frontend
 
-Angular 21+ frontend application for Gourmet Bookings order management system, integrated with Spring Boot backend.
+Angular 21+ frontend application for TMA Tour Management order management system, integrated with Spring Boot backend.
 
 ## Prerequisites
 

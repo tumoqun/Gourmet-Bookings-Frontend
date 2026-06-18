@@ -7,7 +7,7 @@
   },
   "newProjectRoot": "projects",
   "projects": {
-    "gourmet-bookings-frontend": {
+    "tma-tour-management-frontend": {
       "projectType": "application",
       "schematics": {},
       "root": "",
@@ -60,10 +60,10 @@
           },
           "configurations": {
             "production": {
-              "buildTarget": "gourmet-bookings-frontend:build:production"
+              "buildTarget": "tma-tour-management-frontend:build:production"
             },
             "development": {
-              "buildTarget": "gourmet-bookings-frontend:build:development"
+              "buildTarget": "tma-tour-management-frontend:build:development"
             }
           },
           "defaultConfiguration": "development"

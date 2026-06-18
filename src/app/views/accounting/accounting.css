@@ -548,10 +548,10 @@ td strong {
 .rows-control select {
   width: auto;
   min-width: 118px;
-  height: 36px;
+  height: 34px;
   padding: 0 34px 0 12px;
   border: 1px solid #e2e0dc;
-  border-radius: 10px;
+  border-radius: 8px;
   color: #1f2345;
   background-color: #ffffff;
   font-size: 0.92rem;

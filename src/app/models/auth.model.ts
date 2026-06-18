@@ -24,10 +24,10 @@ export interface DevTestAccount {
 }
 
 export const DEV_TEST_ACCOUNTS: DevTestAccount[] = [
-  { label: 'Admin', email: 'admin@gourmetbookings.com', role: 'ADMIN' },
-  { label: 'Admin 2', email: 'ops.admin@gourmetbookings.com', role: 'ADMIN' },
-  { label: 'Agent', email: 'agent@gourmetbookings.com', role: 'AGENT' },
-  { label: 'Agent 2', email: 'agent2@gourmetbookings.com', role: 'AGENT' },
-  { label: 'Guide (Sophia)', email: 'sophia.taylor@guides.com', role: 'GUIDE' },
-  { label: 'Guide (Emily)', email: 'emily.j@guides.com', role: 'GUIDE' },
+  { label: 'Admin', email: 'admin@tmatour.com', role: 'ADMIN' },
+  { label: 'Admin 2', email: 'ops.admin@tmatour.com', role: 'ADMIN' },
+  { label: 'Agent', email: 'agent@tmatour.com', role: 'AGENT' },
+  { label: 'Agent 2', email: 'agent2@tmatour.com', role: 'AGENT' },
+  { label: 'Guide (Sophia)', email: 'sophia.taylor@tmatour.com', role: 'GUIDE' },
+  { label: 'Guide (Emily)', email: 'emily.j@tmatour.com', role: 'GUIDE' },
 ];

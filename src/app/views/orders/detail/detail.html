@@ -310,7 +310,7 @@
           <header class="edit-group-header">
             <h3 id="edit-group-title">Edit Group Information</h3>
             <div class="edit-group-tools">
-              <button class="edit-group-help" type="button" aria-label="Help">
+              <button class="edit-group-help" type="button" (click)="openGuestInfoHelp()" aria-label="Help">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                   <circle cx="12" cy="12" r="10"/>
                   <path d="M9.1 9a3 3 0 1 1 5.2 2c-.9.6-1.3 1.1-1.3 2"/>
@@ -375,40 +375,108 @@
         </div>
       </div>
 
-      <!-- Add guest inline form modal -->
-      <div class="add-guest-overlay" *ngIf="isAddingGuest" role="dialog" aria-modal="true" aria-label="Add guest">
+      <!-- Guest information help dialog -->
+      <div class="guest-info-help-overlay" *ngIf="isGuestInfoHelpOpen" role="dialog" aria-modal="true" aria-labelledby="guest-info-help-title">
+        <section class="guest-info-help-dialog">
+          <header class="guest-info-help-header">
+            <h3 id="guest-info-help-title">Update Guest Information Notes</h3>
+            <button class="guest-info-help-close" type="button" (click)="closeGuestInfoHelp()" aria-label="Close">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <line x1="18" y1="6" x2="6" y2="18"/>
+                <line x1="6" y1="6" x2="18" y2="18"/>
+              </svg>
+            </button>
+          </header>
+          <div class="guest-info-help-body">
+            <p>1. Update guest names only (auto-save) If you only change guest names, your changes will be saved immediately.</p>
+            <p>2. Update sensitive data (requires approval) If you update important details such as leader phone number, allergies or dietary restrictions, special requests, or guests' special conditions, after clicking save, a dialog 'Review Guest Group Information Changes' will appear to help you compare the old and new data.</p>
+            <p>3. Linked bookings If the guest group is linked to multiple bookings, a dialog "Select Booking(s)" will open. You will be asked whether you want to apply the changes to:<br>a. Only this booking -> choose "No". A new guest group will be created for this booking without affecting the others<br>b. Other booking(s) -> select the bookings you want and click "Save". The guest data will be updated for all the selected bookings.</p>
+          </div>
+        </section>
+      </div>
+
+      <!-- Add guest modal -->
+      <div class="add-guest-overlay" *ngIf="isAddingGuest" role="dialog" aria-modal="true" aria-labelledby="add-guest-title">
         <div class="add-guest-dialog">
-          <h3>Add Guest</h3>
+          <header class="add-guest-header">
+            <h3 id="add-guest-title">Individual Guest Details</h3>
+            <button class="add-guest-close" type="button" (click)="closeAddGuest()" aria-label="Close">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <line x1="18" y1="6" x2="6" y2="18"/>
+                <line x1="6" y1="6" x2="18" y2="18"/>
+              </svg>
+            </button>
+          </header>
+
           <div class="add-guest-form">
-            <label class="ag-field">
-              <span>Name</span>
-              <input type="text" [(ngModel)]="newGuestName" placeholder="Full name" id="new-guest-name" />
+            <label class="ag-field ag-half">
+              <span>First Name</span>
+              <input type="text" [(ngModel)]="newGuestFirstName" placeholder="Enter Phone Number" id="new-guest-first-name" />
             </label>
-            <label class="ag-field">
-              <span>Phone Number</span>
-              <input type="text" [(ngModel)]="newGuestPhone" placeholder="Phone number" id="new-guest-phone" />
+            <label class="ag-field ag-half">
+              <span>Last Name</span>
+              <input type="text" [(ngModel)]="newGuestLastName" placeholder="Enter Notes" id="new-guest-last-name" />
             </label>
-            <label class="ag-field">
+
+            <div class="ag-type-row">
+              <div class="ag-segmented" role="group" aria-label="Guest type">
+                <button type="button" [class.active]="newGuestType === 'adult'" (click)="newGuestType = 'adult'">Adult</button>
+                <button type="button" [class.active]="newGuestType === 'child'" (click)="newGuestType = 'child'">Children</button>
+              </div>
+              <label class="ag-vip">
+                <span>VIP</span>
+                <input type="checkbox" [(ngModel)]="newGuestVip" />
+              </label>
+            </div>
+
+            <label class="ag-field ag-full">
               <span>Age</span>
               <input type="number" [(ngModel)]="newGuestAge" placeholder="Age" id="new-guest-age" />
             </label>
-            <label class="ag-field">
+
+            <label class="ag-field ag-full">
               <span>Gender</span>
-              <select [(ngModel)]="newGuestGender" id="new-guest-gender">
-                <option value="">Select gender</option>
-                <option value="Male">Male</option>
-                <option value="Female">Female</option>
-                <option value="Other">Other</option>
-              </select>
+              <div class="ag-select-shell">
+                <select [(ngModel)]="newGuestGender" id="new-guest-gender">
+                  <option value="Male">Male</option>
+                  <option value="Female">Female</option>
+                  <option value="Other">Other</option>
+                </select>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <polyline points="6 9 12 15 18 9"/>
+                </svg>
+              </div>
             </label>
-            <label class="ag-field full">
+
+            <label class="ag-field ag-full">
+              <span>Nationality</span>
+              <input type="text" [(ngModel)]="newGuestNationality" placeholder="Enter Nationality" id="new-guest-nationality" />
+            </label>
+
+            <label class="ag-field ag-full">
+              <span>Phone Number</span>
+              <input type="text" [(ngModel)]="newGuestPhone" placeholder="Enter Phone Number" id="new-guest-phone" />
+            </label>
+
+            <label class="ag-field ag-full">
               <span>Allergies or Dietary Restrictions</span>
-              <input type="text" [(ngModel)]="newGuestAllergies" placeholder="E.g. Peanut, Gluten-free" id="new-guest-allergies" />
+              <div class="ag-chip-select">
+                <span class="ag-chip" *ngFor="let allergy of newGuestAllergyTags">{{ allergy }}</span>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <polyline points="6 9 12 15 18 9"/>
+                </svg>
+              </div>
+            </label>
+
+            <label class="ag-field ag-full">
+              <span>Special Occasion</span>
+              <input type="text" [(ngModel)]="newGuestSpecialOccasion" placeholder="Specify Special Occasion" id="new-guest-special-occasion" />
             </label>
           </div>
+
           <div class="add-guest-actions">
-            <button type="button" class="ag-cancel" (click)="closeAddGuest()">Cancel</button>
             <button type="button" class="ag-save" (click)="confirmAddGuest()">Add Guest</button>
+            <button type="button" class="ag-cancel" (click)="closeAddGuest()">Cancel</button>
           </div>
         </div>
       </div>

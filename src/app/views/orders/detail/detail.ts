@@ -45,6 +45,7 @@ export class OrderDetail implements OnInit {
 
   // Guest group state
   protected isEditingGuestGroup = false;
+  protected isGuestInfoHelpOpen = false;
   protected leaderPhone = '';
   protected guestGroupNotes = '';
   protected averageAge: number | string = '';
@@ -68,10 +69,17 @@ export class OrderDetail implements OnInit {
 
   // Add guest form
   protected isAddingGuest = false;
+  protected newGuestFirstName = '';
+  protected newGuestLastName = '';
+  protected newGuestType: 'adult' | 'child' = 'adult';
+  protected newGuestVip = false;
+  protected newGuestNationality = '';
+  protected newGuestSpecialOccasion = '';
+  protected newGuestAllergyTags: string[] = ['Milk', 'Eggs'];
   protected newGuestName = '';
   protected newGuestPhone = '';
   protected newGuestAge: number | string = '';
-  protected newGuestGender = '';
+  protected newGuestGender = 'Male';
   protected newGuestAllergies = '';
 
   // Edit guest
@@ -307,7 +315,16 @@ export class OrderDetail implements OnInit {
   }
 
   protected closeEditGuestGroup(): void {
+    this.isGuestInfoHelpOpen = false;
     this.isEditingGuestGroup = false;
+  }
+
+  protected openGuestInfoHelp(): void {
+    this.isGuestInfoHelpOpen = true;
+  }
+
+  protected closeGuestInfoHelp(): void {
+    this.isGuestInfoHelpOpen = false;
   }
 
   protected saveGuestGroup(): void {
@@ -325,10 +342,17 @@ export class OrderDetail implements OnInit {
 
   protected openAddGuest(): void {
     this.isAddingGuest = true;
+    this.newGuestFirstName = '';
+    this.newGuestLastName = '';
+    this.newGuestType = 'adult';
+    this.newGuestVip = false;
+    this.newGuestNationality = '';
+    this.newGuestSpecialOccasion = '';
+    this.newGuestAllergyTags = ['Milk', 'Eggs'];
     this.newGuestName = '';
     this.newGuestPhone = '';
     this.newGuestAge = '';
-    this.newGuestGender = '';
+    this.newGuestGender = 'Male';
     this.newGuestAllergies = '';
   }
 
@@ -337,12 +361,17 @@ export class OrderDetail implements OnInit {
   }
 
   protected confirmAddGuest(): void {
+    const fullName = `${this.newGuestFirstName} ${this.newGuestLastName}`.trim();
+    const allergyText = this.newGuestAllergyTags.length
+      ? this.newGuestAllergyTags.join(', ')
+      : this.newGuestAllergies;
+
     this.guestMembers.push({
-      name: this.newGuestName,
+      name: fullName || this.newGuestName || 'New Guest',
       phone: this.newGuestPhone,
       age: this.newGuestAge,
       gender: this.newGuestGender,
-      allergies: this.newGuestAllergies || '--',
+      allergies: allergyText || '--',
     });
     this.closeAddGuest();
   }

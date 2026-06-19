@@ -46,6 +46,8 @@ export class OrderDetail implements OnInit {
   // Guest group state
   protected isEditingGuestGroup = false;
   protected isGuestInfoHelpOpen = false;
+  protected isSavingGuestGroup = false;
+  protected guestGroupSaveError = '';
   protected leaderPhone = '';
   protected guestGroupNotes = '';
   protected averageAge: number | string = '';
@@ -269,8 +271,8 @@ export class OrderDetail implements OnInit {
   // ── Guest data seeding ───────────────────────────────────────────────────────
 
   private seedGuestData(order: Order): void {
-    this.leaderPhone = '0912 334 556';
-    this.guestGroupNotes = `${order.adultCount ?? 0}`;
+    this.leaderPhone = order.leaderPhone ?? '';
+    this.guestGroupNotes = order.guestGroupNotes ?? '';
     this.averageAge = Math.round((order.adultCount ?? 1) * 14 + (order.childCount ?? 0) * 8);
     this.specialOccasion = order.dietaryRestrictions ?? '';
     this.leaderEmail = order.guestEmail ?? order.picEmail ?? order.picContact?.email ?? '';
@@ -303,6 +305,7 @@ export class OrderDetail implements OnInit {
   // ── Guest group actions ──────────────────────────────────────────────────────
 
   protected openEditGuestGroup(): void {
+    this.guestGroupSaveError = '';
     this.editLeaderPhone = this.leaderPhone;
     this.editGuestGroupNotes = this.guestGroupNotes;
     this.editLeaderEmail = this.leaderEmail;
@@ -315,8 +318,10 @@ export class OrderDetail implements OnInit {
   }
 
   protected closeEditGuestGroup(): void {
+    if (this.isSavingGuestGroup) return;
     this.isGuestInfoHelpOpen = false;
     this.isEditingGuestGroup = false;
+    this.guestGroupSaveError = '';
   }
 
   protected openGuestInfoHelp(): void {
@@ -328,16 +333,37 @@ export class OrderDetail implements OnInit {
   }
 
   protected saveGuestGroup(): void {
-    this.leaderPhone = this.editLeaderPhone;
-    this.guestGroupNotes = this.editGuestGroupNotes;
-    this.leaderEmail = this.editLeaderEmail;
-    this.allergiesOrDietaryRestrictions = this.editAllergiesOrDietaryRestrictions;
-    this.guestSpecialRequests = this.editGuestSpecialRequests;
-    this.hiredCarDriverGuide = this.editHiredCarDriverGuide;
-    this.internalInformation = this.editInternalInformation;
-    this.selectedSpecialRequests = [...this.editSelectedSpecialRequests];
-    this.specialOccasion = this.editAllergiesOrDietaryRestrictions || this.editSelectedSpecialRequests.join(', ');
-    this.closeEditGuestGroup();
+    if (!this.order?.id || this.isSavingGuestGroup) return;
+
+    this.isSavingGuestGroup = true;
+    this.guestGroupSaveError = '';
+
+    this.apiService.updateOrder(this.order.id, {
+      leaderPhone: this.editLeaderPhone,
+      guestGroupNotes: this.editGuestGroupNotes,
+      guestEmail: this.editLeaderEmail,
+    }).subscribe({
+      next: (updated) => {
+        this.order = { ...this.order, ...updated };
+        this.leaderPhone = updated.leaderPhone ?? this.editLeaderPhone;
+        this.guestGroupNotes = updated.guestGroupNotes ?? this.editGuestGroupNotes;
+        this.leaderEmail = updated.guestEmail ?? this.editLeaderEmail;
+        this.allergiesOrDietaryRestrictions = this.editAllergiesOrDietaryRestrictions;
+        this.guestSpecialRequests = this.editGuestSpecialRequests;
+        this.hiredCarDriverGuide = this.editHiredCarDriverGuide;
+        this.internalInformation = this.editInternalInformation;
+        this.selectedSpecialRequests = [...this.editSelectedSpecialRequests];
+        this.specialOccasion = this.editAllergiesOrDietaryRestrictions || this.editSelectedSpecialRequests.join(', ');
+        this.isSavingGuestGroup = false;
+        this.closeEditGuestGroup();
+        this.cdr.detectChanges();
+      },
+      error: () => {
+        this.guestGroupSaveError = 'Could not save guest group information.';
+        this.isSavingGuestGroup = false;
+        this.cdr.detectChanges();
+      },
+    });
   }
 
   protected openAddGuest(): void {

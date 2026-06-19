@@ -369,8 +369,11 @@
           </div>
 
           <footer class="edit-group-footer">
-            <button class="edit-group-save" type="button" (click)="saveGuestGroup()">Save</button>
-            <button class="edit-group-cancel" type="button" (click)="closeEditGuestGroup()">Cancel</button>
+            <p class="edit-group-error" *ngIf="guestGroupSaveError">{{ guestGroupSaveError }}</p>
+            <button class="edit-group-save" type="button" [disabled]="isSavingGuestGroup" (click)="saveGuestGroup()">
+              {{ isSavingGuestGroup ? 'Saving' : 'Save' }}
+            </button>
+            <button class="edit-group-cancel" type="button" [disabled]="isSavingGuestGroup" (click)="closeEditGuestGroup()">Cancel</button>
           </footer>
         </div>
       </div>

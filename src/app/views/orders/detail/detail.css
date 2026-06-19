@@ -834,11 +834,19 @@ h1 {
 
 .edit-group-footer {
   display: flex;
+  align-items: center;
   justify-content: flex-end;
   gap: 35px;
   padding: 8px 32px 32px;
   border-top: 1px solid #d8d4ce;
   flex-shrink: 0;
+}
+
+.edit-group-error {
+  margin: 0 auto 0 0;
+  color: #b42318;
+  font-size: 0.9rem;
+  font-weight: 600;
 }
 
 .edit-group-save,
@@ -859,6 +867,12 @@ h1 {
 
 .edit-group-save:hover {
   background: #bd9140;
+}
+
+.edit-group-save:disabled,
+.edit-group-cancel:disabled {
+  cursor: not-allowed;
+  opacity: 0.65;
 }
 
 .edit-group-cancel {

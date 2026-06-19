@@ -22,6 +22,8 @@ export interface Order {
   ref2?: string;
   voucherNumber?: string;
   guestEmail?: string;
+  leaderPhone?: string;
+  guestGroupNotes?: string;
   adultCount?: number;
   childCount?: number;
   dietaryRestrictions?: string;

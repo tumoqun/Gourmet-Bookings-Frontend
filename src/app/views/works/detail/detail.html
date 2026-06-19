@@ -22,15 +22,15 @@
           let last = last
         ">
         <div style="display: flex;">
-          <div class="step" [class.active]="isStepActive(status.value)">
+          <div class="step" [class.active]="isStepActive(status.value)" [class.completed]="i < getCurrentStepIndex()">
             <div class="circle">
               {{ i + 1 }}
             </div>
           </div>
-          <div class="line" *ngIf="!last" [class.active]="isStepActive(status.value)"></div>
+          <div class="line" *ngIf="!last" [class.completed]="i < getCurrentStepIndex()"></div>
         </div>
         <span>
-          {{ isStepActive(status.value) ? status.label.toUpperCase() : '' }}
+          {{ isStepActive(status.value) && status.value === workDetail.status ? status.label.toUpperCase() : '' }}
         </span>
       </div>
     </div>
@@ -135,7 +135,7 @@
             {{ order.status }}
           </span>
         </div>
-        <div class="details-link">
+        <div class="details-link" (click)="goToOrderDetails(order.orderId)">
           Order Details
         </div>
       </div>
@@ -207,16 +207,16 @@
         </div>
         <!-- ACTIONS -->
         <div class="actions-cell">
-          <button *ngIf="guide.status !== 'accepted' && guide.status !== 'removed'" class="action-btn accept" (click)="changeStatusGuide(guide, 'accepted')">
+          <button *ngIf="guide.status !== 'accepted' && guide.status !== 'removed'" class="action-btn accept" (click)="changeStatusGuide(guide, 'ACCEPTED')">
             <img class="approve-icon" src="/ui-icons/accept.png" alt="accept icon" />
           </button>
-          <button *ngIf="guide.status !== 'rejected' && guide.status !== 'removed'" class="action-btn reject" (click)="changeStatusGuide(guide, 'rejected')">
+          <button *ngIf="guide.status !== 'rejected' && guide.status !== 'removed'" class="action-btn reject" (click)="changeStatusGuide(guide, 'REJECTED')">
             <img class="reject-icon" src="/ui-icons/reject.png" alt="reject icon" />
           </button>
-          <button *ngIf="guide.status !== 'removed'" class="action-btn remove" (click)="changeStatusGuide(guide, 'removed')">
+          <button *ngIf="guide.status !== 'removed'" class="action-btn remove" (click)="changeStatusGuide(guide, 'REMOVED')">
             <img class="remove-icon" src="/ui-icons/remove.png" alt="remove icon" />
           </button>
-          <button *ngIf="guide.status === 'removed'" class="action-btn re-assign" (click)="changeStatusGuide(guide, 'pending')">
+          <button *ngIf="guide.status === 'removed'" class="action-btn re-assign" (click)="changeStatusGuide(guide, 'PENDING')">
             <img class="remove-icon" src="/ui-icons/reassign.png" alt="remove icon" />
           </button>
         </div>

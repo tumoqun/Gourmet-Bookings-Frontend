@@ -129,9 +129,13 @@
 }
 
 .step.active .circle {
-  background: white;
+  background: #c5a05a;
   border: 2px solid #c5a05a;
-  color: #1a1c3b;
+  color: #ffffff;
+}
+
+.step.completed {
+  background-color: #c5a05a;
 }
 
 .line {
@@ -139,6 +143,10 @@
   height: 24px;
   background: #e7e5e4;
   min-width: 100px;
+}
+
+.line.completed {
+  background: #c5a05a;
 }
 
 /* CONTENT */

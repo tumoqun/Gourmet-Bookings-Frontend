@@ -1,94 +1,458 @@
-:host {
-  display: block;
-  padding: 24px;
+.guide-wrapper {
+  padding: 40px;
+  min-height: 100vh;
+  background:
+    radial-gradient(circle at top center, #ffffff 0, #fcfcfc 56%, #f7f6f3 100%);
 }
 
-.guide-shell {
-  max-width: 960px;
-  margin: 0 auto;
-}
-
-.guide-header {
+.topbar {
   display: flex;
   justify-content: space-between;
-  align-items: flex-start;
-  gap: 16px;
-  margin-bottom: 24px;
+  align-items: center;
 }
 
-.guide-header h1 {
-  margin: 0 0 4px;
-}
-
-.guide-header p {
+.topbar h1 {
+  font-family: playfair display, serif;
+  font-size: 36px;
+  font-weight: 400;
+  color: #1a1c3b;
   margin: 0;
-  color: #5f6368;
 }
 
-.assignment-list {
+.topbar p {
+  font-weight: 500;
+  font-size: 14px;
+  line-height: 20px;
+  color: #8a829e;
+  margin: 0;
+  letter-spacing: 0.14em;
+}
+
+.top-actions button {
+  color: #57534e;
+  padding: 8px 16px;
+  border: 1px solid #e7e5e4;
+  border-radius: 8px;
+  cursor: pointer;
+  height: 34px;
+}
+
+.filter-container {
+  margin-top: 34px;
+  margin-bottom: 34px;
+  background: #ffffff;
+  padding: 24px;
+  border-radius: 12px;
+  box-shadow: 0 22px 46px rgba(82, 70, 44, 0.08);
+}
+
+.filter-grid {
   display: grid;
   gap: 16px;
 }
 
-.assignment-card {
-  border: 1px solid #e0e0e0;
-  border-radius: 12px;
+.filter-grid.bottom {
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto;
+  margin-top: 16px;
+}
+
+select,
+input {
+  width: 100%;
+  height: 50px;
+  padding: 0 18px;
+  border: 1.5px solid #ddd9d3;
+  border-radius: 14px;
+  color: #6f7280;
+  background: #ffffff;
+  font-size: 0.95rem;
+  outline: none;
+  box-sizing: border-box;
+}
+
+select {
+  appearance: none;
+  background-image:
+    linear-gradient(45deg, transparent 50%, #7b8191 50%),
+    linear-gradient(135deg, #7b8191 50%, transparent 50%);
+  background-position:
+    calc(100% - 28px) calc(50% - 3px),
+    calc(100% - 21px) calc(50% - 3px);
+  background-size: 7px 7px, 7px 7px;
+  background-repeat: no-repeat;
+}
+
+.date-icon {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  width: 18px;
+  height: 18px;
+  object-fit: contain;
+  pointer-events: none;
+}
+
+.calendar-popover {
+  position: absolute;
+  z-index: 2;
+  width: 100%;
+  max-width: 320px;
   padding: 16px;
+  background: #ffffff;
+  border: 1px solid #e5e2dc;
+  border-radius: 18px;
+  box-shadow: 0 18px 34px rgba(72, 64, 55, 0.12);
+}
+
+.calendar-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 10px;
+  font-weight: 700;
+  color: #3b3a38;
+}
+
+.calendar-header button {
+  width: 34px;
+  height: 34px;
+  border: 1px solid #d7d2c8;
+  border-radius: 12px;
+  background: #fff;
+  color: #57534e;
+  cursor: pointer;
+}
+
+.calendar-weekdays,
+.calendar-dates {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 8px;
+  text-align: center;
+}
+
+.calendar-weekdays span {
+  color: #8c8a86;
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+.calendar-dates button {
+  width: 100%;
+  min-height: 38px;
+  padding: 0;
+  border: 1px solid transparent;
+  border-radius: 12px;
+  background: #f8f6f1;
+  color: #57534e;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.calendar-dates button:hover:not(:disabled) {
+  border-color: #d8d2c6;
   background: #fff;
 }
 
-.assignment-meta {
+.calendar-dates button.selected {
+  background: #1f2345;
+  color: #fff;
+  border-color: transparent;
+}
+
+.calendar-dates button:disabled {
+  background: transparent;
+  cursor: default;
+}
+
+.filter-toggles {
+  display: flex;
+  justify-content: flex-end;
+  gap: 14px;
+  align-self: center;
+}
+
+.offered-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0 10px;
+  border: 1.5px solid #ddd9d3;
+  border-radius: 10px;
+  color: #6b6761;
+  background: #ffffff;
+  font-size: 0.92rem;
+  font-weight: 500;
+  white-space: nowrap;
+  padding: 12px 16px;
+}
+
+.checkbox-indicator {
+  width: 18px;
+  height: 18px;
+  border: 2px solid #c89d4a;
+  border-radius: 3px;
+  box-sizing: border-box;
+  cursor: pointer;
+}
+
+.checkbox-indicator.checked {
+  background: #c89d4a;
+  border-color: #c89d4a;
+}
+
+.checkbox-indicator.checked::after {
+  content: '✓';
+  color: #fff;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.apply {
+  min-width: 112px;
+  color: #ffffff;
+  background: #cfa24b;
+  font-size: 0.98rem;
+  font-weight: 700;
+  border: none;
+  border-radius: 12px;
+  cursor: pointer;
+  padding: 12px 16px;
+}
+
+.clear {
+  border: 0;
+  color: #b0aba4;
+  background: transparent;
+  font-size: 0.92rem;
+  cursor: pointer;
+}
+
+.work-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(20%, 1fr));
+  gap: 20px;
+}
+
+.work-card {
+  background: #fff;
+  border: 1px solid #e5e5e5;
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.card-active {
+  border: 1px solid #C5A05A
+}
+
+.card-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  gap: 12px;
+  padding: 12px;
+  color: #000000;
+  h3 {
+    margin: 0;
+    font-size: 20px;
+    font-weight: 600;
+  }
+  p {
+    margin: 2px 0 0;
+    font-size: 16px;
+    font-weight: 600;
+  }
 }
 
-.assignment-meta h2 {
-  margin: 0;
-  font-size: 1.1rem;
+.status-badge {
+  height: 20px;
 }
 
-.badge {
-  text-transform: capitalize;
-  background: #f1f3f4;
-  padding: 4px 10px;
+.status-offered,
+.status-ready,
+.status-accepted,
+.status-rejected,
+.status-started,
+.status-reminder,
+.status-problem,
+.status-paid-date,
+.status-deleted,
+.status-closed,
+.status-ended,
+.status-active,
+.status-scheduled,
+.status-in-prep,
+.status-cancelled {
+  padding: 5px 12px;
   border-radius: 999px;
-  font-size: 0.85rem;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.status-offered {
+  background: #FFEDD5;;
+  color: #9A3412;
+  border: 1px solid #9A34124D;
+}
+
+.status-ready {
+  background: #e0e7ff;
+  color: #3730A3;
+  border: 1px solid #3730A34D;
+}
+
+.status-accepted {
+  background: #DCFCE7;
+  color: #166534;
+  border: 1px solid #1665344D
+}
+
+.status-rejected {
+  background: #FFEDD5;
+  color: #9a3412;
+  border: 1px solid #9A34124D
+}
+
+.status-started {
+  background: #CFFAFE;
+  color: #115e75;
+  border: 1px solid #155E754D
+}
+
+.status-reminder {
+  background: #F3E8FF;
+  color: #6b21A8;
+  border: 1px solid #6B21A84D
+}
+
+.status-problem {
+  background: #FEE2E2;
+  color: #991b1b;
+  border: 1px solid #991B1B4D
+}
+
+.status-paid-date {
+  background: #FEF3C7;
+  color: #92400E;
+  border: 1px solid #92400E4D
+}
+
+.status-deleted {
+  background: #e7e5e4;
+  color: #44403c;
+  border: 1px solid #44403C4D
+}
+
+.status-closed {
+  background: #000000;
+  color: #ffffff;
+  border: 1px solid #FFFFFF4D
+}
+
+.status-ended {
+  background: #d9d9d9;
+  color: #555;
+  border: 1px solid #1F29374D;
+}
+
+.status-active {
+  background: #d8f7e8;
+  color: #1d9b68;
+  border: 1px solid #115E594D
+}
+
+.status-scheduled {
+  background: #dbe8ff;
+  color: #4677ff;
+  border: 1px solid #1E40AF4D
+}
+
+.status-in-prep {
+  background: #fff2c9;
+  color: #b68b00;
+  border: 1px solid #854D0E4D
+}
+
+.status-cancelled {
+  background: #e8edf4;
+  color: #7d8795;
+  border: 1px solid #3341554D
+}
+
+.card-body {
+  border-top: 1px solid #eee;
+  padding: 12px;
+}
+
+.info-row {
+  display: flex;
+  margin-bottom: 8px;
+  font-size: 16px;
+  font-weight: 500;
+  span {
+    width: 105px;
+    color: #57534E;
+    margin-right: 32px;
+  }
+}
+
+.info-data {
+  flex: 1;
+  color: #292524;
+}
+
+.card-footer {
+  border-top: 1px solid #eee;
+  padding: 12px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.btn-detail {
+  border: 1px solid #ddd;
+  background: white;
+  border-radius: 6px;
+  padding: 6px 12px;
+  cursor: pointer;
+}
+
+.btn-primary {
+  background: #16183c;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  padding: 8px 16px;
+  cursor: pointer;
+}
+
+.btn-danger {
+  background: white;
+  color: #ff4d4f;
+  border: 1px solid #ff4d4f;
+  border-radius: 6px;
+  padding: 8px 16px;
+  cursor: pointer;
+}
+
+.btn-outline {
+  background: white;
+  color: #c8a24b;
+  border: 1px solid #c8a24b;
+  border-radius: 6px;
+  padding: 8px 16px;
+  cursor: pointer;
 }
 
 .actions {
   display: flex;
-  flex-wrap: wrap;
   gap: 8px;
-  margin-top: 12px;
 }
 
-.actions button {
-  border: 1px solid #dadce0;
-  background: #fff;
-  border-radius: 8px;
-  padding: 8px 12px;
+.icon-btn {
+  width: 32px;
+  height: 32px;
+  background: white;
   cursor: pointer;
-}
-
-.actions button.danger {
-  color: #b3261e;
-  border-color: #f9dedc;
-}
-
-.secondary-action {
-  border: 1px solid #dadce0;
-  background: #fff;
-  border-radius: 8px;
-  padding: 8px 12px;
-  cursor: pointer;
-}
-
-.status {
-  color: #5f6368;
-}
-
-.status.error {
-  color: #b3261e;
+  border: unset;
 }

@@ -1,43 +1,131 @@
-<section class="guide-shell">
-  <header class="guide-header">
+<section class="guide-wrapper">
+  <header class="topbar">
     <div>
-      <h1>Tour Guide</h1>
-      <p>Your assigned tours and field operations.</p>
+      <h1 id="works-title">Works</h1>
+      <p>TODAY IS THURSDAY, MARCH 12, 2026</p>
     </div>
-    @if (capability.isAdmin()) {
-      <button type="button" class="secondary-action" (click)="switchToAdminView()">
-        Switch to Admin view
+    <div class="top-actions">
+      <button class="refresh" type="button" [disabled]="loading" (click)="handleRefesh()">
+        <span aria-hidden="true">&#8635;</span> Refresh
       </button>
-    }
+    </div>
   </header>
 
-  @if (loading()) {
-    <p class="status">Loading assignments…</p>
-  } @else if (error()) {
-    <p class="status error">{{ error() }}</p>
-  } @else if (assignments().length === 0) {
-    <p class="status">No assignments found.</p>
-  } @else {
-    <div class="assignment-list">
-      @for (assignment of assignments(); track assignment.id) {
-        <article class="assignment-card">
-          <div class="assignment-meta">
-            <h2>{{ assignment.workNumber || ('Work #' + assignment.workId) }}</h2>
-            <span class="badge">{{ assignment.status }}</span>
+  <div class="filter-container">
+    <div class="filter-grid bottom">
+      <label class="date-field" (click)="openDateCalendar($event)">
+        <input type="text" placeholder="Tour Date" aria-label="Tour Date" [(ngModel)]="filters.requestedDate" readonly />
+        <img class="date-icon" src="/ui-icons/date.png" alt="Date icon" />
+        <div class="calendar-popover" *ngIf="activeCalendar">
+          <div class="calendar-header">
+            <button type="button" (click)="changeCalendarMonth(-1, $event)">
+              &lt;
+            </button>
+            <span>
+              {{ calendarMonthNames[calendarMonth] }}
+              {{ calendarYear }}
+            </span>
+            <button type="button" (click)="changeCalendarMonth(1, $event)">
+              &gt;
+            </button>
           </div>
-          <p>Guide: {{ assignment.guideName || assignment.guideId }}</p>
-          <div class="actions">
-            @if (assignment.status === 'pending' && capability.can('GUIDE_ASSIGNMENT_RESPOND')) {
-              <button type="button" (click)="accept(assignment.id)">Accept</button>
-              <button type="button" class="danger" (click)="reject(assignment.id)">Reject</button>
-            }
-            @if (capability.can('GUIDE_WORK_LIFECYCLE')) {
-              <button type="button" (click)="startWork(assignment.id)">Start Work</button>
-              <button type="button" (click)="endWork(assignment.id)">End Work</button>
-            }
+          <div class="calendar-weekdays">
+            <span *ngFor="let day of calendarWeekdays">
+              {{ day }}
+            </span>
           </div>
-        </article>
-      }
+          <div class="calendar-dates">
+            <button type="button" *ngFor="let date of buildCalendarDays(calendarYear, calendarMonth)"
+              [disabled]="date === 0" [class.selected]="isSelectedCalendarDate(date)"
+              (click)="selectCalendarDate(date, $event)">
+              {{ date > 0 ? date : '' }}
+            </button>
+          </div>
+        </div>
+      </label>
+      <label>
+        <select aria-label="All Statuses" [(ngModel)]="filters.status">
+          <option value="undefined">All Statuses</option>
+          <option *ngFor="let status of statuses" [value]="status.value.toLowerCase()">{{ status.label }}</option>
+        </select>
+      </label>
+      <div class="filter-toggles">
+        <button type="button" class="offered-toggle"
+          (click)="onCheckboxChange()">
+          <span class="checkbox-indicator" [class.checked]="filters.isNewOffered"></span>
+          <span>New Offers</span>
+        </button>
+        <button class="apply" type="button" (click)="applySearchFilters()">Apply</button>
+        <button class="clear" type="button" (click)="clearSearchFilters()">Clear Filters</button>
+      </div>
     </div>
-  }
+  </div>
+
+  <div *ngIf="loading && assignments.length === 0">
+    Loading ...
+  </div>
+  <div *ngIf="!loading && assignments.length === 0">
+    No works found.
+  </div>
+
+  <div class="work-grid">
+    <div class="work-card" [class.card-active]="work.workStatus.toUpperCase() === 'STARTED'" *ngFor="let work of assignments">
+      <div class="card-header">
+        <div>
+          <h3>{{ work.serviceName }}</h3>
+          <p>{{ work.resellerName }}</p>
+        </div>
+        <span class="status-badge" [class]="getStatusClass(work.workStatus.toUpperCase())">
+          {{ work.workStatus.toUpperCase().replace('_', ' ') }}
+        </span>
+      </div>
+      <div class="card-body">
+        <div class="info-row">
+          <span>Date</span>
+          <div>{{ work.tourDate }}</div>
+        </div>
+        <div class="info-row">
+          <span>Time</span>
+          <div class="info-data">{{ formatTime(work.tourStartTime) }} - {{ formatTime(work.tourEndTime) }}</div>
+        </div>
+        <div class="info-row">
+          <span>Tour Duration</span>
+          <div class="info-data">{{ work.durationMinutes }}</div>
+        </div>
+        <div class="info-row">
+          <span>Guests</span>
+          <div class="info-data">{{ work.totalAdultCount }}/{{ work.totalChildCount }}</div>
+        </div>
+        <div class="info-row">
+          <span>Fees</span>
+          <div class="info-data">${{ formatCurrency(work.totalFeeAmount) }}</div>
+        </div>
+      </div>
+      <div class="card-footer">
+        <button class="btn-detail">
+          See Details
+        </button>
+        <ng-container [ngSwitch]="work.workStatus.toUpperCase()">
+          <div *ngSwitchCase="'OFFERED'" class="actions">
+            <button class="icon-btn" (click)="accept(work.assignmentId)">
+              <img class="approve-icon" src="/ui-icons/accept.png" alt="accept icon" />
+            </button>
+            <button class="icon-btn" (click)="reject(work.assignmentId)">
+              <img class="remove-icon" src="/ui-icons/remove.png" alt="remove icon" />
+            </button>
+          </div>
+          <button *ngSwitchCase="'ACCEPTED'" class="btn-primary" (click)="startWork(work.assignmentId)">
+            Start Work
+          </button>
+          <button *ngSwitchCase="'STARTED'" class="btn-danger" (click)="endWork(work.assignmentId)">
+            End Work
+          </button>
+          <button *ngSwitchCase="'ENDED'" class="btn-outline">
+            Salary Entry
+          </button>
+        </ng-container>
+      </div>
+    </div>
+  </div>
+
 </section>

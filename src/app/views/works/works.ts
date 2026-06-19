@@ -15,6 +15,7 @@ interface WorkFilterTab {
 export enum WorkStatusClass {
   PENDING = 'status-pending',
   READY = 'status-ready',
+  OFFERED = 'status-offered',
   ACCEPTED = 'status-accepted',
   STARTED = 'status-started',
   REMINDER = 'status-reminder',

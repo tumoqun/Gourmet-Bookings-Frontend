@@ -1,7 +1,7 @@
 import { CommonModule } from '@angular/common';
 import { ChangeDetectorRef, Component, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { WorkDetailType, WorkGuide, WorkOrder, WorkService, WorkStatuses } from '../../../services/work.service';
 import { AddGuide } from '../add-guide/add-guide';
 import { AddStop, ItineraryStatus } from '../add-stop/add-stop';
@@ -34,6 +34,7 @@ export interface StopService {
 })
 export class WorkDetail {
   private route = inject(ActivatedRoute);
+  private router = inject(Router);
 
   isEditNote = false;
   showGuideModal = false;
@@ -193,6 +194,16 @@ export class WorkDetail {
       WorkStatuses.findIndex((status) => status.value === step.toUpperCase()) <=
       WorkStatuses.findIndex((status) => status.value === this.workDetail.status.toUpperCase())
     );
+  }
+
+  getCurrentStepIndex(): number {
+    return this.workStatuses.findIndex(
+      s => s.value === this.workDetail.status
+    );
+  }
+
+  goToOrderDetails(id: number): void {
+    this.router.navigate(['/orders', id]);
   }
 
   openGuideModal(): void {

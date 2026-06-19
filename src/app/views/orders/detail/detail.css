@@ -663,6 +663,215 @@ h1 {
 
 /* ── add guest dialog ────────────────────────────────────────────────────── */
 
+.edit-group-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  background: rgba(0, 0, 0, 0.18);
+}
+
+.edit-group-dialog {
+  width: min(914px, calc(100vw - 28px));
+  max-height: min(856px, calc(100vh - 28px));
+  display: flex;
+  flex-direction: column;
+  background: #fff;
+  border-radius: 9px;
+  color: #2d2b29;
+  overflow: hidden;
+  box-shadow: 0 22px 58px rgba(35, 31, 27, 0.16);
+  font-family: "Aptos", "Segoe UI", sans-serif;
+}
+
+.edit-group-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 32px 32px 14px;
+  border-bottom: 1px solid #d8d4ce;
+  flex-shrink: 0;
+}
+
+.edit-group-header h3 {
+  margin: 0;
+  font-size: 1.55rem;
+  line-height: 1.2;
+  font-weight: 800;
+  color: #292827;
+}
+
+.edit-group-tools {
+  display: flex;
+  align-items: center;
+  gap: 30px;
+  padding-right: 3px;
+}
+
+.edit-group-help,
+.edit-group-close {
+  width: 28px;
+  height: 28px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+}
+
+.edit-group-help svg {
+  width: 28px;
+  height: 28px;
+  color: #c79b46;
+}
+
+.edit-group-close svg {
+  width: 27px;
+  height: 27px;
+  color: #9b9792;
+}
+
+.edit-group-body {
+  padding: 10px 32px 14px;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: #c4c0bc transparent;
+}
+
+.edit-group-body::-webkit-scrollbar {
+  width: 10px;
+}
+
+.edit-group-body::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.edit-group-body::-webkit-scrollbar-thumb {
+  background: #c4c0bc;
+  border-radius: 999px;
+}
+
+.edit-group-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 18px;
+}
+
+.edit-group-field span {
+  font-size: 1rem;
+  line-height: 1.25;
+  font-weight: 400;
+  color: #5b5650;
+}
+
+.edit-group-field input,
+.edit-chip-select {
+  width: 100%;
+  height: 43px;
+  box-sizing: border-box;
+  border: 1px solid #d5d1cb;
+  border-radius: 11px;
+  background: #fff;
+  color: #292827;
+  font-size: 1rem;
+  font-family: inherit;
+}
+
+.edit-group-field input {
+  padding: 0 16px;
+  outline: none;
+}
+
+.edit-group-field input::placeholder {
+  color: #9aa4b2;
+  opacity: 1;
+}
+
+.edit-group-field input:focus,
+.edit-chip-select:focus-within {
+  border-color: #c79b46;
+  box-shadow: 0 0 0 3px rgba(199, 155, 70, 0.12);
+}
+
+.edit-chip-select {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 50px;
+  height: 50px;
+  padding: 7px 44px 7px 16px;
+  position: relative;
+}
+
+.edit-chip-select svg {
+  position: absolute;
+  right: 19px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 18px;
+  height: 18px;
+  color: #667085;
+}
+
+.edit-request-chip {
+  display: inline-flex;
+  align-items: center;
+  height: 32px;
+  padding: 0 5px;
+  border: 1px solid #d29a35;
+  border-radius: 4px;
+  background: #fffaf1;
+  color: #2d2b29 !important;
+  font-size: 1rem !important;
+  line-height: 1 !important;
+}
+
+.edit-group-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 35px;
+  padding: 8px 32px 32px;
+  border-top: 1px solid #d8d4ce;
+  flex-shrink: 0;
+}
+
+.edit-group-save,
+.edit-group-cancel {
+  height: 40px;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.edit-group-save {
+  min-width: 74px;
+  border: 0;
+  background: #cba052;
+  color: #fff;
+}
+
+.edit-group-save:hover {
+  background: #bd9140;
+}
+
+.edit-group-cancel {
+  min-width: 93px;
+  border: 1px solid #dcd8d2;
+  background: #fff;
+  color: #2d2b29;
+}
+
+.edit-group-cancel:hover {
+  background: #faf9f7;
+}
+
 .add-guest-overlay {
   position: fixed;
   inset: 0;

@@ -49,7 +49,22 @@ export class OrderDetail implements OnInit {
   protected guestGroupNotes = '';
   protected averageAge: number | string = '';
   protected specialOccasion = '';
+  protected leaderEmail = '';
+  protected allergiesOrDietaryRestrictions = '';
+  protected guestSpecialRequests = '';
+  protected hiredCarDriverGuide = '';
+  protected internalInformation = '';
+  protected selectedSpecialRequests: string[] = ['Special Occasion', 'VIP'];
   protected guestMembers: GuestMember[] = [];
+
+  protected editLeaderPhone = '';
+  protected editGuestGroupNotes = '';
+  protected editLeaderEmail = '';
+  protected editAllergiesOrDietaryRestrictions = '';
+  protected editGuestSpecialRequests = '';
+  protected editHiredCarDriverGuide = '';
+  protected editInternalInformation = '';
+  protected editSelectedSpecialRequests: string[] = [];
 
   // Add guest form
   protected isAddingGuest = false;
@@ -156,6 +171,10 @@ export class OrderDetail implements OnInit {
     return this.order?.isTentative ? 'YES' : 'NO';
   }
 
+  protected get orderTypeLabel(): string {
+    return this.order?.isPrivate ? 'PRIVATE' : 'GROUP';
+  }
+
   protected get originalAgent(): string {
     return this.order?.originalAgent?.name ?? 'NO';
   }
@@ -246,6 +265,8 @@ export class OrderDetail implements OnInit {
     this.guestGroupNotes = `${order.adultCount ?? 0}`;
     this.averageAge = Math.round((order.adultCount ?? 1) * 14 + (order.childCount ?? 0) * 8);
     this.specialOccasion = order.dietaryRestrictions ?? '';
+    this.leaderEmail = order.guestEmail ?? order.picEmail ?? order.picContact?.email ?? '';
+    this.allergiesOrDietaryRestrictions = order.dietaryRestrictions ?? '';
 
     // Build sample guests from adultCount + childCount
     const adults = order.adultCount ?? 2;
@@ -274,11 +295,32 @@ export class OrderDetail implements OnInit {
   // ── Guest group actions ──────────────────────────────────────────────────────
 
   protected openEditGuestGroup(): void {
+    this.editLeaderPhone = this.leaderPhone;
+    this.editGuestGroupNotes = this.guestGroupNotes;
+    this.editLeaderEmail = this.leaderEmail;
+    this.editAllergiesOrDietaryRestrictions = this.allergiesOrDietaryRestrictions;
+    this.editGuestSpecialRequests = this.guestSpecialRequests;
+    this.editHiredCarDriverGuide = this.hiredCarDriverGuide;
+    this.editInternalInformation = this.internalInformation;
+    this.editSelectedSpecialRequests = [...this.selectedSpecialRequests];
     this.isEditingGuestGroup = true;
   }
 
   protected closeEditGuestGroup(): void {
     this.isEditingGuestGroup = false;
+  }
+
+  protected saveGuestGroup(): void {
+    this.leaderPhone = this.editLeaderPhone;
+    this.guestGroupNotes = this.editGuestGroupNotes;
+    this.leaderEmail = this.editLeaderEmail;
+    this.allergiesOrDietaryRestrictions = this.editAllergiesOrDietaryRestrictions;
+    this.guestSpecialRequests = this.editGuestSpecialRequests;
+    this.hiredCarDriverGuide = this.editHiredCarDriverGuide;
+    this.internalInformation = this.editInternalInformation;
+    this.selectedSpecialRequests = [...this.editSelectedSpecialRequests];
+    this.specialOccasion = this.editAllergiesOrDietaryRestrictions || this.editSelectedSpecialRequests.join(', ');
+    this.closeEditGuestGroup();
   }
 
   protected openAddGuest(): void {

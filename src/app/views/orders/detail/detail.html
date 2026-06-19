@@ -26,7 +26,7 @@
       <div class="progress-bar-card">
         <div class="reseller-badge">
           <span class="reseller-name">{{ reseller }}</span>
-          <span class="group-badge">GROUP</span>
+          <span class="group-badge">{{ orderTypeLabel }}</span>
         </div>
 
         <div class="progress-track" aria-label="Order progress">
@@ -303,6 +303,77 @@
           <span>Special Occasion: {{ specialOccasion }}</span>
         </div>
       </section>
+
+      <!-- Edit group information modal -->
+      <div class="edit-group-overlay" *ngIf="isEditingGuestGroup" role="dialog" aria-modal="true" aria-labelledby="edit-group-title">
+        <div class="edit-group-dialog">
+          <header class="edit-group-header">
+            <h3 id="edit-group-title">Edit Group Information</h3>
+            <div class="edit-group-tools">
+              <button class="edit-group-help" type="button" aria-label="Help">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <circle cx="12" cy="12" r="10"/>
+                  <path d="M9.1 9a3 3 0 1 1 5.2 2c-.9.6-1.3 1.1-1.3 2"/>
+                  <path d="M12 17h.01"/>
+                </svg>
+              </button>
+              <button class="edit-group-close" type="button" (click)="closeEditGuestGroup()" aria-label="Close">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <line x1="18" y1="6" x2="6" y2="18"/>
+                  <line x1="6" y1="6" x2="18" y2="18"/>
+                </svg>
+              </button>
+            </div>
+          </header>
+
+          <div class="edit-group-body">
+            <label class="edit-group-field">
+              <span>Leader Phone Number</span>
+              <input type="text" [(ngModel)]="editLeaderPhone" placeholder="Enter Phone Number" />
+            </label>
+            <label class="edit-group-field">
+              <span>Guest Group Notes</span>
+              <input type="text" [(ngModel)]="editGuestGroupNotes" placeholder="Enter Notes" />
+            </label>
+            <label class="edit-group-field">
+              <span>Leader Mail</span>
+              <input type="email" [(ngModel)]="editLeaderEmail" placeholder="Enter Email" />
+            </label>
+            <label class="edit-group-field">
+              <span>Allergies or Dietary Restrictions</span>
+              <input type="text" [(ngModel)]="editAllergiesOrDietaryRestrictions" placeholder="Enter Allergies or Dietary Restrictions" />
+            </label>
+
+            <label class="edit-group-field">
+              <span>Special Requests</span>
+              <div class="edit-chip-select">
+                <span class="edit-request-chip" *ngFor="let request of editSelectedSpecialRequests">{{ request }}</span>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <polyline points="6 9 12 15 18 9"/>
+                </svg>
+              </div>
+            </label>
+
+            <label class="edit-group-field">
+              <span>Guests Special Requests</span>
+              <input type="text" [(ngModel)]="editGuestSpecialRequests" placeholder="Enter Requests" />
+            </label>
+            <label class="edit-group-field">
+              <span>Hired Car / Driver / Handover Guide</span>
+              <input type="text" [(ngModel)]="editHiredCarDriverGuide" placeholder="Enter Allergies or Dietary Restrictions" />
+            </label>
+            <label class="edit-group-field">
+              <span>Internal Information</span>
+              <input type="text" [(ngModel)]="editInternalInformation" placeholder="Enter Notes" />
+            </label>
+          </div>
+
+          <footer class="edit-group-footer">
+            <button class="edit-group-save" type="button" (click)="saveGuestGroup()">Save</button>
+            <button class="edit-group-cancel" type="button" (click)="closeEditGuestGroup()">Cancel</button>
+          </footer>
+        </div>
+      </div>
 
       <!-- Add guest inline form modal -->
       <div class="add-guest-overlay" *ngIf="isAddingGuest" role="dialog" aria-modal="true" aria-label="Add guest">

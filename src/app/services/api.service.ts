@@ -4,12 +4,26 @@ import { Observable, of } from 'rxjs';
 import { environment } from '../../environments/environment';
 import { MOCK_ORDERS } from './mock-orders.data';
 
+export interface OrderGuest {
+  id?: number;
+  firstName?: string;
+  lastName?: string;
+  guestType?: string;
+  isVip?: boolean;
+  age?: number;
+  gender?: string;
+  nationality?: string;
+  phoneNumber?: string;
+  allergies?: string;
+  specialOccasion?: string;
+}
+
 export interface Order {
   id?: number;
   orderNumber: string;
-  status: OrderStatus;
+  status?: OrderStatus;
   orderChannel?: string;
-  isTentative: boolean;
+  isTentative?: boolean;
   isPrivate?: boolean;
   createdByUser?: User;
   createdByName?: string;
@@ -38,6 +52,7 @@ export interface Order {
   additionalServices?: OrderAdditionalService[];
   specialRequests?: SpecialRequestType[];
   financialLines?: OrderFinancialLine[];
+  guests?: OrderGuest[];
   guide?: string;
 }
 
@@ -72,6 +87,7 @@ export interface ResellerContact {
   reseller: Reseller;
   name: string;
   email: string;
+  phoneNumber?: string;
   isPrimary: boolean;
 }
 
@@ -283,6 +299,10 @@ export class ApiService {
 
   updateOrder(id: number, order: Partial<Order>): Observable<Order> {
     return this.http.put<Order>(`${this.apiUrl}/orders/${id}`, order, this.getHttpOptions());
+  }
+
+  updateOrderGuests(id: number, guests: OrderGuest[]): Observable<OrderGuest[]> {
+    return this.http.put<OrderGuest[]>(`${this.apiUrl}/orders/${id}/guests`, guests, this.getHttpOptions());
   }
 
   deleteOrder(id: number): Observable<void> {

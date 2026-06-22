@@ -234,4 +234,8 @@ export class WorkService {
   getWorkGuides(workId: number): Observable<WorkGuide[]> {
     return this.http.get<WorkGuide[]>(`${this.apiUrl}/works/${workId}/guides`);
   }
+
+  updateWorkStatus(workId: number, status: string): Observable<any> {
+    return this.http.put<any>(`${this.apiUrl}/works/${workId}/status`, { status });
+  }
 }

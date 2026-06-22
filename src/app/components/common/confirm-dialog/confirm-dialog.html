@@ -1,0 +1,19 @@
+<div class="dialog-backdrop" *ngIf="visible">
+  <div class="dialog-container">
+    <div class="dialog-header">
+      <h3>{{ title }}</h3>
+    </div>
+    <div class="dialog-body">
+      {{ message }}
+    </div>
+    <div class="dialog-footer">
+      <button type="button" class="btn-cancel" (click)="onCancel()">
+        {{ cancelText }}
+      </button>
+      <button type="button" class="btn-confirm" (click)="onConfirm()">
+        {{ confirmText }}
+      </button>
+    </div>
+
+  </div>
+</div>

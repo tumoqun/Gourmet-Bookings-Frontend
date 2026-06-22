@@ -137,7 +137,7 @@ export class GuideView implements OnInit {
       this.filters.status = 'undefined';
       this.filters.isNewOffered = false;
     } else {
-      this.filters.status = 'offered';
+      this.filters.status = 'OFFERED';
       this.filters.isNewOffered = true;
     }
     this.loadAssignments();

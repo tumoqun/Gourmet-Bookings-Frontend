@@ -1,8 +1,16 @@
 <section class="work-detail-list-wrapper">
   <header class="topbar">
-    <div>
-      <h1 id="works-title">Work Detail</h1>
-      <p>TODAY IS THURSDAY, MARCH 12, 2026</p>
+    <div class="top-left">
+      <button class="back-btn" type="button" (click)="goBack()" aria-label="Back to orders">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"
+          stroke-linejoin="round" aria-hidden="true">
+          <polyline points="15 18 9 12 15 6" />
+        </svg>
+      </button>
+      <div>
+        <h1 id="works-title">Work Detail</h1>
+        <p>TODAY IS THURSDAY, MARCH 12, 2026</p>
+      </div>
     </div>
   </header>
   <div *ngIf="loadingInfo" class="loading-state">
@@ -22,7 +30,7 @@
           let last = last
         ">
         <div style="display: flex;">
-          <div class="step" [class.active]="isStepActive(status.value)" [class.completed]="i < getCurrentStepIndex()">
+          <div class="step" [class.active]="isStepActive(status.value)" [class.completed]="i < getCurrentStepIndex()" (click)="onClickStep(status.value)">
             <div class="circle">
               {{ i + 1 }}
             </div>
@@ -207,16 +215,16 @@
         </div>
         <!-- ACTIONS -->
         <div class="actions-cell">
-          <button *ngIf="guide.status !== 'accepted' && guide.status !== 'removed'" class="action-btn accept" (click)="changeStatusGuide(guide, 'ACCEPTED')">
+          <button *ngIf="guide.status !== 'ACCEPTED' && guide.status !== 'REMOVED'" class="action-btn accept" (click)="onClickGuideAction(guide.id, 'ACCEPTED')">
             <img class="approve-icon" src="/ui-icons/accept.png" alt="accept icon" />
           </button>
-          <button *ngIf="guide.status !== 'rejected' && guide.status !== 'removed'" class="action-btn reject" (click)="changeStatusGuide(guide, 'REJECTED')">
+          <button *ngIf="guide.status !== 'REJECTED' && guide.status !== 'REMOVED'" class="action-btn reject" (click)="onClickGuideAction(guide.id, 'REJECTED')">
             <img class="reject-icon" src="/ui-icons/reject.png" alt="reject icon" />
           </button>
-          <button *ngIf="guide.status !== 'removed'" class="action-btn remove" (click)="changeStatusGuide(guide, 'REMOVED')">
+          <button *ngIf="guide.status !== 'REMOVED'" class="action-btn remove" (click)="onClickGuideAction(guide.id, 'REMOVED')">
             <img class="remove-icon" src="/ui-icons/remove.png" alt="remove icon" />
           </button>
-          <button *ngIf="guide.status === 'removed'" class="action-btn re-assign" (click)="changeStatusGuide(guide, 'PENDING')">
+          <button *ngIf="guide.status === 'REMOVED'" class="action-btn re-assign" (click)="onClickGuideAction(guide.id, 'PENDING')">
             <img class="remove-icon" src="/ui-icons/reassign.png" alt="remove icon" />
           </button>
         </div>
@@ -288,10 +296,10 @@
         </div>
         <!-- ACTIONS -->
         <div class="actions-cell">
-          <button *ngIf="item.status === 'SCHEDULED'" class="action-btn accept" (click)="changeStopStatus(item, 'CONFIRMED')">
+          <button *ngIf="item.status === 'SCHEDULED'" class="action-btn accept" (click)="onClickStopAction(item.id, 'CONFIRMED')">
             <img class="approve-icon" src="/ui-icons/accept.png" alt="accept icon" />
           </button>
-          <button *ngIf="item.status !== 'CANCELLED'" class="action-btn remove" (click)="changeStopStatus(item, 'CANCELLED')">
+          <button *ngIf="item.status !== 'CANCELLED'" class="action-btn remove" (click)="onClickStopAction(item.id, 'CANCELLED')">
             <img class="remove-icon" src="/ui-icons/remove.png" alt="remove icon" />
           </button>
         </div>
@@ -368,6 +376,19 @@
 
   <app-add-guide *ngIf="showGuideModal" [visible]="showGuideModal" [currentGuides]="currentGuides"
     (close)="closeGuideModal()" (reload)="getWorkGuides(workId)"></app-add-guide>
+
+  <app-confirm-dialog [visible]="openConfirmWork" [message]="confirmTextWork" confirmText="Confirm" cancelText="Cancel"
+    (confirm)="changeWorkStatus()" (cancel)="onCloseConfirmWork()">
+  </app-confirm-dialog>
+
+  <app-confirm-dialog [visible]="openConfirmGuide"
+    [message]="confirmTextGuide" confirmText="Confirm" cancelText="Cancel" (confirm)="changeStatusGuide()"
+    (cancel)="closeGuideConfirm()">
+  </app-confirm-dialog>
+
+  <app-confirm-dialog [visible]="openConfirmStop" [message]="confirmTextStop" confirmText="Confirm" cancelText="Cancel"
+    (confirm)="changeStopStatus()" (cancel)="closeStopConfirm()">
+  </app-confirm-dialog>
   
   <app-add-stop *ngIf="showStopModal" [visible]="showStopModal" [serviceInfo]="stopService" (close)="closeStopModal()" (reload)="loadItineraryStops(workId)"></app-add-stop>
 </section>

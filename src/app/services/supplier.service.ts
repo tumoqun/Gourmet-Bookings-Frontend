@@ -31,9 +31,9 @@ export class SupplierService {
     };
   }
 
-  getSuppliersForService(serviceId: number, type: string): Observable<SupplierSelectOption[]> {
+  getSuppliersForService(serviceId: number, workId: number, type: string): Observable<SupplierSelectOption[]> {
     return this.http.get<SupplierSelectOption[]>(
-      `${this.apiUrl}/services/${serviceId}/suppliers?supplierType=${type}`,
+      `${this.apiUrl}/services/${serviceId}/suppliers?workId=${workId}&supplierType=${type}`,
       this.getHttpOptions(),
     );
   }

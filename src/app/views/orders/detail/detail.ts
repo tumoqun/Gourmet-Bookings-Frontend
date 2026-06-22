@@ -2,7 +2,7 @@ import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
-import { ApiService, Order, OrderAdditionalService } from '../../../services/api.service';
+import { ApiService, Order, OrderAdditionalService, OrderGuest } from '../../../services/api.service';
 
 interface GuestMember {
   name: string;
@@ -45,18 +45,43 @@ export class OrderDetail implements OnInit {
 
   // Guest group state
   protected isEditingGuestGroup = false;
+  protected isGuestInfoHelpOpen = false;
+  protected isSavingGuestGroup = false;
+  protected guestGroupSaveError = '';
   protected leaderPhone = '';
   protected guestGroupNotes = '';
   protected averageAge: number | string = '';
   protected specialOccasion = '';
+  protected leaderEmail = '';
+  protected allergiesOrDietaryRestrictions = '';
+  protected guestSpecialRequests = '';
+  protected hiredCarDriverGuide = '';
+  protected internalInformation = '';
+  protected selectedSpecialRequests: string[] = ['Special Occasion', 'VIP'];
   protected guestMembers: GuestMember[] = [];
+
+  protected editLeaderPhone = '';
+  protected editGuestGroupNotes = '';
+  protected editLeaderEmail = '';
+  protected editAllergiesOrDietaryRestrictions = '';
+  protected editGuestSpecialRequests = '';
+  protected editHiredCarDriverGuide = '';
+  protected editInternalInformation = '';
+  protected editSelectedSpecialRequests: string[] = [];
 
   // Add guest form
   protected isAddingGuest = false;
+  protected newGuestFirstName = '';
+  protected newGuestLastName = '';
+  protected newGuestType: 'adult' | 'child' = 'adult';
+  protected newGuestVip = false;
+  protected newGuestNationality = '';
+  protected newGuestSpecialOccasion = '';
+  protected newGuestAllergyTags: string[] = ['Milk', 'Eggs'];
   protected newGuestName = '';
   protected newGuestPhone = '';
   protected newGuestAge: number | string = '';
-  protected newGuestGender = '';
+  protected newGuestGender = 'Male';
   protected newGuestAllergies = '';
 
   // Edit guest
@@ -99,7 +124,7 @@ export class OrderDetail implements OnInit {
         type: 'P',
         dateTime: 'Sat, 07-Dec-24 - 5:30PM',
         guests: '5/0',
-        fee: '¥90,488',
+        fee: 'VND 90,488',
         status: 'Completed',
         statusTone: 'neutral',
         notes: 'View Notes',
@@ -154,6 +179,10 @@ export class OrderDetail implements OnInit {
 
   protected get isTentative(): string {
     return this.order?.isTentative ? 'YES' : 'NO';
+  }
+
+  protected get orderTypeLabel(): string {
+    return this.order?.isPrivate ? 'PRIVATE' : 'GROUP';
   }
 
   protected get originalAgent(): string {
@@ -242,51 +271,119 @@ export class OrderDetail implements OnInit {
   // ── Guest data seeding ───────────────────────────────────────────────────────
 
   private seedGuestData(order: Order): void {
-    this.leaderPhone = '0912 334 556';
-    this.guestGroupNotes = `${order.adultCount ?? 0}`;
-    this.averageAge = Math.round((order.adultCount ?? 1) * 14 + (order.childCount ?? 0) * 8);
-    this.specialOccasion = order.dietaryRestrictions ?? '';
+    this.leaderPhone = order.leaderPhone ?? order.picContact?.phoneNumber ?? '';
+    this.guestGroupNotes = order.guestGroupNotes ?? '';
+    this.leaderEmail = order.guestEmail ?? order.picEmail ?? order.picContact?.email ?? '';
+    this.allergiesOrDietaryRestrictions = order.dietaryRestrictions ?? '';
 
-    // Build sample guests from adultCount + childCount
-    const adults = order.adultCount ?? 2;
-    const children = order.childCount ?? 1;
-    this.guestMembers = [];
-    for (let i = 0; i < adults; i++) {
-      this.guestMembers.push({
-        name: i === 0 ? (order.picContact?.name ?? 'Guest One') : `Guest ${i + 1}`,
-        phone: i === 0 ? '0912 334 556' : '',
-        age: 30 + i * 5,
-        gender: i % 2 === 0 ? 'Male' : 'Female',
-        allergies: i === 0 && order.dietaryRestrictions ? order.dietaryRestrictions : '--',
-      });
+    // Load guests from the database only — no mock fallback
+    this.guestMembers = (order.guests ?? []).map(g => ({
+      name: `${g.firstName || ''} ${g.lastName || ''}`.trim() || 'Guest',
+      phone: g.phoneNumber || '',
+      age: g.age || '',
+      gender: g.gender || '',
+      allergies: g.allergies || '--',
+    }));
+
+    this.calculateAverageAge();
+  }
+
+  private calculateAverageAge(): void {
+    if (this.guestMembers.length === 0) {
+      this.averageAge = '';
+      return;
     }
-    for (let j = 0; j < children; j++) {
-      this.guestMembers.push({
-        name: `Child ${j + 1}`,
-        phone: '',
-        age: 8 + j,
-        gender: j % 2 === 0 ? 'Male' : 'Female',
-        allergies: '--',
-      });
+
+    const ages = this.guestMembers
+      .map(g => typeof g.age === 'number' ? g.age : parseInt(g.age as string))
+      .filter(age => !isNaN(age));
+
+    if (ages.length === 0) {
+      this.averageAge = '';
+      return;
     }
+
+    const sum = ages.reduce((acc, age) => acc + age, 0);
+    this.averageAge = Math.round(sum / ages.length);
   }
 
   // ── Guest group actions ──────────────────────────────────────────────────────
 
   protected openEditGuestGroup(): void {
+    this.guestGroupSaveError = '';
+    this.editLeaderPhone = this.leaderPhone;
+    this.editGuestGroupNotes = this.guestGroupNotes;
+    this.editLeaderEmail = this.leaderEmail;
+    this.editAllergiesOrDietaryRestrictions = this.allergiesOrDietaryRestrictions;
+    this.editGuestSpecialRequests = this.guestSpecialRequests;
+    this.editHiredCarDriverGuide = this.hiredCarDriverGuide;
+    this.editInternalInformation = this.internalInformation;
+    this.editSelectedSpecialRequests = [...this.selectedSpecialRequests];
     this.isEditingGuestGroup = true;
   }
 
   protected closeEditGuestGroup(): void {
+    if (this.isSavingGuestGroup) return;
+    this.isGuestInfoHelpOpen = false;
     this.isEditingGuestGroup = false;
+    this.guestGroupSaveError = '';
+  }
+
+  protected openGuestInfoHelp(): void {
+    this.isGuestInfoHelpOpen = true;
+  }
+
+  protected closeGuestInfoHelp(): void {
+    this.isGuestInfoHelpOpen = false;
+  }
+
+  protected saveGuestGroup(): void {
+    if (!this.order?.id || this.isSavingGuestGroup) return;
+
+    this.isSavingGuestGroup = true;
+    this.guestGroupSaveError = '';
+
+    this.apiService.updateOrder(this.order.id, {
+      leaderPhone: this.editLeaderPhone,
+      guestGroupNotes: this.editGuestGroupNotes,
+      guestEmail: this.editLeaderEmail,
+    }).subscribe({
+      next: (updated) => {
+        this.order = { ...this.order, ...updated };
+        this.leaderPhone = updated.leaderPhone ?? this.editLeaderPhone;
+        this.guestGroupNotes = updated.guestGroupNotes ?? this.editGuestGroupNotes;
+        this.leaderEmail = updated.guestEmail ?? this.editLeaderEmail;
+        this.allergiesOrDietaryRestrictions = this.editAllergiesOrDietaryRestrictions;
+        this.guestSpecialRequests = this.editGuestSpecialRequests;
+        this.hiredCarDriverGuide = this.editHiredCarDriverGuide;
+        this.internalInformation = this.editInternalInformation;
+        this.selectedSpecialRequests = [...this.editSelectedSpecialRequests];
+        this.specialOccasion = this.editAllergiesOrDietaryRestrictions || this.editSelectedSpecialRequests.join(', ');
+        this.isSavingGuestGroup = false;
+        this.closeEditGuestGroup();
+        this.cdr.detectChanges();
+      },
+      error: () => {
+        this.guestGroupSaveError = 'Could not save guest group information.';
+        this.isSavingGuestGroup = false;
+        this.cdr.detectChanges();
+      },
+    });
   }
 
   protected openAddGuest(): void {
     this.isAddingGuest = true;
+    this.newGuestFirstName = '';
+    this.newGuestLastName = '';
+    this.newGuestType = 'adult';
+    this.newGuestVip = false;
+    this.newGuestNationality = '';
+    this.newGuestSpecialOccasion = '';
+    this.newGuestAllergyTags = ['Milk', 'Eggs'];
     this.newGuestName = '';
     this.newGuestPhone = '';
     this.newGuestAge = '';
-    this.newGuestGender = '';
+    this.newGuestGender = 'Male';
     this.newGuestAllergies = '';
   }
 
@@ -295,14 +392,64 @@ export class OrderDetail implements OnInit {
   }
 
   protected confirmAddGuest(): void {
-    this.guestMembers.push({
-      name: this.newGuestName,
-      phone: this.newGuestPhone,
-      age: this.newGuestAge,
-      gender: this.newGuestGender,
-      allergies: this.newGuestAllergies || '--',
+    const fullName = `${this.newGuestFirstName} ${this.newGuestLastName}`.trim();
+    const allergyText = this.newGuestAllergyTags.length
+      ? this.newGuestAllergyTags.join(', ')
+      : this.newGuestAllergies;
+
+    const guestsPayload: OrderGuest[] = this.guestMembers.map(g => ({
+       firstName: g.name.split(' ')[0] || '',
+       lastName: g.name.split(' ').slice(1).join(' ') || '',
+       phoneNumber: g.phone,
+       age: typeof g.age === 'number' ? g.age : (parseInt(g.age as string) || undefined),
+       gender: g.gender,
+       allergies: g.allergies !== '--' ? g.allergies : undefined
+    }));
+    
+    guestsPayload.push({
+       firstName: this.newGuestFirstName,
+       lastName: this.newGuestLastName,
+       guestType: this.newGuestType,
+       isVip: this.newGuestVip,
+       nationality: this.newGuestNationality,
+       specialOccasion: this.newGuestSpecialOccasion,
+       phoneNumber: this.newGuestPhone,
+       age: typeof this.newGuestAge === 'number' ? this.newGuestAge : (parseInt(this.newGuestAge as string) || undefined),
+       gender: this.newGuestGender,
+       allergies: allergyText
     });
-    this.closeAddGuest();
+
+    if (this.order?.id) {
+        this.apiService.updateOrderGuests(this.order.id, guestsPayload).subscribe({
+           next: (updatedGuests) => {
+               this.guestMembers = updatedGuests.map(g => ({
+                   name: `${g.firstName || ''} ${g.lastName || ''}`.trim() || 'Guest',
+                   phone: g.phoneNumber || '',
+                   age: g.age || '',
+                   gender: g.gender || '',
+                   allergies: g.allergies || '--',
+               }));
+               this.order!.guests = updatedGuests;
+               this.calculateAverageAge();
+               this.closeAddGuest();
+               this.cdr.detectChanges();
+           },
+           error: () => {
+               console.error("Failed to sync guests");
+               this.closeAddGuest();
+           }
+        });
+    } else {
+        this.guestMembers.push({
+          name: fullName || this.newGuestName || 'New Guest',
+          phone: this.newGuestPhone,
+          age: this.newGuestAge,
+          gender: this.newGuestGender,
+          allergies: allergyText || '--',
+        });
+        this.calculateAverageAge();
+        this.closeAddGuest();
+    }
   }
 
   protected editGuest(index: number): void {
@@ -319,6 +466,23 @@ export class OrderDetail implements OnInit {
 
   protected removeGuest(index: number): void {
     this.guestMembers.splice(index, 1);
+    this.calculateAverageAge();
+    if (this.order?.id) {
+        const guestsPayload: OrderGuest[] = this.guestMembers.map(g => ({
+           firstName: g.name.split(' ')[0] || '',
+           lastName: g.name.split(' ').slice(1).join(' ') || '',
+           phoneNumber: g.phone,
+           age: typeof g.age === 'number' ? g.age : (parseInt(g.age as string) || undefined),
+           gender: g.gender,
+           allergies: g.allergies !== '--' ? g.allergies : undefined
+        }));
+        this.apiService.updateOrderGuests(this.order.id, guestsPayload).subscribe({
+            next: (updatedGuests) => {
+                this.order!.guests = updatedGuests;
+                this.cdr.detectChanges();
+            }
+        });
+    }
   }
 
   // ── Action bar ───────────────────────────────────────────────────────────────

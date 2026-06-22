@@ -1,0 +1,168 @@
+<div class="accounting-page">
+  <section class="accounting-content" aria-labelledby="accounting-title">
+    <header class="topbar">
+      <div>
+        <h1 id="accounting-title">Accounting</h1>
+        <p>{{ todayLabel }}</p>
+      </div>
+      <div class="top-actions">
+        <button class="urgent" type="button">+ Make Urgent Assignment</button>
+        <button class="refresh" type="button">
+          <span aria-hidden="true">&#8635;</span> Refresh
+        </button>
+      </div>
+    </header>
+
+    <div class="status-tabs" aria-label="Accounting tabs">
+      <button
+        type="button"
+        *ngFor="let tab of tabs"
+        [class.active]="tab.id === activeTab"
+        (click)="setTab(tab.id)"
+      >
+        <span>{{ tab.label }}</span>
+        <strong *ngIf="tab.count != null">{{ tab.count }}</strong>
+      </button>
+    </div>
+
+    <section class="filters-card" aria-label="Accounting filters">
+      <div class="filter-grid top">
+        <label>
+          <span>Reseller</span>
+          <select aria-label="Reseller" [(ngModel)]="reseller">
+            <option value="">Reseller</option>
+            <option *ngFor="let option of resellerOptions" [value]="option">{{ option }}</option>
+          </select>
+        </label>
+
+        <label>
+          <span>Ref</span>
+          <select aria-label="Ref" [(ngModel)]="ref">
+            <option value="">Ref</option>
+            <option value="TK-08053-1">TK-08053-1</option>
+            <option value="JPTAMI-M-9/7">JPTAMI-M-9/7</option>
+            <option value="NO.IRL.322">NO.IRL.322</option>
+          </select>
+        </label>
+
+        <label>
+          <span>Guide Name</span>
+          <select aria-label="Guide Name" [(ngModel)]="guideName">
+            <option value="">Guide Name</option>
+            <option *ngFor="let option of guideOptions" [value]="option">{{ option }}</option>
+          </select>
+        </label>
+
+        <label>
+          <span>Service Name</span>
+          <input aria-label="Service Name" placeholder="Service Name" [(ngModel)]="serviceName" />
+        </label>
+      </div>
+
+      <div class="filter-grid bottom">
+        <label class="date-field">
+          <span>Tour Date</span>
+          <input type="date" aria-label="Tour Date" [(ngModel)]="tourDate" />
+          <span class="date-icon" aria-hidden="true"></span>
+        </label>
+
+        <label>
+          <span>Status</span>
+          <select aria-label="Status" [(ngModel)]="status">
+            <option *ngFor="let option of statusOptions" [value]="option">{{ option }}</option>
+          </select>
+        </label>
+
+        <div class="filter-toggles">
+          <button
+            class="private-toggle"
+            type="button"
+            [class.active]="privateOnly"
+            [attr.aria-pressed]="privateOnly"
+            (click)="togglePrivate()"
+          >
+            Private
+          </button>
+          <button class="apply" type="button" (click)="applyFilters()">Apply</button>
+          <button class="clear" type="button" (click)="clearFilters()">Clear Filters</button>
+          <button class="topup" type="button" (click)="topUpRequests()">
+            <span class="topup-icon" aria-hidden="true"></span>
+            Top Up Requests
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <section class="table-card" aria-label="Accounting table">
+      <div class="table-scroll">
+        <table>
+          <thead>
+            <tr>
+              <th>Guide</th>
+              <th>Reseller</th>
+              <th>Ref 1</th>
+              <th>Service</th>
+              <th>P/S</th>
+              <th>#Guests</th>
+              <th>Target Dates</th>
+              <th>Status</th>
+              <th>Notes</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let row of rows">
+              <td class="guide-cell">
+                <div class="guide-row" [class.multi]="row.guides.length > 1">
+                  <div class="guide-profile" *ngFor="let g of row.guides">
+                    <img class="guide-icon" src="/ui-icons/image-default.png" alt="" aria-hidden="true" />
+                    <span class="guide-text">
+                      <strong>{{ g.name }}</strong>
+                      <small *ngIf="g.meta" [class]="getGuideMetaClass(g.meta)">{{ g.meta }}</small>
+                    </span>
+                  </div>
+                </div>
+              </td>
+              <td>{{ row.reseller }}</td>
+              <td><strong>{{ row.ref1 }}</strong></td>
+              <td><span class="pill service">{{ row.service }}</span></td>
+              <td><strong>{{ row.ps }}</strong></td>
+              <td>{{ row.guests }}</td>
+              <td><span class="pill target">{{ row.targetDates }}</span></td>
+              <td><span class="status-chip {{ row.statusTone }}">{{ row.status }}</span></td>
+              <td class="notes">{{ row.notes || '-' }}</td>
+            </tr>
+          </tbody>
+          <tfoot class="table-tfoot">
+            <tr>
+              <td colspan="9">
+                <div class="table-footer">
+                  <div class="footer-left">
+                    <label class="rows-control">
+                      <span class="rows-label">Show:</span>
+                      <select [(ngModel)]="selectedRows" aria-label="Rows per page">
+                        <option [ngValue]="25">25 rows</option>
+                        <option [ngValue]="50">50 rows</option>
+                        <option [ngValue]="100">100 rows</option>
+                      </select>
+                    </label>
+                    <span class="divider">|</span>
+                    <button class="page-edge first" type="button" aria-label="First page"></button>
+                    <button class="page-edge previous" type="button" aria-label="Previous page"></button>
+                    <button type="button" class="page-number active">1</button>
+                    <button type="button" class="page-number">2</button>
+                    <button type="button" class="page-number">3</button>
+                    <button class="page-edge next" type="button" aria-label="Next page"></button>
+                    <button class="page-edge last" type="button" aria-label="Last page"></button>
+                    <span class="divider">|</span>
+                    <span class="records-count">{{ rows.length }} records</span>
+                  </div>
+                </div>
+              </td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+    </section>
+  </section>
+</div>
+

@@ -264,7 +264,6 @@
 
 .special-cell {
   display: flex;
-  flex-direction: column;
   gap: 6px;
 }
 
@@ -277,6 +276,7 @@
 
 /* STATUS */
 
+.status-pending,
 .status-ready,
 .status-accepted,
 .status-rejected,
@@ -297,6 +297,13 @@
   border-radius: 999px;
   font-size: 12px;
   font-weight: 700;
+  text-transform: uppercase;
+}
+
+.status-pending {
+  background: #fff4d4;
+  color: #b68b00;
+  border: 1px solid #B68B004D;
 }
 
 .status-ready {
@@ -391,6 +398,11 @@
 .status-completed {
   background: #c9f7f0;
   border: 1px solid #115E594D
+}
+
+.special-request-icon {
+  width: 24px;
+  height: 24px;
 }
 
 /* VIP */

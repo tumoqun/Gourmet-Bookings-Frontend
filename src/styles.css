@@ -40,3 +40,9 @@ body {
   color: var(--color-text-body);
   background: var(--color-page-background);
 }
+
+.disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  pointer-events: none;
+}

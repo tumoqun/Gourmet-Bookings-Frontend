@@ -1,7 +1,19 @@
 import { Injectable } from '@angular/core';
-import { HttpClient, HttpHeaders } from '@angular/common/http';
+import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
 import { Observable, of } from 'rxjs';
 import { environment } from '../../environments/environment';
+
+export const WorkStatuses: { label: string, value: string }[] = [
+  { label: 'Scheduled', value: 'SCHEDULED' },
+  { label: 'In Prep', value: 'IN_PREP' },
+  { label: 'Accepted', value: 'ACCEPTED' },
+  { label: 'Reminder', value: 'REMINDER' },
+  { label: 'Ready', value: 'READY' },
+  { label: 'Started', value: 'STARTED' },
+  { label: 'Ended', value: 'ENDED' },
+  { label: 'Closed', value: 'CLOSED' },
+  { label: 'Paid Date', value: 'PAID_DATE' },
+];
 
 export interface Work {
   id: number;
@@ -40,13 +52,10 @@ export interface PageResponse<T> {
   content: T[];
   totalElements: number;
   totalPages: number;
-  last: boolean;
+  page: number;
   size: number;
-  number: number;
-  sort: Sort;
-  numberOfElements: number;
-  first: boolean;
-  empty: boolean;
+  totalAdultCount: number;
+  totalChildCount: number;
 }
 
 export interface Sort {
@@ -115,28 +124,47 @@ export interface WorkDetailType {
   areaName: string;
 }
 
+export interface SpecialRequest {
+  id: number;
+  code: string;
+  label: string;
+}
+
 export interface WorkOrder {
   orderId: number;
   reseller: string;
   originalAgent: string;
   ref1: string;
-  totalFeeAmount: string;
+  totalFeeAmount: number;
   childCount: number;
   adultCount: number;
-  special?: string;
-  specialIcon?: string;
-  specialNote?: string;
-  specialLink?: string;
   status: string;
+  specialRequests: SpecialRequest[];
 }
 
 export interface WorkGuide {
+  id: number;
+  guideId: number;
   name: string;
   phone: string;
   role: string;
   isCalendarInvitation: boolean;
-  rejectionReason?: string;
+  note?: string;
   status: string;
+  isEditNote?: boolean;
+}
+
+export interface WorkFilter {
+  resellerId?: number;
+  ref?: string;
+  personInChargeId?: number;
+  areaId?: number;
+  serviceName?: string;
+  guideName?: string;
+  status?: string;
+  tourDate?: string;
+  isPrivate?: boolean;
+  isShared?: boolean;
 }
 
 @Injectable({
@@ -155,29 +183,44 @@ export class WorkService {
     };
   }
 
-  getWorks(page: number, size: number): Observable<PageResponse<WorkOrder>> {
-    return this.http.get<PageResponse<WorkOrder>>(
-      `${this.apiUrl}/works?page=${page}&size=${size}`,
-      this.getHttpOptions(),
-    );
-  }
+  getWorks(page: number, size: number, filters: WorkFilter): Observable<PageResponse<WorkOrder>> {
+    let params = new HttpParams({
+      fromObject: {
+        page: page.toString(),
+        size: size.toString(),
+      },
+    });
 
-  getGuestSummary(): Observable<{
-    totalAdults: number;
-    totalChildren: number;
-  }> {
-    return this.http.get<{
-      totalAdults: number;
-      totalChildren: number;
-    }>(`${this.apiUrl}/works/guests`);
+    Object.entries(filters).forEach(([key, value]) => {
+      const stringValue = String(value).trim();
+      if (
+        value == null ||
+        stringValue === '0' ||
+        stringValue === '' ||
+        stringValue === 'undefined' ||
+        stringValue === 'null'
+      ) {
+        return;
+      }
+
+      params = params.set(key, stringValue);
+    });
+
+    return this.http.get<PageResponse<WorkOrder>>(
+      `${this.apiUrl}/works`,
+      {
+        ...this.getHttpOptions(),
+        params,
+      }
+    );
   }
 
   getWorkDetail(workId: number): Observable<WorkDetailType> {
     return this.http.get<WorkDetailType>(`${this.apiUrl}/works/${workId}`);
   }
 
-  getWorkOrders(workId: number): Observable<WorkOrder[]> {
-    return this.http.get<WorkOrder[]>(`${this.apiUrl}/works/${workId}/orders`);
+  getWorkOrders(workId: number, status: string): Observable<WorkOrder[]> {
+    return this.http.get<WorkOrder[]>(`${this.apiUrl}/works/${workId}/orders?status=${status}`);
   }
 
   getWorkGuides(workId: number): Observable<WorkGuide[]> {

@@ -514,6 +514,10 @@ export class OrderDetail implements OnInit {
     navigator.clipboard.writeText(url).catch(() => {});
   }
 
+  protected goToWork(): void {
+    this.router.navigate(['/works']);
+  }
+
   protected goBack(): void {
     this.router.navigate(['/orders']);
   }

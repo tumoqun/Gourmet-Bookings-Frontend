@@ -62,7 +62,7 @@ export class AddStop {
   async loadSuppliers(type: string): Promise<void> {
     try {
       const suppliers = await this.supplierService
-        .getSuppliersForService(this.serviceInfo.id, type)
+        .getSuppliersForService(this.serviceInfo.id, Number(this.workId), type)
         .toPromise();
       this.supplierList = suppliers || [];
       console.log('Loaded Suppliers:', suppliers);

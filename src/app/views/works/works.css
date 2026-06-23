@@ -401,6 +401,7 @@ td {
 }
 
 .status-ready,
+.status-offered,
 .status-accepted,
 .status-rejected,
 .status-started,
@@ -418,6 +419,13 @@ td {
   border-radius: 999px;
   font-size: 12px;
   font-weight: 700;
+}
+
+.status-offered {
+  background: #FFEDD5;
+  ;
+  color: #9A3412;
+  border: 1px solid #9A34124D;
 }
 
 .status-ready {

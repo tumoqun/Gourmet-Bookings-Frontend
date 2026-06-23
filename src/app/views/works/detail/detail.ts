@@ -1,7 +1,7 @@
 import { CommonModule } from '@angular/common';
 import { ChangeDetectorRef, Component, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { WorkDetailType, WorkGuide, WorkOrder, WorkService, WorkStatuses } from '../../../services/work.service';
 import { AddGuide } from '../add-guide/add-guide';
 import { AddStop, ItineraryStatus } from '../add-stop/add-stop';
@@ -9,6 +9,7 @@ import { WorkStatusClass } from '../works';
 import { ItineraryService, ItineraryStopItem } from '../../../services/itinerary.service';
 import { Receipt, ReceiptService } from '../../../services/receipt.service';
 import { GuideService } from '../../../services/guide.service';
+import { ConfirmDialog } from '../../../components/common/confirm-dialog/confirm-dialog';
 
 export type OrderStatus = 'Completed' | 'Active' | 'Scheduled';
 
@@ -27,13 +28,15 @@ export interface StopService {
 }
 
 @Component({
+  standalone: true,
   selector: 'app-work-detail',
-  imports: [CommonModule, FormsModule, AddGuide, AddStop],
+  imports: [CommonModule, FormsModule, AddGuide, AddStop, ConfirmDialog],
   templateUrl: './detail.html',
   styleUrl: './detail.css',
 })
 export class WorkDetail {
   private route = inject(ActivatedRoute);
+  private router = inject(Router);
 
   isEditNote = false;
   showGuideModal = false;
@@ -52,13 +55,27 @@ export class WorkDetail {
     endTime: '',
   };
 
+  openConfirmGuide: boolean = false;
+  guideSelectedId: number = 0;
+  newGuideStatus: string = '';
+  confirmTextGuide: string = '';
+
+  openConfirmStop: boolean = false;
+  stopSelectedId: number = 0;
+  newStopStatus: ItineraryStatus = 'SCHEDULED';
+  confirmTextStop: string = '';
+
+  openConfirmWork: boolean = false;
+  newWorkStatus: string = '';
+  confirmTextWork: string = '';
+
   constructor(
     private workService: WorkService,
     private guideService: GuideService,
     private itinerariesService: ItineraryService,
     private receiptService: ReceiptService,
     private cdr: ChangeDetectorRef,
-  ) {}
+  ) { }
 
   statusOptions: StatusOption[] = [
     {
@@ -104,7 +121,6 @@ export class WorkDetail {
   }
 
   async ngOnInit(): Promise<void> {
-    console.log('this.workDetail', this.workDetail);
     await Promise.all([
       this.getWorkDetail(Number(this.workId)),
       this.getWorkOrders(Number(this.workId), this.selectedStatus),
@@ -118,6 +134,10 @@ export class WorkDetail {
       startTime: this.workDetail.tourStartTime,
       endTime: this.workDetail.tourEndTime,
     };
+  }
+
+  goBack(): void {
+    this.router.navigate(['/works']);
   }
 
   async getWorkDetail(workId: number): Promise<void> {
@@ -195,6 +215,41 @@ export class WorkDetail {
     );
   }
 
+  getCurrentStepIndex(): number {
+    return this.workStatuses.findIndex(
+      s => s.value === this.workDetail.status
+    );
+  }
+
+  onClickStep(status: string): void {
+    console.log('status', status)
+    this.openConfirmWork = true;
+    this.newWorkStatus = status;
+    this.confirmTextWork = `Do you want to change assignment status to ${status.toLocaleLowerCase()}?`;
+  }
+
+  onCloseConfirmWork(): void {
+    this.openConfirmWork = false;
+    this.newWorkStatus = '';
+    this.confirmTextWork = '';
+  }
+
+  changeWorkStatus(): void {
+    this.workService.updateWorkStatus(this.workId, this.newWorkStatus).subscribe({
+      next: () => {
+        this.getWorkDetail(Number(this.workId)),
+        this.onCloseConfirmWork();
+      },
+      error: (err) => {
+        console.error(err);
+      },
+    });
+  }
+
+  goToOrderDetails(id: number): void {
+    this.router.navigate(['/orders', id]);
+  }
+
   openGuideModal(): void {
     this.showGuideModal = true;
   }
@@ -203,15 +258,46 @@ export class WorkDetail {
     this.showGuideModal = false;
   }
 
-  changeStatusGuide(guide: WorkGuide, newStatus: string): void {
+  onClickGuideAction(guideId: number, newStatus: string): void {
+    this.openConfirmGuide = true;
+    this.guideSelectedId = guideId;
+    this.newGuideStatus = newStatus;
+    switch (newStatus) {
+      case 'ACCEPTED':
+        this.confirmTextGuide = 'Do you want to change assignment status to accepted?'
+        break;
+      case 'REJECTED':
+        this.confirmTextGuide = 'Do you want to change assignment status to rejected?'
+        break;
+      case 'REMOVED':
+        this.confirmTextGuide = 'Do you want to removed this guide?'
+        break;
+      case 'PENDING':
+        this.confirmTextGuide = 'Do you want to re-assign this guide?'
+        break;
+      default:
+        break;
+    }
+  }
+
+  closeGuideConfirm(): void {
+    this.openConfirmGuide = false;
+    this.guideSelectedId = 0;
+    this.newGuideStatus = '';
+    this.confirmTextGuide = '';
+  }
+
+  changeStatusGuide(): void {
     this.guideService
       .updateAssignment({
-        id: guide.id,
-        status: newStatus,
+        id: this.guideSelectedId,
+        status: this.newGuideStatus,
       })
       .subscribe({
         next: () => {
+          this.getWorkDetail(Number(this.workId)),
           this.getWorkGuides(this.workId);
+          this.closeGuideConfirm();
         },
         error: (err) => {
           console.error(err);
@@ -252,15 +338,39 @@ export class WorkDetail {
     console.log('Add stop');
   }
 
-  changeStopStatus(stop: ItineraryStopItem, newStatus: ItineraryStatus): void {
+  onClickStopAction(stopId: number, newStatus: ItineraryStatus): void {
+    this.openConfirmStop = true;
+    this.stopSelectedId = stopId;
+    this.newStopStatus = newStatus;
+    switch (newStatus) {
+      case 'CONFIRMED':
+        this.confirmTextStop = 'Do you want to confirm this itinerary?'
+        break;
+      case 'CANCELLED':
+        this.confirmTextStop = 'Do you want to cancel this itinerary?'
+        break;
+      default:
+        break;
+    }
+  }
+
+  closeStopConfirm(): void {
+    this.openConfirmStop = false;
+    this.stopSelectedId = 0;
+    this.newStopStatus = 'SCHEDULED';
+    this.confirmTextStop = '';
+  }
+
+  changeStopStatus(): void {
     this.itinerariesService
       .updateItineraryStopStatus(
-        stop.id,
-        newStatus,
+        this.stopSelectedId,
+        this.newStopStatus,
       )
       .subscribe({
         next: () => {
           this.loadItineraryStops(this.workId);
+          this.closeStopConfirm();
         },
         error: (err) => {
           console.error(err);

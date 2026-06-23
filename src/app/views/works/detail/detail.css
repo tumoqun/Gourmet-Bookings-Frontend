@@ -8,6 +8,37 @@
     radial-gradient(circle at top center, #ffffff 0, #fcfcfc 56%, #f7f6f3 100%);
 }
 
+.top-left {
+  display: flex;
+  gap: 14px;
+}
+
+.back-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border: 1.5px solid #ddd9d3;
+  border-radius: 10px;
+  background: #fff;
+  cursor: pointer;
+  margin-top: 4px;
+  flex-shrink: 0;
+  transition: border-color 0.15s, background 0.15s;
+}
+
+.back-btn:hover {
+  border-color: #b0a89e;
+  background: #faf8f4;
+}
+
+.back-btn svg {
+  width: 18px;
+  height: 18px;
+  color: #57534e;
+}
+
 .topbar {
   display: flex;
   justify-content: space-between;
@@ -102,6 +133,7 @@
   justify-content: center;
   background-color: #e7e5e4;
   height: 24px;
+  cursor: pointer;
 }
 
 .step:first-child {
@@ -129,9 +161,13 @@
 }
 
 .step.active .circle {
-  background: white;
+  background: #c5a05a;
   border: 2px solid #c5a05a;
-  color: #1a1c3b;
+  color: #ffffff;
+}
+
+.step.completed {
+  background-color: #c5a05a;
 }
 
 .line {
@@ -139,6 +175,10 @@
   height: 24px;
   background: #e7e5e4;
   min-width: 100px;
+}
+
+.line.completed {
+  background: #c5a05a;
 }
 
 /* CONTENT */

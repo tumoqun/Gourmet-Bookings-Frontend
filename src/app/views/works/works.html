@@ -90,7 +90,7 @@
         <span>All Statuses</span>
         <select aria-label="All Statuses" [(ngModel)]="filters.status">
           <option value="undefined">All Statuses</option>
-          <option *ngFor="let status of statuses" [value]="status.value.toLowerCase()">{{ status.label }}</option>
+          <option *ngFor="let status of statuses" [value]="status.value">{{ status.label }}</option>
         </select>
       </label>
       <div class="filter-toggles">
@@ -167,7 +167,8 @@
               <span *ngIf="work.guides" class="guide">
                 <img *ngIf="work.guides[0]?.avatar" class="guide-icon" [src]="work.guides[0].avatar" alt="Guide icon" />
                 <img *ngIf="!work.guides[0]?.avatar" class="guide-icon" src="/ui-icons/image-default.png" alt="Guide icon" />
-                <strong>{{ work.guides[0].fullName }}</strong>
+                <strong *ngIf="work.guides[0]?.fullName">{{ work.guides[0].fullName }}</strong>
+                <strong *ngIf="!work.guides[0]?.fullName">Unassigned</strong>
               </span>
               <span *ngIf="!work.guides" class="guide">
                 <img class="guide-icon" src="/ui-icons/image-default.png" alt="Guide icon" />

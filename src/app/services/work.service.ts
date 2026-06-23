@@ -5,6 +5,7 @@ import { environment } from '../../environments/environment';
 
 export const WorkStatuses: { label: string, value: string }[] = [
   { label: 'Scheduled', value: 'SCHEDULED' },
+  { label: 'Offered', value: 'OFFERED' },
   { label: 'In Prep', value: 'IN_PREP' },
   { label: 'Accepted', value: 'ACCEPTED' },
   { label: 'Reminder', value: 'REMINDER' },
@@ -13,6 +14,13 @@ export const WorkStatuses: { label: string, value: string }[] = [
   { label: 'Ended', value: 'ENDED' },
   { label: 'Closed', value: 'CLOSED' },
   { label: 'Paid Date', value: 'PAID_DATE' },
+];
+
+export const GuideWorkStatuses: { label: string, value: string }[] = [
+  { label: 'Offered', value: 'OFFERED' },
+  { label: 'Accepted', value: 'ACCEPTED' },
+  { label: 'Started', value: 'STARTED' },
+  { label: 'Ended', value: 'ENDED' },
 ];
 
 export interface Work {
@@ -225,5 +233,9 @@ export class WorkService {
 
   getWorkGuides(workId: number): Observable<WorkGuide[]> {
     return this.http.get<WorkGuide[]>(`${this.apiUrl}/works/${workId}/guides`);
+  }
+
+  updateWorkStatus(workId: number, status: string): Observable<any> {
+    return this.http.put<any>(`${this.apiUrl}/works/${workId}/status`, { status });
   }
 }

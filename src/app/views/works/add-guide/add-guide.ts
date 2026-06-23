@@ -18,6 +18,7 @@ export class AddGuide {
 
   @Output() close = new EventEmitter<void>();
   @Output() reload = new EventEmitter<void>();
+  @Output() reloadWork = new EventEmitter<void>();
 
   private searchSubject = new Subject<string>();
 
@@ -101,12 +102,6 @@ export class AddGuide {
   }
 
   addGuide(): void {
-    console.log({
-      selectedGuideId: this.selectedGuideId,
-      calendarInvite: this.calendarInvite,
-      isLeader: this.isLeader,
-      managerNote: this.managerNote,
-    });
     // Here you would typically call the service to assign the guide to the work
     this.guideService
       .assignGuideToWork({
@@ -120,6 +115,7 @@ export class AddGuide {
       .subscribe(() => {
         this.close.emit();
         this.reload.emit();
+        this.reloadWork.emit();
       });
   }
 

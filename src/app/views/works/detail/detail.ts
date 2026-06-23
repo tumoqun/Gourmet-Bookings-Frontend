@@ -296,7 +296,7 @@ export class WorkDetail {
       .subscribe({
         next: () => {
           this.getWorkDetail(Number(this.workId)),
-            this.getWorkGuides(this.workId);
+          this.getWorkGuides(this.workId);
           this.closeGuideConfirm();
         },
         error: (err) => {

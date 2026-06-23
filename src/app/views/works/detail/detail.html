@@ -375,7 +375,7 @@
   </div>
 
   <app-add-guide *ngIf="showGuideModal" [visible]="showGuideModal" [currentGuides]="currentGuides"
-    (close)="closeGuideModal()" (reload)="getWorkGuides(workId)"></app-add-guide>
+    (close)="closeGuideModal()" (reload)="getWorkGuides(workId)" (reloadWork)="getWorkDetail(workId)"></app-add-guide>
 
   <app-confirm-dialog [visible]="openConfirmWork" [message]="confirmTextWork" confirmText="Confirm" cancelText="Cancel"
     (confirm)="changeWorkStatus()" (cancel)="onCloseConfirmWork()">

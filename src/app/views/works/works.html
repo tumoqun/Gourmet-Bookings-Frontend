@@ -167,7 +167,8 @@
               <span *ngIf="work.guides" class="guide">
                 <img *ngIf="work.guides[0]?.avatar" class="guide-icon" [src]="work.guides[0].avatar" alt="Guide icon" />
                 <img *ngIf="!work.guides[0]?.avatar" class="guide-icon" src="/ui-icons/image-default.png" alt="Guide icon" />
-                <strong>{{ work.guides[0].fullName }}</strong>
+                <strong *ngIf="work.guides[0]?.fullName">{{ work.guides[0].fullName }}</strong>
+                <strong *ngIf="!work.guides[0]?.fullName">Unassigned</strong>
               </span>
               <span *ngIf="!work.guides" class="guide">
                 <img class="guide-icon" src="/ui-icons/image-default.png" alt="Guide icon" />

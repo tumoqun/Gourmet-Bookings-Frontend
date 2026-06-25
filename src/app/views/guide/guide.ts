@@ -7,6 +7,7 @@ import { FormsModule } from '@angular/forms';
 import { GuideWorkStatuses } from '../../services/work.service';
 import { firstValueFrom } from 'rxjs';
 import { WorkStatusClass } from '../works/works';
+import { Router } from '@angular/router';
 
 @Component({
   selector: 'app-guide-view',
@@ -15,6 +16,7 @@ import { WorkStatusClass } from '../works/works';
   styleUrl: './guide.css',
 })
 export class GuideView implements OnInit {
+  private router = inject(Router);
   private readonly auth = inject(AuthService);
   protected readonly capability = inject(CapabilityService);
 
@@ -191,8 +193,7 @@ export class GuideView implements OnInit {
     this.guidePortal.endWork(id).subscribe({ next: () => this.loadAssignments() });
   }
 
-  protected switchToAdminView(): void {
-    this.auth.setTourGuideViewMode(false);
-    this.auth.navigateHome();
+  protected viewWorkDetail(id: number): void {
+    this.router.navigate(['guide/work', id])
   }
 }

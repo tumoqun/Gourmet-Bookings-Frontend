@@ -132,6 +132,21 @@ export interface WorkDetailType {
   areaName: string;
 }
 
+export interface WorkDetailForGuideType {
+  workId: number,
+  status: string,
+  tourDate: string,
+  tourStartTime: string,
+  tourEndTime: string,
+  durationMinutes: number,
+  locationAddress: string,
+  agentName: string,
+  resellerName: string,
+  ref1: string,
+  ref2: string,
+  serviceName: string
+}
+
 export interface SpecialRequest {
   id: number;
   code: string;
@@ -148,6 +163,55 @@ export interface WorkOrder {
   adultCount: number;
   status: string;
   specialRequests: SpecialRequest[];
+}
+
+export interface WorkOrderForGuide {
+  orderId: number,
+  contactName: string,
+  ref1: string,
+  ref2: string,
+  isPrivate: true,
+  adultCount: number,
+  childCount: number,
+  totalFeeAmount: number,
+  status: string,
+  notes: string,
+  tourDate: string,
+  tourStartTime: string,
+  tourEndTime: string,
+  serviceName: string,
+}
+
+export interface OrderGuest {
+  id: number;
+  firstName: string;
+  lastName: string;
+  phoneNumber: string;
+  age: number;
+  gender: string;
+  allergies: string | null;
+  specialOccasion: string | null;
+  dietaryRestrictions: string | null;
+}
+
+export interface OrderGuestGroup {
+  orderId: number;
+  adultCount: number;
+  childCount: number;
+  guestGroupNotes: string;
+  leaderPhone: string;
+  averageAge: number;
+  guests: OrderGuest[];
+}
+
+export interface Expense {
+  id: number;
+  name: string;
+  notes: string;
+  amount: number;
+  imageUrl: string;
+  createdAt: string;
+  createdBy: string;
 }
 
 export interface WorkGuide {
@@ -227,8 +291,16 @@ export class WorkService {
     return this.http.get<WorkDetailType>(`${this.apiUrl}/works/${workId}`);
   }
 
+  getWorkDetailForGuide(workId: number): Observable<WorkDetailForGuideType> {
+    return this.http.get<WorkDetailForGuideType>(`${this.apiUrl}/guide/work/${workId}`);
+  }
+
   getWorkOrders(workId: number, status: string): Observable<WorkOrder[]> {
     return this.http.get<WorkOrder[]>(`${this.apiUrl}/works/${workId}/orders?status=${status}`);
+  }
+
+  getWorkOrdersForGuide(workId: number): Observable<WorkOrderForGuide[]> {
+    return this.http.get<WorkOrderForGuide[]>(`${this.apiUrl}/guide/work/${workId}/orders`);
   }
 
   getWorkGuides(workId: number): Observable<WorkGuide[]> {
@@ -237,5 +309,9 @@ export class WorkService {
 
   updateWorkStatus(workId: number, status: string): Observable<any> {
     return this.http.put<any>(`${this.apiUrl}/works/${workId}/status`, { status });
+  }
+
+  getOrderGuests(workId: number): Observable<OrderGuestGroup[]> {
+    return this.http.get<OrderGuestGroup[]>(`${this.apiUrl}/guide/work/${workId}/guests`);
   }
 }

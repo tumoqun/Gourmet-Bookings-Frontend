@@ -52,6 +52,15 @@ export const routes: Routes = [
     path: 'guide',
     canActivate: [authGuard, permissionGuard],
     data: { permissions: ['GUIDE_TOURS_READ'] },
-    loadComponent: () => import('./views/guide/guide').then((m) => m.GuideView),
+    children: [
+      {
+        path: '',
+        loadComponent: () => import('./views/guide/guide').then((m) => m.GuideView),
+      },
+      {
+        path: 'work/:id',
+        loadComponent: () => import('./views/guide/guide-work-detail/guide-work-detail').then((m) => m.GuideWorkDetail),
+      }
+    ]
   },
 ];

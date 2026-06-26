@@ -1,0 +1,434 @@
+<section class="work-detail-list-wrapper">
+  <header class="topbar">
+    <div class="top-left">
+      <button class="back-btn" type="button" (click)="goBack()" aria-label="Back to orders">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"
+          stroke-linejoin="round" aria-hidden="true">
+          <polyline points="15 18 9 12 15 6" />
+        </svg>
+      </button>
+      <div>
+        <h1 id="works-title">Work Detail</h1>
+        <p>TODAY IS THURSDAY, MARCH 12, 2026</p>
+      </div>
+    </div>
+  </header>
+
+  <div *ngIf="!loadingInfo" class="tour-header">
+    <div class="tour-info">
+      <h2>{{ workDetail.serviceName }}</h2>
+      <div [class]="getStatusClass(workDetail.status.toUpperCase())">{{workDetail.status}}</div>
+    </div>
+    <div class="tour-info-bottom">{{ workDetail.resellerName }}</div>
+  </div>
+  <div *ngIf="!loadingInfo" class="tour-content">
+    <div class="info-group">
+      <label>TOUR DATE</label>
+      <p *ngIf="workDetail.tourDate">{{ workDetail.tourDate | date:'EEEE, dd/MMMM/yyyy' }}</p>
+    </div>
+    <div class="info-group">
+      <label>TIME</label>
+      <p *ngIf="workDetail.tourStartTime">{{ formatTime(workDetail.tourStartTime) }} - {{ formatTime(workDetail.tourEndTime) }}</p>
+    </div>
+    <div class="info-group">
+      <label>DURATION</label>
+      <p *ngIf="workDetail.durationMinutes">{{ workDetail.durationMinutes / 60 }}hr</p>
+    </div>
+    <div class="info-group">
+      <label>AGENT</label>
+      <p *ngIf="workDetail.agentName">{{ workDetail.agentName }}</p>
+    </div>
+    <div class="info-group">
+      <label>AGENT PIC</label>
+      <p *ngIf="workDetail.resellerName">{{ workDetail.resellerName }}</p>
+    </div>
+    <div class="info-group">
+      <label>AGENT REF</label>
+      <p *ngIf="workDetail.ref1">{{ workDetail.ref1 }}</p>
+    </div>
+    <div class="info-group">
+      <label>AGENT PHONE</label>
+      <p>--</p>
+    </div>
+    <div class="info-group">
+      <label>AFTERNATE PHONE</label>
+      <p>--</p>
+    </div>
+    <div class="info-group">
+      <label>PHONE NOTE</label>
+      <p>--</p>
+    </div>
+    <div class="info-group full-width">
+      <label>MEETING POINT</label>
+      <p *ngIf="workDetail.locationAddress">{{ workDetail.locationAddress }}</p>
+      <p *ngIf="!workDetail.locationAddress">--</p>
+    </div>
+  </div>
+
+  <div class="table-card" *ngFor="let group of orderGuests">
+    <div class="table-header">
+      <h2>
+        Guest Group: {{ group.adultCount }} Adult {{ group.childCount }} Children
+      </h2>
+      <button class="edit-button">
+        <img class="edit-icon" src="/ui-icons/edit-icon.png" alt="edit icon" />
+        <span>Edit</span>
+      </button>
+    </div>
+    <div class="guest-info">
+      <div>
+        <label>LEADER PHONE NUMBER</label>
+        <p>{{ group.leaderPhone || '--' }}</p>
+      </div>
+      <div>
+        <label>GUEST GROUP NOTES</label>
+        <p>{{ group.guestGroupNotes || '--' }}</p>
+      </div>
+      <div>
+        <label>AVERAGE AGE</label>
+        <p>{{ group.averageAge || '--' }}</p>
+      </div>
+    </div>
+    <div class="table-contents">
+      <div class="guest-row table-head">
+        <div>NAME</div>
+        <div>PHONE NUMBER</div>
+        <div>AGE</div>
+        <div>GENDER</div>
+        <div>ALLERGIES OR DIETARY RESTRICTIONS</div>
+        <div>SPECIAL OCCASION</div>
+      </div>
+      <div *ngIf="!group.guests || group.guests.length === 0" class="guest-row">
+        <p>No guest found.</p>
+      </div>
+      <div class="guest-row" *ngFor="let guest of group.guests">
+        <div>
+          {{ guest.firstName }} {{ guest.lastName }}
+        </div>
+        <div>
+          {{ guest.phoneNumber || '--' }}
+        </div>
+        <div>
+          {{ guest.age || '--' }}
+        </div>
+        <div>
+          {{ guest.gender || '--' }}
+        </div>
+        <div>
+          {{
+          guest.allergies ||
+          guest.dietaryRestrictions ||
+          '--'
+          }}
+        </div>
+        <div>
+          {{ guest.specialOccasion || '--' }}
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="table-card">
+    <!-- HEADER -->
+    <div class="table-header">
+      <h2>Related Orders</h2>
+    </div>
+    <!-- TABLE -->
+    <div class="table-contents">
+      <!-- HEADER -->
+      <div class="order-row table-head">
+        <div>PIC</div>
+        <div>REF 1</div>
+        <div>REF 2</div>
+        <div>SERVICE NAME</div>
+        <div>P/S</div>
+        <div>DATE-TIME</div>
+        <div>#GUESTS</div>
+        <div>FEE (INC. TAX)</div>
+        <div>STATUS</div>
+        <div>NOTES</div>
+        <div></div>
+      </div>
+      <!-- BODY -->
+      <div *ngIf="loadingOrders" class="loading-state">
+        <p>Loading...</p>
+      </div>
+      <div class="order-row" *ngFor="let order of orders">
+        <div>
+          {{ order.contactName || '--' }}
+        </div>
+        <div class="bold">
+          {{ order.ref1 || '--' }}
+        </div>
+        <div>
+          {{ order.ref2 || '--' }}
+        </div>
+        <div class="service-cell">
+          {{ order.serviceName || '--' }}
+        </div>
+        <div class="bold">
+          {{ order.isPrivate ? 'P' : 'S' }}
+        </div>
+        <div class="date-cell">
+          {{ formatTourDateTime(order.tourDate, order.tourStartTime) }}
+        </div>
+        <div class="bold" style="color: #57534E;">
+          {{ order.adultCount }}/{{ order.childCount }}
+        </div>
+        <div class="bold">
+          {{ formatCurrency(order.totalFeeAmount) || '--' }}
+        </div>
+        <div>
+          <span class="status" [class]="getStatusClass(order.status)">
+            {{ order.status }}
+          </span>
+        </div>
+        <div class="notes-link">
+          View Notes
+        </div>
+        <div class="details-link" (click)="goToOrderDetails(order.orderId)">
+          Order Details
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="table-card">
+    <!-- HEADER -->
+    <div class="table-header">
+      <h2>Guides</h2>
+    </div>
+    <!-- TABLE -->
+    <div class="table-contents">
+      <!-- TABLE HEADER -->
+      <div class="guide-row table-head">
+        <div>GUIDE</div>
+        <div>PHONE NUMBER</div>
+        <div>MANAGER'S NOTE</div>
+        <div>ROLE</div>
+        <div>CALENDAR INVITATION</div>
+        <div>STATUS</div>
+      </div>
+      <!-- TABLE BODY -->
+      <div *ngIf="loadingGuides" class="guide-row">
+        <p>Loading...</p>
+      </div>
+      <div *ngIf="!loadingGuides && guides.length === 0" class="guide-row">
+        <p>No guides found.</p>
+      </div>
+      <div class="guide-row" *ngFor="let guide of guides">
+        <!-- NAME -->
+        <div>
+          {{ guide.name || '--' }}
+        </div>
+        <!-- PHONE -->
+        <div>
+          {{ guide.phone || '--' }}
+        </div>
+        <!-- NOTE -->
+        <div class="note-cell">
+          <span *ngIf="!guide.isEditNote">
+            {{ guide.note || '--' }}
+          </span>
+        </div>
+        <!-- ROLE -->
+        <div>
+          {{ guide.role || '--' }}
+        </div>
+        <!-- CALENDAR -->
+        <div class="calendar-cell">
+          {{ guide.isCalendarInvitation ? 'Yes' : 'No' }}
+        </div>
+        <!-- STATUS -->
+        <div>
+          <span class="guide-status" [class]="guide.status.toLowerCase()">
+            {{ guide.status }}
+          </span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="table-card">
+    <!-- HEADER -->
+    <div class="table-header">
+      <h2>Itinerary</h2>
+    </div>
+    <!-- TABLE -->
+    <div class="table-contents">
+      <!-- HEADER -->
+      <div class="itinerary-row table-head">
+        <div>NAME</div>
+        <div>SCHEDULE TIME</div>
+        <div>PHONE NUMBER</div>
+        <div>ADDED BY</div>
+        <div>ADDED AT</div>
+        <div>STATUS</div>
+        <div>NOTES</div>
+      </div>
+      <!-- BODY -->
+      <div *ngIf="loadingItineraries" class="itinerary-row">
+        <p>Loading...</p>
+      </div>
+      <div *ngIf="!loadingItineraries && itineraryList.length === 0" class="itinerary-row">
+        <p>No itinerary found.</p>
+      </div>
+      <div class="itinerary-row" *ngFor="let item of itineraryList">
+        <!-- NAME -->
+        <div>
+          {{ item.supplierName || '--' }}
+        </div>
+        <!-- SCHEDULE -->
+        <div>
+          {{ formatTime(item.scheduledTime) || '--' }}
+        </div>
+        <!-- PHONE -->
+        <div>
+          {{ item.supplierPhone || '--' }}
+        </div>
+        <!-- ADDED BY -->
+        <div class="bold">
+          {{ item.addedBy || '--' }}
+        </div>
+        <!-- ADDED AT -->
+        <div>
+          {{ item.createdAt | date:'dd/MM/yyyy HH:mm' }}
+        </div>
+        <!-- STATUS -->
+        <div>
+          <span [class]="getStatusClass(item.status)">{{ item.status }}</span>
+        </div>
+        <!-- NOTES -->
+        <div>
+          {{ item.specialNotes || '--' }}
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="table-card">
+    <div class="table-header">
+      <h2>Receipts</h2>
+      <button class="add-button">Add Receipt</button>
+    </div>
+    <div class="table-table">
+      <div class="receipt-row table-head">
+        <div>RESTAURANT</div>
+        <div>NOTES</div>
+        <div>FEE</div>
+        <div>TAX</div>
+        <div>TOTAL</div>
+        <div>T-NUMBER</div>
+        <div>PASS-THROUGH</div>
+        <div>PHOTO</div>
+        <div>SUBMITTED BY</div>
+        <div>SUBMITTED AT</div>
+        <div>ACTIONS</div>
+      </div>
+      <div *ngIf="loadingReceipts" class="receipt-row">
+        <p>Loading...</p>
+      </div>
+      <div *ngIf="!loadingReceipts && receipts.length === 0" class="receipt-row">
+        <p>No receipts found.</p>
+      </div>
+      <div class="receipt-row" *ngFor="let receipt of receipts">
+        <div>
+          {{ receipt.supplierName || '--' }}
+        </div>
+        <div>
+          {{ receipt.notes }}
+        </div>
+        <div>
+          {{ formatCurrency(receipt.fee) }}
+        </div>
+        <div>
+          {{ formatCurrency(receipt.tax) }}
+        </div>
+        <div class="bold">
+          {{ formatCurrency(receipt.amount) }}
+        </div>
+        <div class="bold">
+          {{ receipt.receiptNumber || '--' }}
+        </div>
+        <div>
+          {{ receipt.isVerified ? 'Yes' : 'No' }}
+        </div>
+        <div>
+          <img *ngIf="receipt.imageUrl" class="receipt-icon" src="{{ receipt.imageUrl }}" alt="receipt icon"
+            (click)="openReceiptPhoto(receipt)" />
+          <img *ngIf="!receipt.imageUrl" class="photo-icon" src="/ui-icons/image-default.png" alt="photo icon" />
+        </div>
+        <div>
+          {{ receipt.submittedBy || '--' }}
+        </div>
+        <div>
+          {{ receipt.createdAt | date:'dd/MM/yyyy HH:mm' }}
+        </div>
+      </div>
+      <!-- FOOTER -->
+      <div class="receipts-footer">
+        <div class="footer-label">
+          TOTAL VOLUME
+        </div>
+        <div class="footer-total">
+          {{ formatCurrency(totalVolume) }}
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="table-card">
+    <div class="table-header">
+      <h2>Other Expenses</h2>
+      <button class="add-button">Add Expenses</button>
+    </div>
+    <div class="table-table">
+      <div class="expense-row table-head">
+        <div>EXPENSES</div>
+        <div>NOTES</div>
+        <div>AMOUNT</div>
+        <div>PHOTO</div>
+        <div>SUBMITTED BY</div>
+        <div>SUBMITTED AT</div>
+        <div>ACTIONS</div>
+      </div>
+      <div *ngIf="loadingOtherExpenses" class="expense-row">
+        <p>Loading...</p>
+      </div>
+      <div *ngIf="!loadingOtherExpenses && otherExpenses.length === 0" class="expense-row">
+        <p>No expenses found.</p>
+      </div>
+      <div class="expense-row" *ngFor="let expenses of otherExpenses">
+        <div>
+          {{ expenses.name || '--' }}
+        </div>
+        <div>
+          {{ expenses.notes }}
+        </div>
+        <div>
+          {{ formatCurrency(expenses.amount) }}
+        </div>
+        <div>
+          <img *ngIf="expenses.imageUrl" class="expenses-icon" src="{{ expenses.imageUrl }}" alt="expenses icon"
+            (click)="openExpensesPhoto(expenses)" />
+          <img *ngIf="!expenses.imageUrl" class="photo-icon" src="/ui-icons/image-default.png" alt="photo icon" />
+        </div>
+        <div>
+          {{ expenses.createdBy || '--' }}
+        </div>
+        <div>
+          {{ expenses.createdAt | date:'dd/MM/yyyy HH:mm' }}
+        </div>
+      </div>
+      <!-- FOOTER -->
+      <div class="expenses-footer">
+        <div class="footer-label">
+          TOTAL VOLUME
+        </div>
+        <div class="footer-total">
+          {{ formatCurrency(totalVolume) }}
+        </div>
+      </div>
+    </div>
+  </div>
+</section>

@@ -13,7 +13,7 @@
           [attr.aria-expanded]="isNewOrderOpen"
           (click)="openNewOrderModal()"
         >
-          + New Booking
+          + New Order
         </button>
         <button class="refresh" type="button" [disabled]="isLoading" (click)="loadOrders()">
           <span aria-hidden="true">&#8635;</span> Refresh
@@ -39,9 +39,13 @@
         </label>
         <label>
           <span>Ref</span>
-          <select aria-label="Ref">
-            <option>Ref</option>
-          </select>
+          <input
+            type="text"
+            placeholder="Ref"
+            aria-label="Ref"
+            [(ngModel)]="selectedFilterRef"
+            (input)="applySearchFilters()"
+          />
         </label>
         <label>
           <span>Person In Charge</span>
@@ -401,7 +405,7 @@
           <div class="service-details-grid">
             <label class="modal-field date-field">
               <span>Target Date</span>
-              <input type="date" [ngModel]="targetDateNewOrder" (ngModelChange)="onTargetDateChange($event)" name="targetDate" />
+              <input type="date" [ngModel]="targetDateNewOrder" (ngModelChange)="onTargetDateChange($event)" name="targetDate" [min]="minTargetDate" />
               <img class="date-icon" src="/ui-icons/date.png" alt="Date icon" />
             </label>
 
@@ -726,7 +730,7 @@
       Link copied
     </div>
 
-    <div class="menu-item cancel" role="menuitem" tabindex="0" (click)="cancelOrder(orderForAction); closeActionPopup()">
+    <div class="menu-item cancel" role="menuitem" tabindex="0" (click)="openActionConfirmDialog('cancel')">
       <span class="icon" aria-hidden="true">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
           <circle cx="12" cy="12" r="9"/>
@@ -737,7 +741,7 @@
     </div>
 
     @if (capability.can('ORDERS_DELETE')) {
-    <div class="menu-item delete" role="menuitem" tabindex="0" (click)="deleteOrder(); closeActionPopup()">
+    <div class="menu-item delete" role="menuitem" tabindex="0" (click)="openActionConfirmDialog('delete')">
       <span class="icon" aria-hidden="true">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
           <polyline points="3 6 5 6 21 6"/>
@@ -750,6 +754,32 @@
       Delete
     </div>
     }
+  </div>
+
+  <div
+    *ngIf="actionConfirmPromptOpen"
+    class="make-offer-overlay"
+    role="presentation"
+    (click)="closeActionConfirmDialog()"
+  >
+    <div
+      class="make-offer-dialog confirm-dialog"
+      role="dialog"
+      aria-modal="true"
+      [attr.aria-label]="actionConfirmMode === 'delete' ? 'Delete order' : 'Cancel order'"
+      (click)="$event.stopPropagation()"
+    >
+      <div class="section">
+        <div class="section-title">{{ actionConfirmMode === 'delete' ? 'Delete order' : 'Cancel order' }}</div>
+        <p>
+          {{ actionConfirmMode === 'delete' ? 'Are you sure you want to delete this order?' : 'Are you sure you want to cancel this order?' }}
+        </p>
+      </div>
+      <footer class="new-order-footer">
+        <button class="request-order" type="button" (click)="confirmActionDeletion()">Yes</button>
+        <button class="cancel-order" type="button" (click)="closeActionConfirmDialog()">No</button>
+      </footer>
+    </div>
   </div>
 
   <div

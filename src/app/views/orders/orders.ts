@@ -76,6 +76,8 @@ export class OrdersView implements OnInit {
   protected actionPopupPosition = { top: 0, left: 0 };
   protected makeOfferPopupOpen = false;
   protected confirmOrderPromptOpen = false;
+  protected actionConfirmPromptOpen = false;
+  protected actionConfirmMode: 'confirm' | 'cancel' | 'delete' | null = null;
   protected isSendingOffer = false;
   protected offerPricingNotes = '';
   protected hostConfirmationRequired = false;
@@ -121,6 +123,7 @@ export class OrdersView implements OnInit {
 
   protected selectedFilterReseller = '';
   protected selectedFilterPic = '';
+  protected selectedFilterRef = '';
   protected selectedFilterService = '';
   protected selectedFilterStatus = 'all';
   protected selectedFilterRequestedDate = '';
@@ -147,6 +150,7 @@ export class OrdersView implements OnInit {
   protected copyEmailNewOrder = '';
   protected guestEmailNewOrder = '';
   protected targetDateNewOrder = '';
+  protected minTargetDate = this.toDateInputValue(new Date());
   protected startTimeNewOrder = '';
   protected selectedAllotmentId?: number;
   protected voucherNumberNewOrder = '';
@@ -301,6 +305,14 @@ export class OrdersView implements OnInit {
       filtered = filtered.filter((order) => order.pic === this.selectedFilterPic);
     }
 
+    if (this.selectedFilterRef.trim()) {
+      const refQuery = this.selectedFilterRef.trim().toLowerCase();
+      filtered = filtered.filter((order) => {
+        const refs = [order.ref1, order.ref2].filter((value): value is string => Boolean(value));
+        return refs.some((ref) => ref.toLowerCase().includes(refQuery));
+      });
+    }
+
     if (this.selectedFilterService) {
       filtered = filtered.filter((order) =>
         order.service.some((service) => {
@@ -351,6 +363,7 @@ export class OrdersView implements OnInit {
   protected clearSearchFilters(): void {
     this.selectedFilterReseller = '';
     this.selectedFilterPic = '';
+    this.selectedFilterRef = '';
     this.selectedFilterService = '';
     this.selectedFilterStatus = 'all';
     this.selectedFilterRequestedDate = '';
@@ -601,6 +614,13 @@ export class OrdersView implements OnInit {
     this.selectedAgentId = agentId || undefined;
   }
 
+  private toDateInputValue(date: Date): string {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  }
+
   protected onTargetDateChange(value: string): void {
     this.targetDateNewOrder = value;
     this.startTimeNewOrder = '';
@@ -785,13 +805,9 @@ export class OrdersView implements OnInit {
   }
 
   private isStepOneValid(): boolean {
-    return [
-      this.createdByNameNewOrder,
-      this.picEmailNewOrder,
-      this.copyEmailNewOrder,
-      this.ref1NewOrder,
-      this.ref2NewOrder,
-    ].every((value) => this.hasValue(value))
+    return this.hasValue(this.createdByNameNewOrder)
+      && this.hasValue(this.picEmailNewOrder)
+      && this.hasValue(this.ref1NewOrder)
       && this.selectedResellerId != null
       && this.selectedAgentId != null
       && this.selectedContactId != null;
@@ -807,10 +823,6 @@ export class OrdersView implements OnInit {
   }
 
   private isStepThreeValid(): boolean {
-    if (!this.hasValue(this.voucherNumberNewOrder)) {
-      return false;
-    }
-
     if (this.pickupEnabled) {
       if (!this.hasValue(this.pickupLocationNewOrder) || !this.pickupVehicleType || this.pickupDistanceId == null) {
         return false;
@@ -818,20 +830,15 @@ export class OrdersView implements OnInit {
     }
 
     if (this.dropoffSelected === 'HAND') {
-      return this.hasValue(this.handoffTextNewOrder);
+      return true;
     }
 
-    return this.hasValue(this.dropoffLocationNewOrder)
-      && !!this.dropoffVehicleType
-      && this.dropoffDistanceId != null;
+    return true;
   }
 
   private isStepFourValid(): boolean {
-    return this.hasValue(this.guestEmailNewOrder)
-      && this.adultGuests >= 0
-      && this.childGuests >= 0
-      && this.hasValue(this.dietaryRestrictionsNewOrder)
-      && this.selectedSpecialRequestIds.length > 0;
+    return this.adultGuests >= 0
+      && this.childGuests >= 0;
   }
 
   private hasValue(value?: string): boolean {
@@ -1187,6 +1194,21 @@ export class OrdersView implements OnInit {
     });
   }
 
+  protected confirmActionDeletion(): void {
+    if (!this.orderForAction) {
+      this.closeActionConfirmDialog();
+      return;
+    }
+
+    if (this.actionConfirmMode === 'cancel') {
+      this.cancelOrder(this.orderForAction);
+    } else if (this.actionConfirmMode === 'delete') {
+      this.deleteOrder();
+    }
+
+    this.closeActionConfirmDialog();
+  }
+
   protected showActionPopup(event: Event, orderId?: number): void {
     if (!orderId) {
       return;
@@ -1194,27 +1216,38 @@ export class OrdersView implements OnInit {
 
     const button = event.currentTarget as HTMLElement;
     const rect = button.getBoundingClientRect();
-    const popupWidth = 250;
-    const popupHeight = 100;
+    const popupWidth = 220;
     const screenWidth = window.innerWidth;
     const screenHeight = window.innerHeight;
 
     let left = rect.left;
     let top = rect.bottom + 5;
 
-    // Check if popup would go off the right edge
     if (left + popupWidth > screenWidth) {
       left = screenWidth - popupWidth - 10;
     }
 
-    // Check if popup would go off the bottom edge
-    if (top + popupHeight > screenHeight) {
-      top = rect.top - popupHeight - 5;
-    }
+    left = Math.max(10, left);
 
     this.orderForAction = orderId;
-    this.actionPopupPosition = { top, left };
     this.actionPopupOpen = true;
+    this.cdr.detectChanges();
+
+    window.requestAnimationFrame(() => {
+      const menuElement = document.querySelector('.menu') as HTMLElement | null;
+      const menuHeight = menuElement?.offsetHeight ?? 320;
+      const spaceBelow = screenHeight - rect.bottom - 10;
+      const spaceAbove = rect.top - 10;
+
+      if (spaceBelow < menuHeight && spaceAbove >= menuHeight) {
+        top = rect.top - menuHeight - 5;
+      } else if (spaceBelow < menuHeight) {
+        top = Math.max(10, screenHeight - menuHeight - 10);
+      }
+
+      this.actionPopupPosition = { top: Math.max(10, top), left };
+      this.cdr.detectChanges();
+    });
   }
 
   protected makeOffer(): void {
@@ -1249,7 +1282,7 @@ export class OrdersView implements OnInit {
 
   protected closeActionPopup(): void {
     this.actionPopupOpen = false;
-    if (!this.confirmOrderPromptOpen) {
+    if (!this.confirmOrderPromptOpen && !this.actionConfirmPromptOpen) {
       this.orderForAction = undefined;
     }
   }
@@ -1300,6 +1333,17 @@ export class OrdersView implements OnInit {
 
   protected openConfirmOrderDialog(): void {
     this.confirmOrderPromptOpen = true;
+  }
+
+  protected openActionConfirmDialog(mode: 'cancel' | 'delete'): void {
+    this.actionConfirmMode = mode;
+    this.actionConfirmPromptOpen = true;
+    this.actionPopupOpen = false;
+  }
+
+  protected closeActionConfirmDialog(): void {
+    this.actionConfirmPromptOpen = false;
+    this.actionConfirmMode = null;
   }
 
   protected closeConfirmOrderDialog(): void {

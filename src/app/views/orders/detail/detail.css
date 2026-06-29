@@ -663,6 +663,75 @@ h1 {
 
 /* ── add guest dialog ────────────────────────────────────────────────────── */
 
+.confirm-dialog-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: rgba(24, 20, 17, 0.48);
+  backdrop-filter: blur(3px);
+}
+
+.confirm-dialog-card {
+  width: min(420px, 100%);
+  background: #fffdf9;
+  border: 1px solid #e7ddcf;
+  border-radius: 16px;
+  box-shadow: 0 20px 50px rgba(30, 24, 17, 0.2);
+  padding: 24px 24px 20px;
+  color: #2d2b29;
+}
+
+.confirm-dialog-card h3 {
+  margin: 0 0 8px;
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: #2a241f;
+}
+
+.confirm-dialog-card p {
+  margin: 0 0 20px;
+  color: #6f675d;
+  font-size: 0.95rem;
+  line-height: 1.5;
+}
+
+.confirm-dialog-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.confirm-dialog-cancel,
+.confirm-dialog-confirm {
+  border: 0;
+  border-radius: 999px;
+  padding: 10px 16px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: transform 0.15s ease, box-shadow 0.15s ease, background-color 0.15s ease;
+}
+
+.confirm-dialog-cancel {
+  background: #f3efe8;
+  color: #534c43;
+}
+
+.confirm-dialog-confirm {
+  background: linear-gradient(135deg, #cfa24b, #b4832f);
+  color: #fff;
+  box-shadow: 0 8px 18px rgba(207, 162, 75, 0.25);
+}
+
+.confirm-dialog-cancel:hover,
+.confirm-dialog-confirm:hover {
+  transform: translateY(-1px);
+}
+
 .edit-group-overlay {
   position: fixed;
   inset: 0;

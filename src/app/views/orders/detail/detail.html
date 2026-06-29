@@ -129,13 +129,13 @@
             Add another
           </button>
 
-          <button class="action-btn confirm-btn" type="button" (click)="confirmOrder()" id="btn-confirm-order">
+          <button class="action-btn confirm-btn" type="button" (click)="openConfirmDialog()" id="btn-confirm-order" [disabled]="isConfirmingOrder">
             <span class="action-icon confirm-icon" aria-hidden="true">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                 <polyline points="20 6 9 17 4 12"/>
               </svg>
             </span>
-            Confirm
+            {{ isConfirmingOrder ? 'Confirming...' : 'Confirm' }}
           </button>
 
           <button class="action-btn offer-btn" type="button" (click)="makeOffer()" id="btn-make-offer">
@@ -184,6 +184,17 @@
               <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>
             </svg>
           </button>
+        </div>
+      </div>
+
+      <div class="confirm-dialog-overlay" *ngIf="showConfirmDialog" (click)="closeConfirmDialog()">
+        <div class="confirm-dialog-card" role="dialog" aria-modal="true" aria-labelledby="confirm-order-title" (click)="$event.stopPropagation()">
+          <h3 id="confirm-order-title">Confirm this order?</h3>
+          <p>This action will mark the order as confirmed.</p>
+          <div class="confirm-dialog-actions">
+            <button class="confirm-dialog-cancel" type="button" (click)="closeConfirmDialog()">Cancel</button>
+            <button class="confirm-dialog-confirm" type="button" (click)="confirmOrder()">Confirm</button>
+          </div>
         </div>
       </div>
 
@@ -264,7 +275,7 @@
                 </ng-container>
 
                 <!-- Inline edit row -->
-                <ng-container *ngIf="editingGuestIndex === i">
+                <ng-container *ngIf="editingGuestIndex === i && !isAddingGuest">
                   <td><input type="text" [(ngModel)]="guestMembers[i].name" [attr.aria-label]="'Name for guest ' + (i+1)" /></td>
                   <td><input type="text" [(ngModel)]="guestMembers[i].phone" [attr.aria-label]="'Phone for guest ' + (i+1)" /></td>
                   <td><input type="number" [(ngModel)]="guestMembers[i].age" [attr.aria-label]="'Age for guest ' + (i+1)" /></td>
@@ -463,12 +474,7 @@
 
             <label class="ag-field ag-full">
               <span>Allergies or Dietary Restrictions</span>
-              <div class="ag-chip-select">
-                <span class="ag-chip" *ngFor="let allergy of newGuestAllergyTags">{{ allergy }}</span>
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                  <polyline points="6 9 12 15 18 9"/>
-                </svg>
-              </div>
+              <input type="text" [(ngModel)]="newGuestAllergies" placeholder="Enter allergies or dietary restrictions" id="new-guest-allergies" />
             </label>
 
             <label class="ag-field ag-full">
@@ -478,7 +484,7 @@
           </div>
 
           <div class="add-guest-actions">
-            <button type="button" class="ag-save" (click)="confirmAddGuest()">Add Guest</button>
+            <button type="button" class="ag-save" (click)="confirmAddGuest()">{{ editingGuestIndex !== null ? 'Update Guest Details' : 'Add Guest' }}</button>
             <button type="button" class="ag-cancel" (click)="closeAddGuest()">Cancel</button>
           </div>
         </div>

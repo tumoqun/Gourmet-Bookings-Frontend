@@ -1,0 +1,95 @@
+<div class="modal-backdrop" *ngIf="visible" (click)="onCancel()">
+  <div class="modal-container" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h2>Add Receipt</h2>
+      <button type="button" class="close-btn" (click)="onCancel()">
+        ✕
+      </button>
+    </div>
+    <form [formGroup]="receiptForm">
+      <!-- Restaurant -->
+      <div class="form-group">
+        <label>Restaurant</label>
+        <select formControlName="itineraryStopId">
+          <option value="">Select Restaurant</option>
+          <option *ngFor="let supplier of suppliers" [value]="supplier.itineraryStopId">
+            {{ supplier.name }}
+          </option>
+        </select>
+      </div>
+
+      <!-- Fee -->
+      <div class="form-group">
+        <label>Fee (Tax Excluded)</label>
+        <input type="number" formControlName="fee" placeholder="Enter Total Service Fee Before Tax">
+      </div>
+
+      <!-- Tax -->
+      <div class="form-group">
+        <label>Tax Rate</label>
+        <input type="number" formControlName="taxRate" placeholder="Enter Tax Rate">
+      </div>
+
+      <!-- Estimated Tax -->
+      <div class="estimate-box">
+        <span>ESTIMATED TAX</span>
+        <strong>
+          {{ estimatedTax | currency }}
+        </strong>
+      </div>
+
+      <!-- Total -->
+      <div class="form-group">
+        <label>Total Amount</label>
+        <input type="number" placeholder="Auto-calculated total (editable if needed)" formControlName="totalAmount">
+      </div>
+
+      <!-- Override -->
+      <div class="switch-row">
+        <span>Override Auto-Calculation</span>
+        <label class="switch">
+          <input type="checkbox" formControlName="overrideCalculation">
+          <span class="slider"></span>
+        </label>
+      </div>
+
+      <!-- Upload -->
+      <div class="upload-row">
+        <button type="button" class="attach-btn" (click)="receiptInput.click()">
+          <span class="attach-text">Attach Receipt</span>
+          <img class="link-icon" src="/ui-icons/link.png" alt="link icon" />
+        </button>
+        <input #receiptInput hidden type="file" accept="image/*" (change)="onFileSelected($event)">
+        <p *ngIf="uploading" class="uploading-text">Uploading...</p>
+        <img *ngIf="receiptForm.get('imageUrl')?.value" class="uploaded-image" [src]="receiptForm.get('imageUrl')?.value" alt="Uploaded Image">
+      </div>
+
+      <!-- Checkbox -->
+      <div class="checkbox-row">
+        <label>
+          T Number
+          <input type="checkbox" formControlName="tNumber">
+        </label>
+        <label>
+          Pass Through
+          <input type="checkbox" formControlName="passThrough">
+        </label>
+      </div>
+      <!-- Notes -->
+      <div class="form-group">
+        <label>Notes</label>
+        <textarea rows="1" formControlName="notes">
+        </textarea>
+      </div>
+    </form>
+
+    <div class="modal-footer">
+      <button class="btn-save" type="button" (click)="onSubmit()">
+        Save
+      </button>
+      <button class="btn-cancel" type="button" (click)="onCancel()">
+        Cancel
+      </button>
+    </div>
+  </div>
+</div>

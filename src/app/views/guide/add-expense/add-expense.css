@@ -1,0 +1,151 @@
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, .45);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.modal-container {
+  width: 700px;
+  background: #fff;
+  border-radius: 14px;
+  padding: 24px;
+}
+
+@keyframes modalShow {
+  from {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.modal-header,
+.modal-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.modal-header h2 {
+  margin: 0;
+}
+
+.modal-footer {
+  justify-content: flex-end;
+  gap: 16px;
+  margin-top: 24px;
+  border-top: 1px solid #eee;
+  padding-top: 20px;
+}
+
+.close-btn {
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  font-size: 26px;
+}
+
+.form-group {
+  margin-top: 18px;
+  label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 500;
+  }
+  input,
+  textarea {
+    width: 100%;
+    border: 1px solid #ddd;
+    border-radius: 10px;
+    padding: 12px 14px;
+    font-size: 14px;
+    box-sizing: border-box;
+  }
+  textarea {
+    resize: none;
+  }
+}
+
+.upload-row {
+  margin-top: 16px;
+}
+
+.uploading-text {
+  font-size: 14px;
+  color: #666;
+  margin-top: 8px;
+  margin-bottom: 0;
+}
+
+.uploaded-image {
+  width: 200px;
+  height: 200px;
+  margin-top: 8px;
+  border-radius: 8px;
+}
+
+.attach-btn {
+  display: flex;
+  align-items: center;
+  border: 1px solid #1a1c3b;
+  border-radius: 8px;
+  padding: 0;
+  background: #ffffff;
+  height: 32px;
+  cursor: pointer;
+}
+
+.attach-text {
+  color: white;
+  background: #1a1c3b;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  padding: 0 8px;
+  border-radius: 8px 0 0 8px;
+}
+
+.link-icon {
+  font-size: 14px;
+  padding: 0 8px;
+}
+
+.file-name {
+  color: #666;
+  font-size: 14px;
+}
+
+.modal-footer {
+  margin-top: 24px;
+  padding-top: 20px;
+  border-top: 1px solid #eee;
+
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+}
+
+.btn-save {
+  background: #caa04b;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 10px 24px;
+  cursor: pointer;
+}
+
+.btn-cancel {
+  background: #fff;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  padding: 10px 24px;
+  cursor: pointer;
+}

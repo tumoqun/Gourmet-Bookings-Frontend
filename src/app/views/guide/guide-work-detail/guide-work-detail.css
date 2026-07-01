@@ -285,6 +285,38 @@
   height: 24px;
 }
 
+.add-guest {
+  font-weight: 500;
+  color: #2563eb;
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  justify-content: end;
+  cursor: pointer;
+}
+
+.add-guest span:first-child {
+  background: #2563EB33;
+  width: 24px;
+  height: 24px;
+  border-radius: 8px;
+  font-size: 15px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.guest-actions {
+  display: flex;
+  justify-content: end;
+  gap: 16px;
+  align-items: center;
+}
+
+.guest-actions img {
+  cursor: pointer;
+}
+
 .guest-info {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
@@ -336,6 +368,41 @@
 
 .order-row:last-child {
   border-bottom: none;
+}
+
+.status {
+  display: inline-flex;
+  align-items: center;
+  min-height: 24px;
+  padding: 0 10px;
+  border-radius: 999px;
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
+.completed {
+  color: #64748b;
+  background: #eef2f7;
+}
+
+.confirmed, .active {
+  color: #00855e;
+  background: #d6f8e7;
+}
+
+.requested, .tentative {
+  color: #0a7ecf;
+  background: #dcedff;
+}
+
+.offered {
+  color: #c86d1c;
+  background: #fff0dd;
+}
+
+.cancelled {
+  color: #ef4444;
+  background: #fde5e5;
 }
 
 /* HEADER ROW */
@@ -390,11 +457,9 @@
   display: grid;
   grid-template-columns:
     1.2fr 1.2fr 1.4fr 1fr 1.2fr 1fr;
-
   align-items: center;
   padding: 18px 14px;
   border-bottom: 1px solid #f2f2f2;
-
   font-size: 14px;
   color: #444;
 }
@@ -477,7 +542,7 @@
 .receipt-row {
   display: grid;
   grid-template-columns:
-    1.2fr 1.2fr 1fr 1fr 1fr 1.2fr 1.2fr 80px 1.2fr 1.8fr 1fr;
+    1.2fr 1.2fr 1fr 1fr 1fr 80px 1.2fr 1.8fr 1fr;
   align-items: center;
   padding: 18px 14px;
   border-bottom: 1px solid #f2f2f2;
@@ -487,6 +552,24 @@
 
 .receipt-row:last-child {
   border-bottom: none;
+}
+
+.receipt-actions {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+}
+
+.receipt-actions img {
+  cursor: pointer;
+}
+
+.receipt-image {
+  width: 32px;
+  height: 32px;
+  border-radius: 4px;
+  object-fit: cover;
+  cursor: pointer;
 }
 
 .receipts-footer {
@@ -511,6 +594,46 @@
 
 .expense-row:last-child {
   border-bottom: none;
+}
+
+.expenses-image {
+  width: 32px;
+  height: 32px;
+  border-radius: 4px;
+  object-fit: cover;
+  cursor: pointer;
+}
+
+.expense-actions {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+}
+
+.expense-actions img {
+  cursor: pointer;
+}
+
+.image-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.8);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 9999;
+}
+
+.image-modal-content {
+  max-width: 90%;
+  max-height: 90%;
+}
+
+.image-preview {
+  max-width: 100%;
+  max-height: 90vh;
+  border-radius: 8px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
 }
 
 .expenses-footer {

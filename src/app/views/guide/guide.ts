@@ -63,7 +63,7 @@ export class GuideView implements OnInit {
   }
 
   handleRefesh(): void {
-    console.log('refesh')
+    this.loadAssignments();
   }
 
   openDateCalendar(event: MouseEvent): void {

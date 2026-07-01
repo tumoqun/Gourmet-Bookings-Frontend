@@ -42,7 +42,7 @@ export class GuidePortalService {
 
   getAssignments(filters: GuideFilter): Observable<GuideAssignment[]> {
     if (filters.isNewOffered) {
-      filters.status = 'offered';
+      filters.status = 'OFFERED';
       // delete filters.isNewOffered;
     }
     let params = new HttpParams({

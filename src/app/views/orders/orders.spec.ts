@@ -125,6 +125,14 @@ describe('OrdersView', () => {
     return compiled;
   }
 
+  function openActionMenu(fixture: ReturnType<typeof createFixture>) {
+    const compiled = fixture.nativeElement as HTMLElement;
+    const moreActionButton = compiled.querySelector('.more-action') as HTMLButtonElement;
+    moreActionButton.click();
+    fixture.detectChanges();
+    return compiled;
+  }
+
   function setInputValue(input: HTMLInputElement, value: string) {
     input.value = value;
     input.dispatchEvent(new Event('input'));
@@ -194,6 +202,17 @@ describe('OrdersView', () => {
     clickPrimaryAction(compiled, fixture);
   }
 
+  it('should prevent selecting past dates in step two', () => {
+    const fixture = createFixture();
+    const compiled = openNewOrderDialog(fixture);
+    goToStepTwo(compiled, fixture);
+
+    const targetDateInput = getDialog(compiled).querySelector('input[name="targetDate"]') as HTMLInputElement;
+    const expectedMinDate = `${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, '0')}-${String(new Date().getDate()).padStart(2, '0')}`;
+
+    expect(targetDateInput.getAttribute('min')).toBe(expectedMinDate);
+  });
+
   function fillStepThreeDropoff(compiled: HTMLElement, fixture: ReturnType<typeof createFixture>) {
     const dialog = getDialog(compiled);
     setInputValue(dialog.querySelector('input[name="voucherNumber"]') as HTMLInputElement, 'VOUCH-1');
@@ -233,6 +252,98 @@ describe('OrdersView', () => {
     specialButton.click();
     fixture.detectChanges();
   }
+
+  it('should prompt for confirmation before cancelling an order', () => {
+    const fixture = createFixture();
+    const compiled = openActionMenu(fixture);
+
+    const cancelAction = Array.from(compiled.querySelectorAll('.menu-item')).find((item) => item.textContent?.includes('Cancel')) as HTMLElement;
+    cancelAction.click();
+    fixture.detectChanges();
+
+    const dialog = getDialog(compiled);
+    expect(dialog.querySelector('.confirm-dialog')?.textContent).toContain('cancel this order');
+    expect(dialog.querySelector('.confirm-dialog .request-order')?.textContent).toContain('Yes');
+  });
+
+  it('should invoke cancel when the confirmation dialog is accepted', () => {
+    const fixture = createFixture();
+    const compiled = openActionMenu(fixture);
+    const view = fixture.componentInstance as any;
+
+    spyOn(view, 'cancelOrder').and.callThrough();
+
+    const cancelAction = Array.from(compiled.querySelectorAll('.menu-item')).find((item) => item.textContent?.includes('Cancel')) as HTMLElement;
+    cancelAction.click();
+    fixture.detectChanges();
+
+    const yesButton = compiled.querySelector('.confirm-dialog .request-order') as HTMLButtonElement;
+    yesButton.click();
+    fixture.detectChanges();
+
+    expect(view.cancelOrder).toHaveBeenCalledWith(1);
+  });
+
+  it('should filter orders by reference text', async () => {
+    const fixture = createFixture();
+    const view = fixture.componentInstance as any;
+
+    view.allOrders = [
+      {
+        id: 1,
+        reseller: 'Gourmet Travel',
+        pic: 'Mina Sato',
+        ref1: 'REF-1',
+        ref2: '',
+        requestedDate: 'May 15, 2026',
+        requestedAtRaw: '2026-05-15T10:00:00',
+        offeredDateRaw: '2026-05-15T10:00:00',
+        area: 'TOKYO',
+        service: ['The Drunken Tiger'],
+        type: 'P',
+        targetDate: ['May 15, 2026'],
+        pickup: '-/-',
+        guests: '2/1',
+        special: [],
+        tr: 'warn',
+        fee: '12,000',
+        status: 'Requested',
+        statusTone: 'info',
+        statusCode: 'requested',
+        guide: 'Unassigned',
+      },
+      {
+        id: 2,
+        reseller: 'Gourmet Travel',
+        pic: 'Mina Sato',
+        ref1: 'REF-2',
+        ref2: '',
+        requestedDate: 'May 16, 2026',
+        requestedAtRaw: '2026-05-16T10:00:00',
+        offeredDateRaw: '2026-05-16T10:00:00',
+        area: 'TOKYO',
+        service: ['Golden Barrel Pub'],
+        type: 'S',
+        targetDate: ['May 16, 2026'],
+        pickup: '-/-',
+        guests: '2/1',
+        special: [],
+        tr: 'warn',
+        fee: '15,000',
+        status: 'Offered',
+        statusTone: 'warning',
+        statusCode: 'offered',
+        guide: 'Unassigned',
+      },
+    ];
+
+    view.selectedFilterRef = 'REF-2';
+    view.applySearchFilters();
+    fixture.detectChanges();
+
+    expect(view.filteredOrders.length).toBe(1);
+    expect(view.filteredOrders[0].ref1).toBe('REF-2');
+  });
 
   it('should create the view', () => {
     const fixture = createFixture();

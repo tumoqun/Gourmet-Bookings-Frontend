@@ -34,6 +34,8 @@ interface RelatedOrder {
 })
 export class OrderDetail implements OnInit {
   protected isLoading = true;
+  protected isConfirmingOrder = false;
+  protected showConfirmDialog = false;
   protected errorMessage = '';
   protected order?: Order;
   protected orderId?: number;
@@ -87,12 +89,13 @@ export class OrderDetail implements OnInit {
   // Edit guest
   protected editingGuestIndex: number | null = null;
 
-  // Related orders (mock for now)
+  // Related orders loaded from the backend when available
   protected relatedOrders: RelatedOrder[] = [];
 
   // Action buttons state
   protected waiversSigned = true;
   protected signboardAttached = false;
+  protected isLinkCopied = false;
 
   constructor(
     private apiService: ApiService,
@@ -114,22 +117,7 @@ export class OrderDetail implements OnInit {
       this.errorMessage = 'No order ID provided.';
     }
 
-    // Seed mock related orders
-    this.relatedOrders = [
-      {
-        pic: 'James Anderson',
-        ref1: 'TK-08053-1',
-        ref2: 'ACC-AW03-1 2-bc',
-        serviceName: 'Secret Food Tours',
-        type: 'P',
-        dateTime: 'Sat, 07-Dec-24 - 5:30PM',
-        guests: '5/0',
-        fee: 'VND 90,488',
-        status: 'Completed',
-        statusTone: 'neutral',
-        notes: 'View Notes',
-      },
-    ];
+    this.relatedOrders = [];
   }
 
   protected loadOrder(id: number): void {
@@ -389,15 +377,15 @@ export class OrderDetail implements OnInit {
 
   protected closeAddGuest(): void {
     this.isAddingGuest = false;
+    this.editingGuestIndex = null;
   }
 
   protected confirmAddGuest(): void {
     const fullName = `${this.newGuestFirstName} ${this.newGuestLastName}`.trim();
-    const allergyText = this.newGuestAllergyTags.length
-      ? this.newGuestAllergyTags.join(', ')
-      : this.newGuestAllergies;
+    const allergyText = this.newGuestAllergies.trim();
+    const isEditingExistingGuest = this.editingGuestIndex !== null && this.editingGuestIndex >= 0;
 
-    const guestsPayload: OrderGuest[] = this.guestMembers.map(g => ({
+    const guestsPayload: OrderGuest[] = this.guestMembers.map((g, index) => ({
        firstName: g.name.split(' ')[0] || '',
        lastName: g.name.split(' ').slice(1).join(' ') || '',
        phoneNumber: g.phone,
@@ -405,19 +393,34 @@ export class OrderDetail implements OnInit {
        gender: g.gender,
        allergies: g.allergies !== '--' ? g.allergies : undefined
     }));
-    
-    guestsPayload.push({
-       firstName: this.newGuestFirstName,
-       lastName: this.newGuestLastName,
-       guestType: this.newGuestType,
-       isVip: this.newGuestVip,
-       nationality: this.newGuestNationality,
-       specialOccasion: this.newGuestSpecialOccasion,
-       phoneNumber: this.newGuestPhone,
-       age: typeof this.newGuestAge === 'number' ? this.newGuestAge : (parseInt(this.newGuestAge as string) || undefined),
-       gender: this.newGuestGender,
-       allergies: allergyText
-    });
+
+    if (isEditingExistingGuest) {
+      guestsPayload[this.editingGuestIndex!] = {
+        firstName: this.newGuestFirstName,
+        lastName: this.newGuestLastName,
+        guestType: this.newGuestType,
+        isVip: this.newGuestVip,
+        nationality: this.newGuestNationality,
+        specialOccasion: this.newGuestSpecialOccasion,
+        phoneNumber: this.newGuestPhone,
+        age: typeof this.newGuestAge === 'number' ? this.newGuestAge : (parseInt(this.newGuestAge as string) || undefined),
+        gender: this.newGuestGender,
+        allergies: allergyText || undefined,
+      };
+    } else {
+      guestsPayload.push({
+        firstName: this.newGuestFirstName,
+        lastName: this.newGuestLastName,
+        guestType: this.newGuestType,
+        isVip: this.newGuestVip,
+        nationality: this.newGuestNationality,
+        specialOccasion: this.newGuestSpecialOccasion,
+        phoneNumber: this.newGuestPhone,
+        age: typeof this.newGuestAge === 'number' ? this.newGuestAge : (parseInt(this.newGuestAge as string) || undefined),
+        gender: this.newGuestGender,
+        allergies: allergyText
+      });
+    }
 
     if (this.order?.id) {
         this.apiService.updateOrderGuests(this.order.id, guestsPayload).subscribe({
@@ -431,29 +434,63 @@ export class OrderDetail implements OnInit {
                }));
                this.order!.guests = updatedGuests;
                this.calculateAverageAge();
+               this.editingGuestIndex = null;
                this.closeAddGuest();
                this.cdr.detectChanges();
            },
            error: () => {
                console.error("Failed to sync guests");
+               this.editingGuestIndex = null;
                this.closeAddGuest();
            }
         });
     } else {
-        this.guestMembers.push({
-          name: fullName || this.newGuestName || 'New Guest',
-          phone: this.newGuestPhone,
-          age: this.newGuestAge,
-          gender: this.newGuestGender,
-          allergies: allergyText || '--',
-        });
+        if (isEditingExistingGuest) {
+          this.guestMembers[this.editingGuestIndex!] = {
+            name: fullName || this.newGuestName || 'New Guest',
+            phone: this.newGuestPhone,
+            age: this.newGuestAge,
+            gender: this.newGuestGender,
+            allergies: allergyText || '--',
+          };
+        } else {
+          this.guestMembers.push({
+            name: fullName || this.newGuestName || 'New Guest',
+            phone: this.newGuestPhone,
+            age: this.newGuestAge,
+            gender: this.newGuestGender,
+            allergies: allergyText || '--',
+          });
+        }
         this.calculateAverageAge();
+        this.editingGuestIndex = null;
         this.closeAddGuest();
     }
   }
 
+  protected openEditGuest(index: number): void {
+    this.editGuest(index);
+  }
+
   protected editGuest(index: number): void {
     this.editingGuestIndex = index;
+    const guest = this.guestMembers[index];
+    if (!guest) {
+      return;
+    }
+
+    const [firstName = '', ...rest] = guest.name.split(' ');
+    this.newGuestFirstName = firstName;
+    this.newGuestLastName = rest.join(' ');
+    this.newGuestPhone = guest.phone || '';
+    this.newGuestAge = guest.age || '';
+    this.newGuestGender = guest.gender || 'Male';
+    this.newGuestAllergies = guest.allergies === '--' ? '' : guest.allergies;
+    this.newGuestSpecialOccasion = '';
+    this.newGuestNationality = '';
+    this.newGuestVip = false;
+    this.newGuestType = 'adult';
+    this.isAddingGuest = true;
   }
 
   protected saveGuestEdit(index: number): void {
@@ -462,6 +499,7 @@ export class OrderDetail implements OnInit {
 
   protected cancelGuestEdit(): void {
     this.editingGuestIndex = null;
+    this.isAddingGuest = false;
   }
 
   protected removeGuest(index: number): void {
@@ -491,16 +529,38 @@ export class OrderDetail implements OnInit {
     console.log('Add another order for this group');
   }
 
+  protected openConfirmDialog(): void {
+    if (!this.order?.id || this.isConfirmingOrder) {
+      return;
+    }
+
+    this.showConfirmDialog = true;
+  }
+
+  protected closeConfirmDialog(): void {
+    this.showConfirmDialog = false;
+  }
+
   protected confirmOrder(): void {
-    if (!this.order?.id) return;
+    if (!this.order?.id || this.isConfirmingOrder) {
+      return;
+    }
+
+    this.showConfirmDialog = false;
+    this.isConfirmingOrder = true;
+    this.errorMessage = '';
+
     this.apiService.confirmOrder(this.order.id).subscribe({
       next: (updated) => {
-        this.order = updated;
-        this.progressStep = this.deriveProgressStep(updated.status?.code ?? '');
+        this.order = { ...this.order, ...updated };
+        this.progressStep = this.deriveProgressStep(updated.status?.code ?? this.order?.status?.code ?? '');
+        this.isConfirmingOrder = false;
         this.cdr.detectChanges();
       },
       error: () => {
+        this.isConfirmingOrder = false;
         this.errorMessage = 'Could not confirm this order.';
+        this.cdr.detectChanges();
       },
     });
   }
@@ -511,7 +571,57 @@ export class OrderDetail implements OnInit {
 
   protected copyLink(): void {
     const url = window.location.href;
-    navigator.clipboard.writeText(url).catch(() => {});
+
+    const finishCopy = (): void => {
+      this.isLinkCopied = true;
+      this.cdr.detectChanges();
+
+      window.setTimeout(() => {
+        this.isLinkCopied = false;
+        this.cdr.detectChanges();
+      }, 1500);
+    };
+
+    if (navigator.clipboard?.writeText) {
+      navigator.clipboard.writeText(url).then(finishCopy).catch(() => {
+        const textarea = document.createElement('textarea');
+        textarea.value = url;
+        textarea.setAttribute('readonly', '');
+        textarea.style.position = 'fixed';
+        textarea.style.top = '-9999px';
+        document.body.appendChild(textarea);
+        textarea.focus();
+        textarea.select();
+
+        try {
+          document.execCommand('copy');
+          finishCopy();
+        } catch {
+          // Ignore copy fallback errors.
+        }
+
+        document.body.removeChild(textarea);
+      });
+      return;
+    }
+
+    const textarea = document.createElement('textarea');
+    textarea.value = url;
+    textarea.setAttribute('readonly', '');
+    textarea.style.position = 'fixed';
+    textarea.style.top = '-9999px';
+    document.body.appendChild(textarea);
+    textarea.focus();
+    textarea.select();
+
+    try {
+      document.execCommand('copy');
+      finishCopy();
+    } catch {
+      // Ignore copy fallback errors.
+    }
+
+    document.body.removeChild(textarea);
   }
 
   protected goToWork(): void {

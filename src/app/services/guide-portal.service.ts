@@ -70,18 +70,32 @@ export class GuidePortalService {
   }
 
   acceptAssignment(id: number): Observable<GuideAssignment> {
-    return this.http.post<GuideAssignment>(`${this.apiUrl}/guide/assignments/${id}/accept`, { ...this.getHttpOptions() });
+    return this.http.post<GuideAssignment>(`${this.apiUrl}/guide/assignments/${id}/accept`, {
+      ...this.getHttpOptions(),
+    });
   }
 
   rejectAssignment(id: number, reason?: string): Observable<GuideAssignment> {
-    return this.http.post<GuideAssignment>(`${this.apiUrl}/guide/assignments/${id}/reject`, { reason },  { ...this.getHttpOptions() });
+    return this.http.post<GuideAssignment>(
+      `${this.apiUrl}/guide/assignments/${id}/reject`,
+      { reason },
+      { ...this.getHttpOptions() },
+    );
   }
 
   startWork(id: number): Observable<GuideAssignment> {
-    return this.http.post<GuideAssignment>(`${this.apiUrl}/guide/assignments/${id}/start-work`, {}, { ...this.getHttpOptions() });
+    return this.http.post<GuideAssignment>(
+      `${this.apiUrl}/guide/assignments/${id}/start-work`,
+      {},
+      { ...this.getHttpOptions() },
+    );
   }
 
   endWork(id: number): Observable<GuideAssignment> {
-    return this.http.post<GuideAssignment>(`${this.apiUrl}/guide/assignments/${id}/end-work`, {}, { ...this.getHttpOptions() });
+    return this.http.post<GuideAssignment>(
+      `${this.apiUrl}/guide/assignments/${id}/end-work`,
+      {},
+      { ...this.getHttpOptions() },
+    );
   }
 }

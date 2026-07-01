@@ -13,6 +13,7 @@ export interface SupplierSelectOption {
   id: number;
   name: string;
   supplierType: string;
+  itineraryStopId?: number;
 }
 
 @Injectable({
@@ -34,6 +35,13 @@ export class SupplierService {
   getSuppliersForService(serviceId: number, workId: number, type: string): Observable<SupplierSelectOption[]> {
     return this.http.get<SupplierSelectOption[]>(
       `${this.apiUrl}/services/${serviceId}/suppliers?workId=${workId}&supplierType=${type}`,
+      this.getHttpOptions(),
+    );
+  }
+
+  getSuppliersNoReceiptByWork(workId: number): Observable<SupplierSelectOption[]> {
+    return this.http.get<SupplierSelectOption[]>(
+      `${this.apiUrl}/receipts/available-suppliers/${workId}`,
       this.getHttpOptions(),
     );
   }

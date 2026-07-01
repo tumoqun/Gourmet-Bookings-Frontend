@@ -1,14 +1,33 @@
 import { ChangeDetectorRef, Component, inject } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { Expense, OrderGuestGroup, WorkDetailForGuideType, WorkDetailType, WorkGuide, WorkOrderForGuide, WorkService } from '../../../services/work.service';
+import {
+  OrderGuestGroup,
+  WorkDetailForGuideType,
+  WorkDetailType,
+  WorkGuide,
+  WorkOrderForGuide,
+  WorkService,
+} from '../../../services/work.service';
 import { CommonModule } from '@angular/common';
 import { WorkStatusClass } from '../../works/works';
-import { Receipt, ReceiptService } from '../../../services/receipt.service';
+import { Receipt, ReceiptService, UpdateReceiptPayload } from '../../../services/receipt.service';
 import { ItineraryService, ItineraryStopItem } from '../../../services/itinerary.service';
+import { AddReceipt } from '../add-receipt/add-receipt';
+import { AddExpense } from '../add-expense/add-expense';
+import { AuthService } from '../../../services/auth.service';
+import { ReceiptFormData, ReceiptPayload } from '../../../services/receipt.service';
+import {
+  Expense,
+  ExpenseForm,
+  ExpensePayload,
+  ExpenseService,
+  UpdateExpensePayload,
+} from '../../../services/expense.service';
+import { ConfirmDialog } from '../../../components/common/confirm-dialog/confirm-dialog';
 
 @Component({
   selector: 'app-guide-work-detail',
-  imports: [CommonModule],
+  imports: [CommonModule, AddReceipt, AddExpense, ConfirmDialog],
   templateUrl: './guide-work-detail.html',
   styleUrl: './guide-work-detail.css',
 })
@@ -16,6 +35,10 @@ export class GuideWorkDetail {
   private route = inject(ActivatedRoute);
   private router = inject(Router);
 
+  openAddReceipt = false;
+  openAddExpense = false;
+  openConfirmDeleteReceipt = false;
+  openConfirmDeleteExpense = false;
   loadingInfo = true;
   loadingGuest = true;
   loadingOrders = true;
@@ -25,20 +48,27 @@ export class GuideWorkDetail {
   loadingOtherExpenses = false;
   workId = Number(this.route.snapshot.paramMap.get('id'));
   workDetail: WorkDetailForGuideType = {} as WorkDetailForGuideType;
+  private readonly auth = inject(AuthService);
+  readonly currentUser = this.auth.currentUser;
 
   orders: WorkOrderForGuide[] = [];
   guides: WorkGuide[] = [];
   receipts: Receipt[] = [];
   itineraryList: ItineraryStopItem[] = [];
   orderGuests: OrderGuestGroup[] = [];
-  otherExpenses: Expense[] = []
+  otherExpenses: Expense[] = [];
+  selectedReceiptId: number = 0;
+  selectedExpenseId: number = 0;
+  selectedImageUrl: string | null = null;
+  isImageModalOpen = false;
 
   constructor(
     private workService: WorkService,
     private itinerariesService: ItineraryService,
     private receiptService: ReceiptService,
+    private expenseService: ExpenseService,
     private cdr: ChangeDetectorRef,
-  ) { }
+  ) {}
 
   async ngOnInit(): Promise<void> {
     await Promise.all([
@@ -47,7 +77,8 @@ export class GuideWorkDetail {
       this.getWorkGuides(Number(this.workId)),
       this.getReceiptsByWork(Number(this.workId)),
       this.loadItineraryStops(Number(this.workId)),
-      this.getOrderGuests(Number(this.workId))
+      this.getOrderGuests(Number(this.workId)),
+      this.getExpensesByWork(Number(this.workId)),
     ]);
   }
 
@@ -56,7 +87,7 @@ export class GuideWorkDetail {
   }
 
   goToOrderDetails(id: number): void {
-    console.log('Go To Order Details', id)
+    console.log('Go To Order Details', id);
   }
 
   formatTime(time: string): string {
@@ -76,7 +107,7 @@ export class GuideWorkDetail {
       year: '2-digit',
       hour: 'numeric',
       minute: '2-digit',
-      hour12: true
+      hour12: true,
     })
       .format(dateTime)
       .replace(',', '')
@@ -171,6 +202,18 @@ export class GuideWorkDetail {
     }
   }
 
+  async getExpensesByWork(workId: number): Promise<void> {
+    try {
+      const expensesResponse = await this.expenseService.getExpensesByWork(workId).toPromise();
+      this.otherExpenses = expensesResponse || [];
+    } catch (error) {
+      console.error('Error fetching expense:', error);
+    } finally {
+      this.loadingOtherExpenses = false;
+      this.cdr.detectChanges();
+    }
+  }
+
   async getOrderGuests(workId: number): Promise<void> {
     try {
       const orderGuestsResponse = await this.workService.getOrderGuests(workId).toPromise();
@@ -187,11 +230,163 @@ export class GuideWorkDetail {
     return this.receipts.reduce((sum, receipt) => sum + receipt.amount, 0);
   }
 
-  openReceiptPhoto(receipt: Receipt): void {
-    console.log('Open photo', receipt);
+  openReceiptModal(): void {
+    this.openAddReceipt = true;
   }
 
-  openExpensesPhoto(expense: Expense): void {
-    console.log('Open photo', expense);
+  closeReceiptModal(): void {
+    this.openAddReceipt = false;
+  }
+
+  openExpenseModal(): void {
+    this.openAddExpense = true;
+  }
+
+  closeExpenseModal(): void {
+    this.openAddExpense = false;
+  }
+
+  onClickEditReceipt(id: number): void {
+    this.openAddReceipt = true;
+    this.selectedReceiptId = id;
+  }
+
+  onClickDeleteReceipt(id: number): void {
+    this.openConfirmDeleteReceipt = true;
+    this.selectedReceiptId = id;
+  }
+
+  onClickEditExpense(id: number): void {
+    this.openAddExpense = true;
+    this.selectedExpenseId = id;
+  }
+
+  onClickDeleteExpense(id: number): void {
+    this.openConfirmDeleteExpense = true;
+    this.selectedExpenseId = id;
+  }
+
+  onSubmitReceipt(data: ReceiptFormData): void {
+    const assignmentId = this.guides.find(
+      (guide) => guide.guideId === this.currentUser()?.guideId,
+    )?.id;
+    const now = new Date();
+    const receiptDate = now.toISOString().split('T')[0]; // yyyy-MM-dd
+    const receiptTime = now.toTimeString().split(' ')[0]; // HH:mm:ss
+    if (this.selectedReceiptId) {
+      // edit receipt
+      const payload: UpdateReceiptPayload = {
+        supplierId: data.supplierId || 0,
+        itineraryStopId: Number(data.itineraryStopId),
+        amount: Number(data.totalAmount),
+        fee: Number(data.fee),
+        tax: Number(data.taxRate),
+        checkNumber: data.tNumber ?? false,
+        isVerified: data.passThrough ?? false,
+        verifiedById: data.passThrough ? this.currentUser()?.id : undefined,
+        notes: data.note ?? '',
+        imageUrl: data.imageUrl || '',
+      };
+      this.receiptService.updateReceipt(this.selectedReceiptId, payload).subscribe(() => {
+        this.closeReceiptModal();
+        this.getReceiptsByWork(Number(this.workId));
+      });
+    } else {
+      // add receipt
+      const payload: ReceiptPayload = {
+        assignmentId: assignmentId || 0,
+        supplierId: data.supplierId || 0,
+        itineraryStopId: Number(data.itineraryStopId),
+        amount: Number(data.totalAmount),
+        receiptDate,
+        receiptTime,
+        fee: Number(data.fee),
+        tax: Number(data.taxRate),
+        checkNumber: data.tNumber ?? false,
+        isVerified: data.passThrough ?? false,
+        verifiedById: data.passThrough ? this.currentUser()?.id : undefined,
+        verifiedAt: data.passThrough ? now.toISOString() : undefined,
+        submittedBy: this.currentUser()?.fullName || '',
+        notes: data.note ?? '',
+        imageUrl: data.imageUrl || '',
+      };
+      this.receiptService.createReceipt(payload).subscribe(() => {
+        this.closeReceiptModal();
+        this.getReceiptsByWork(Number(this.workId));
+      });
+    }
+  }
+
+  onCancelDeleteReceipt() {
+    this.selectedReceiptId = 0;
+    this.openConfirmDeleteReceipt = false;
+  }
+
+  onConfirmDeleteReceipt() {
+    this.receiptService.deleteReceipt(this.selectedReceiptId).subscribe(() => {
+      this.openConfirmDeleteReceipt = false;
+      this.getReceiptsByWork(Number(this.workId));
+    });
+  }
+
+  onSubmitExpense(data: ExpenseForm): void {
+    const assignmentId = this.guides.find(
+      (guide) => guide.guideId === this.currentUser()?.guideId,
+    )?.id;
+    const now = new Date();
+    const expenseDate = now.toISOString().split('T')[0]; // yyyy-MM-dd
+    const expenseTime = now.toTimeString().split(' ')[0]; // HH:mm:ss
+    if (this.selectedExpenseId) {
+      // edit expense
+      const payload: UpdateExpensePayload = {
+        name: data.name || '',
+        amount: data.amount || 0,
+        notes: data.notes || '',
+        imageUrl: data.imageUrl || '',
+        assignmentId: assignmentId || 0,
+      };
+      this.expenseService.updateExpense(this.selectedExpenseId, payload).subscribe(() => {
+        this.closeExpenseModal();
+        this.getExpensesByWork(Number(this.workId));
+      });
+    } else {
+      // add expense
+      const payload: ExpensePayload = {
+        name: data.name || '',
+        amount: data.amount || 0,
+        notes: data.notes || '',
+        imageUrl: data.imageUrl || '',
+        assignmentId: assignmentId || 0,
+        expenseDate,
+        expenseTime,
+        submittedBy: this.currentUser()?.fullName || '',
+      };
+      this.expenseService.createExpense(payload).subscribe(() => {
+        this.closeExpenseModal();
+        this.getExpensesByWork(Number(this.workId));
+      });
+    }
+  }
+
+  onConfirmDeleteExpense() {
+    this.expenseService.deleteExpense(this.selectedExpenseId).subscribe(() => {
+      this.openConfirmDeleteExpense = false;
+      this.getExpensesByWork(Number(this.workId));
+    });
+  }
+
+  onCancelDeleteExpense() {
+    this.selectedExpenseId = 0;
+    this.openConfirmDeleteExpense = false;
+  }
+
+  openPhoto(item: any) {
+    this.selectedImageUrl = item.imageUrl;
+    this.isImageModalOpen = true;
+  }
+
+  closeExpensesPhoto() {
+    this.isImageModalOpen = false;
+    this.selectedImageUrl = null;
   }
 }

@@ -204,16 +204,6 @@ export interface OrderGuestGroup {
   guests: OrderGuest[];
 }
 
-export interface Expense {
-  id: number;
-  name: string;
-  notes: string;
-  amount: number;
-  imageUrl: string;
-  createdAt: string;
-  createdBy: string;
-}
-
 export interface WorkGuide {
   id: number;
   guideId: number;

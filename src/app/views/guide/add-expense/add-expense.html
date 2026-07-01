@@ -1,0 +1,47 @@
+<div class="modal-backdrop" *ngIf="visible" (click)="onCancel()">
+  <div class="modal-container" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h2>Add Expense</h2>
+      <button type="button" class="close-btn" (click)="onCancel()">
+        ✕
+      </button>
+    </div>
+
+    <form [formGroup]="expenseForm">
+      <div class="form-group">
+        <label>Expense</label>
+        <input type="text" formControlName="name" placeholder="Enter Expense Name">
+      </div>
+
+      <div class="form-group">
+        <label>Total Amount</label>
+        <input type="number" formControlName="amount" placeholder="Enter Total Amount">
+      </div>
+
+      <div class="upload-row">
+        <button type="button" class="attach-btn" (click)="expenseInput.click()">
+          <span class="attach-text">Attach Expense</span>
+          <img class="link-icon" src="/ui-icons/link.png" alt="link icon" />
+        </button>
+        <input #expenseInput hidden type="file" accept="image/*" (change)="onFileSelected($event)">
+        <p *ngIf="uploading" class="uploading-text">Uploading...</p>
+        <img *ngIf="expenseForm.get('imageUrl')?.value" class="uploaded-image" [src]="expenseForm.get('imageUrl')?.value" alt="Uploaded Image">
+      </div>
+
+      <div class="form-group">
+        <label>Notes</label>
+        <textarea rows="1" formControlName="notes" placeholder="Enter Notes">
+        </textarea>
+      </div>
+    </form>
+
+    <div class="modal-footer">
+      <button type="button" class="btn-save" (click)="onSubmit()">
+        Save
+      </button>
+      <button type="button" class="btn-cancel" (click)="onCancel()">
+        Cancel
+      </button>
+    </div>
+  </div>
+</div>

@@ -97,6 +97,10 @@
         <div>GENDER</div>
         <div>ALLERGIES OR DIETARY RESTRICTIONS</div>
         <div>SPECIAL OCCASION</div>
+        <div class="add-guest">
+          <span>+</span>
+          <span>Add guest</span>
+        </div>
       </div>
       <div *ngIf="!group.guests || group.guests.length === 0" class="guest-row">
         <p>No guest found.</p>
@@ -123,6 +127,10 @@
         </div>
         <div>
           {{ guest.specialOccasion || '--' }}
+        </div>
+        <div class="guest-actions">
+          <img class="edit-icon" src="/ui-icons/edit-icon.png" alt="edit icon" />
+          <img class="delete-icon" src="/ui-icons/delete-icon.png" alt="delete icon" />
         </div>
       </div>
     </div>
@@ -179,7 +187,7 @@
           {{ formatCurrency(order.totalFeeAmount) || '--' }}
         </div>
         <div>
-          <span class="status" [class]="getStatusClass(order.status)">
+          <span class="status" [class]="order.status.toLowerCase()">
             {{ order.status }}
           </span>
         </div>
@@ -309,7 +317,7 @@
   <div class="table-card">
     <div class="table-header">
       <h2>Receipts</h2>
-      <button class="add-button">Add Receipt</button>
+      <button class="add-button" (click)="openReceiptModal()">Add Receipt</button>
     </div>
     <div class="table-table">
       <div class="receipt-row table-head">
@@ -318,8 +326,6 @@
         <div>FEE</div>
         <div>TAX</div>
         <div>TOTAL</div>
-        <div>T-NUMBER</div>
-        <div>PASS-THROUGH</div>
         <div>PHOTO</div>
         <div>SUBMITTED BY</div>
         <div>SUBMITTED AT</div>
@@ -339,23 +345,17 @@
           {{ receipt.notes }}
         </div>
         <div>
-          {{ formatCurrency(receipt.fee) }}
+          ${{ formatCurrency(receipt.fee) }}
         </div>
         <div>
-          {{ formatCurrency(receipt.tax) }}
+          ${{ formatCurrency(receipt.tax) }}
         </div>
         <div class="bold">
-          {{ formatCurrency(receipt.amount) }}
-        </div>
-        <div class="bold">
-          {{ receipt.receiptNumber || '--' }}
+          ${{ formatCurrency(receipt.amount) }}
         </div>
         <div>
-          {{ receipt.isVerified ? 'Yes' : 'No' }}
-        </div>
-        <div>
-          <img *ngIf="receipt.imageUrl" class="receipt-icon" src="{{ receipt.imageUrl }}" alt="receipt icon"
-            (click)="openReceiptPhoto(receipt)" />
+          <img *ngIf="receipt.imageUrl" class="receipt-image" src="{{ receipt.imageUrl }}" alt="receipt icon"
+            (click)="openPhoto(receipt)" />
           <img *ngIf="!receipt.imageUrl" class="photo-icon" src="/ui-icons/image-default.png" alt="photo icon" />
         </div>
         <div>
@@ -364,6 +364,10 @@
         <div>
           {{ receipt.createdAt | date:'dd/MM/yyyy HH:mm' }}
         </div>
+        <div class="receipt-actions">
+          <img class="edit-icon" src="/ui-icons/edit-icon.png" alt="edit icon" (click)="onClickEditReceipt(receipt.id)" />
+          <img class="delete-icon" src="/ui-icons/delete-icon.png" alt="delete icon" (click)="onClickDeleteReceipt(receipt.id)" />
+        </div>
       </div>
       <!-- FOOTER -->
       <div class="receipts-footer">
@@ -371,7 +375,7 @@
           TOTAL VOLUME
         </div>
         <div class="footer-total">
-          {{ formatCurrency(totalVolume) }}
+          ${{ formatCurrency(totalVolume) }}
         </div>
       </div>
     </div>
@@ -380,7 +384,7 @@
   <div class="table-card">
     <div class="table-header">
       <h2>Other Expenses</h2>
-      <button class="add-button">Add Expenses</button>
+      <button class="add-button" (click)="openExpenseModal()">Add Expense</button>
     </div>
     <div class="table-table">
       <div class="expense-row table-head">
@@ -406,18 +410,22 @@
           {{ expenses.notes }}
         </div>
         <div>
-          {{ formatCurrency(expenses.amount) }}
+          ${{ formatCurrency(expenses.amount) }}
         </div>
         <div>
-          <img *ngIf="expenses.imageUrl" class="expenses-icon" src="{{ expenses.imageUrl }}" alt="expenses icon"
-            (click)="openExpensesPhoto(expenses)" />
+          <img *ngIf="expenses.imageUrl" class="expenses-image" src="{{ expenses.imageUrl }}" alt="expenses icon"
+            (click)="openPhoto(expenses)" />
           <img *ngIf="!expenses.imageUrl" class="photo-icon" src="/ui-icons/image-default.png" alt="photo icon" />
         </div>
         <div>
-          {{ expenses.createdBy || '--' }}
+          {{ expenses.submittedBy || '--' }}
         </div>
         <div>
           {{ expenses.createdAt | date:'dd/MM/yyyy HH:mm' }}
+        </div>
+        <div class="expense-actions">
+          <img class="edit-icon" src="/ui-icons/edit-icon.png" alt="edit icon" (click)="onClickEditExpense(expenses.id)" />
+          <img class="delete-icon" src="/ui-icons/delete-icon.png" alt="delete icon" (click)="onClickDeleteExpense(expenses.id)" />
         </div>
       </div>
       <!-- FOOTER -->
@@ -426,9 +434,27 @@
           TOTAL VOLUME
         </div>
         <div class="footer-total">
-          {{ formatCurrency(totalVolume) }}
+          ${{ formatCurrency(totalVolume) }}
         </div>
       </div>
     </div>
   </div>
+
+  <div class="image-modal-backdrop" *ngIf="isImageModalOpen" (click)="closeExpensesPhoto()">
+    <div class="image-modal-content" (click)="$event.stopPropagation()">
+      <img [src]="selectedImageUrl" class="image-preview" />
+    </div>
+  </div>
+
+  <app-add-receipt *ngIf="openAddReceipt" [visible]="openAddReceipt" [id]="selectedReceiptId" (close)="closeReceiptModal()" (submit)="onSubmitReceipt($event)"></app-add-receipt>
+
+  <app-add-expense *ngIf="openAddExpense" [visible]="openAddExpense" [id]="selectedExpenseId" (close)="closeExpenseModal()" (submit)="onSubmitExpense($event)"></app-add-expense>
+
+  <app-confirm-dialog [visible]="openConfirmDeleteReceipt" message="Do you want to delete this receipt?" confirmText="Confirm" cancelText="Cancel"
+    (confirm)="onConfirmDeleteReceipt()" (cancel)="onCancelDeleteReceipt()">
+  </app-confirm-dialog>
+
+  <app-confirm-dialog [visible]="openConfirmDeleteExpense" message="Do you want to delete this expense?" confirmText="Confirm" cancelText="Cancel"
+    (confirm)="onConfirmDeleteExpense()" (cancel)="onCancelDeleteExpense()">
+  </app-confirm-dialog>
 </section>

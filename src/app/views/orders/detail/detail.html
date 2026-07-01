@@ -49,11 +49,11 @@
       <div class="info-grid">
         <div class="info-field">
           <span class="info-label">REFERENCE NUMBER 1</span>
-          <span class="info-value bold">{{ ref1 }}</span>
+          <span class="info-value">{{ ref1 }}</span>
         </div>
         <div class="info-field">
           <span class="info-label">REFERENCE NUMBER 2</span>
-          <span class="info-value bold">{{ ref2 }}</span>
+          <span class="info-value">{{ ref2 }}</span>
         </div>
         <div class="info-field">
           <span class="info-label">TENTATIVE ORDER</span>
@@ -62,7 +62,7 @@
 
         <div class="info-field">
           <span class="info-label">PERSON IN CHARGE (PIC)</span>
-          <span class="info-value bold">{{ picName }}</span>
+          <span class="info-value">{{ picName }}</span>
         </div>
         <div class="info-field">
           <span class="info-label">PIC EMAIL</span>
@@ -157,7 +157,7 @@
                 <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>
               </svg>
             </span>
-            Copy link
+            {{ isLinkCopied ? 'Link copied' : 'Copy link' }}
           </button>
         </div>
 

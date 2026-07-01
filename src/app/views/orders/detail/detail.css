@@ -264,19 +264,20 @@ h1 {
 }
 
 .info-label {
-  font-size: 0.7rem;
-  font-weight: 700;
-  color: #b9b4ac;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
+  font-family: 'Inter', sans-serif;
+  font-size: 13px;
+  font-weight: 500;
+  color: #57534e;
+  letter-spacing: 1.04px;
+  text-transform: none;
 }
 
 .info-value {
-  font-size: 0.97rem;
-  color: #3d3935;
+  font-size: 16px;
+  font-weight: 500;
+  color: #1a1c3b;
 }
 
-.info-value.bold,
 .info-value strong {
   font-weight: 700;
   color: #1f2345;
@@ -428,10 +429,10 @@ h1 {
 
 .guest-group-title {
   margin: 0;
-  font-size: 1.05rem;
+  font-size: 20px;
+  line-height: 24px;
   font-weight: 700;
-  color: #1f2345;
-  font-family: Georgia, "Times New Roman", serif;
+  color: #1a1c3b;
 }
 
 .edit-btn {
@@ -491,7 +492,10 @@ h1 {
 /* guest table */
 .guest-table-wrap {
   overflow-x: auto;
-  margin: 0 -28px;
+  border: 1px solid #ededed;
+  border-radius: 16px;
+  margin: -10px;
+  margin-bottom: 12px;
 }
 
 .guest-table {
@@ -510,12 +514,14 @@ h1 {
 }
 
 .guest-table th {
-  font-size: 0.7rem;
-  font-weight: 800;
-  color: #3d3935;
-  background: #faf8f4;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
+  font-size: 14px;
+  line-height: 24px;
+  font-weight: 700;
+  font-family: 'Inter', sans-serif;
+  color: #444;
+  background: #e7e5e4;
+  letter-spacing: 0;
+  text-transform: none;
 }
 
 .guest-table td {
@@ -1311,21 +1317,25 @@ h1 {
 /* ── related orders card ─────────────────────────────────────────────────── */
 
 .related-orders-card {
-  padding: 24px 0 0;
+  padding: 24px 28px 0;
+  margin-bottom: 24px;
   overflow: hidden;
 }
 
 .related-title {
   margin: 0 0 18px;
-  padding: 0 28px;
-  font-size: 1.05rem;
+  font-size: 20px;
+  line-height: 24px;
   font-weight: 700;
-  color: #1f2345;
-  font-family: Georgia, "Times New Roman", serif;
+  color: #1a1c3b;
 }
 
 .related-table-wrap {
   overflow-x: auto;
+  border: 1px solid #ededed;
+  border-radius: 16px;
+  margin: -10px;
+  margin-bottom: 12px;
 }
 
 .related-table {
@@ -1345,11 +1355,13 @@ h1 {
 }
 
 .related-table th {
-  font-size: 0.7rem;
-  font-weight: 800;
-  color: #3d3935;
-  background: #faf8f4;
-  letter-spacing: 0.08em;
+  font-size: 14px;
+  line-height: 24px;
+  font-weight: 700;
+  font-family: 'Inter', sans-serif;
+  color: #444;
+  background: #e7e5e4;
+  letter-spacing: 0;
   text-transform: uppercase;
   border-top: none;
   border-bottom: 1px solid #ebe8e3;

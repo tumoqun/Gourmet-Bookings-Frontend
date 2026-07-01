@@ -95,6 +95,7 @@ export class OrderDetail implements OnInit {
   // Action buttons state
   protected waiversSigned = true;
   protected signboardAttached = false;
+  protected isLinkCopied = false;
 
   constructor(
     private apiService: ApiService,
@@ -570,7 +571,57 @@ export class OrderDetail implements OnInit {
 
   protected copyLink(): void {
     const url = window.location.href;
-    navigator.clipboard.writeText(url).catch(() => {});
+
+    const finishCopy = (): void => {
+      this.isLinkCopied = true;
+      this.cdr.detectChanges();
+
+      window.setTimeout(() => {
+        this.isLinkCopied = false;
+        this.cdr.detectChanges();
+      }, 1500);
+    };
+
+    if (navigator.clipboard?.writeText) {
+      navigator.clipboard.writeText(url).then(finishCopy).catch(() => {
+        const textarea = document.createElement('textarea');
+        textarea.value = url;
+        textarea.setAttribute('readonly', '');
+        textarea.style.position = 'fixed';
+        textarea.style.top = '-9999px';
+        document.body.appendChild(textarea);
+        textarea.focus();
+        textarea.select();
+
+        try {
+          document.execCommand('copy');
+          finishCopy();
+        } catch {
+          // Ignore copy fallback errors.
+        }
+
+        document.body.removeChild(textarea);
+      });
+      return;
+    }
+
+    const textarea = document.createElement('textarea');
+    textarea.value = url;
+    textarea.setAttribute('readonly', '');
+    textarea.style.position = 'fixed';
+    textarea.style.top = '-9999px';
+    document.body.appendChild(textarea);
+    textarea.focus();
+    textarea.select();
+
+    try {
+      document.execCommand('copy');
+      finishCopy();
+    } catch {
+      // Ignore copy fallback errors.
+    }
+
+    document.body.removeChild(textarea);
   }
 
   protected goToWork(): void {

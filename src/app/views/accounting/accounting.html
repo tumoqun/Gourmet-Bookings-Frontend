@@ -7,7 +7,7 @@
       </div>
       <div class="top-actions">
         <button class="urgent" type="button">+ Make Urgent Assignment</button>
-        <button class="refresh" type="button">
+        <button class="refresh" type="button" [disabled]="isLoading" (click)="loadWorks()">
           <span aria-hidden="true">&#8635;</span> Refresh
         </button>
       </div>
@@ -37,12 +37,7 @@
 
         <label>
           <span>Ref</span>
-          <select aria-label="Ref" [(ngModel)]="ref">
-            <option value="">Ref</option>
-            <option value="TK-08053-1">TK-08053-1</option>
-            <option value="JPTAMI-M-9/7">JPTAMI-M-9/7</option>
-            <option value="NO.IRL.322">NO.IRL.322</option>
-          </select>
+          <input aria-label="Ref" placeholder="Ref" [(ngModel)]="ref" />
         </label>
 
         <label>
@@ -93,6 +88,8 @@
       </div>
     </section>
 
+    <p class="api-message error" *ngIf="errorMessage">{{ errorMessage }}</p>
+
     <section class="table-card" aria-label="Accounting table">
       <div class="table-scroll">
         <table>
@@ -110,26 +107,50 @@
             </tr>
           </thead>
           <tbody>
+            <!-- Loading state -->
+            <tr *ngIf="isLoading && rows.length === 0">
+              <td class="table-state" colspan="9">Loading…</td>
+            </tr>
+
+            <!-- Empty state -->
+            <tr *ngIf="!isLoading && rows.length === 0">
+              <td class="table-state" colspan="9">No records found.</td>
+            </tr>
+
+            <!-- Data rows -->
             <tr *ngFor="let row of rows">
+              <!-- Guide column — name only, no meta badge -->
               <td class="guide-cell">
                 <div class="guide-row" [class.multi]="row.guides.length > 1">
                   <div class="guide-profile" *ngFor="let g of row.guides">
                     <img class="guide-icon" src="/ui-icons/image-default.png" alt="" aria-hidden="true" />
                     <span class="guide-text">
                       <strong>{{ g.name }}</strong>
-                      <small *ngIf="g.meta" [class]="getGuideMetaClass(g.meta)">{{ g.meta }}</small>
                     </span>
                   </div>
                 </div>
               </td>
+
               <td>{{ row.reseller }}</td>
               <td><strong>{{ row.ref1 }}</strong></td>
+
+              <!-- Service pill -->
               <td><span class="pill service">{{ row.service }}</span></td>
+
               <td><strong>{{ row.ps }}</strong></td>
               <td>{{ row.guests }}</td>
-              <td><span class="pill target">{{ row.targetDates }}</span></td>
+
+              <!-- Target Dates — stacked pills, same as orders page -->
+              <td>
+                <span class="stacked-pills">
+                  <span class="target-date">{{ row.targetDates }}</span>
+                </span>
+              </td>
+
+              <!-- Status chip with dynamic tone class -->
               <td><span class="status-chip {{ row.statusTone }}">{{ row.status }}</span></td>
-              <td class="notes">{{ row.notes || '-' }}</td>
+
+              <td class="notes">{{ row.notes }}</td>
             </tr>
           </tbody>
           <tfoot class="table-tfoot">
@@ -139,22 +160,30 @@
                   <div class="footer-left">
                     <label class="rows-control">
                       <span class="rows-label">Show:</span>
-                      <select [(ngModel)]="selectedRows" aria-label="Rows per page">
+                      <select [(ngModel)]="selectedRows" (ngModelChange)="onRowsChange($event)" aria-label="Rows per page">
                         <option [ngValue]="25">25 rows</option>
                         <option [ngValue]="50">50 rows</option>
                         <option [ngValue]="100">100 rows</option>
                       </select>
                     </label>
                     <span class="divider">|</span>
-                    <button class="page-edge first" type="button" aria-label="First page"></button>
-                    <button class="page-edge previous" type="button" aria-label="Previous page"></button>
-                    <button type="button" class="page-number active">1</button>
-                    <button type="button" class="page-number">2</button>
-                    <button type="button" class="page-number">3</button>
-                    <button class="page-edge next" type="button" aria-label="Next page"></button>
-                    <button class="page-edge last" type="button" aria-label="Last page"></button>
+
+                    <div class="pagination" aria-label="Pagination">
+                      <button class="page-edge first"    type="button" aria-label="First page"    (click)="goToFirstPage()"    [disabled]="currentPage === 1"></button>
+                      <button class="page-edge previous" type="button" aria-label="Previous page" (click)="goToPreviousPage()" [disabled]="currentPage === 1"></button>
+                      <button
+                        *ngFor="let page of getPageNumbers()"
+                        type="button"
+                        class="page-number"
+                        [class.active]="page === currentPage"
+                        (click)="goToPage(page)"
+                      >{{ page }}</button>
+                      <button class="page-edge next" type="button" aria-label="Next page" (click)="goToNextPage()" [disabled]="currentPage === totalPages"></button>
+                      <button class="page-edge last" type="button" aria-label="Last page" (click)="goToLastPage()" [disabled]="currentPage === totalPages"></button>
+                    </div>
+
                     <span class="divider">|</span>
-                    <span class="records-count">{{ rows.length }} records</span>
+                    <span class="records-count">{{ totalElements }} records</span>
                   </div>
                 </div>
               </td>
@@ -165,4 +194,3 @@
     </section>
   </section>
 </div>
-

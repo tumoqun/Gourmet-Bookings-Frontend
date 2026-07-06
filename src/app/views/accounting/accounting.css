@@ -427,26 +427,7 @@ td strong {
   word-break: break-word;
 }
 
-.guide-text small {
-  display: block;
-  font-size: 0.62rem;
-  font-weight: 800;
-  line-height: 1.2;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-}
-
-.guide-text .meta-completed {
-  color: #16a34a;
-}
-
-.guide-text .meta-closed {
-  color: #9ca3af;
-}
-
-.guide-text .meta-default {
-  color: #a8a29e;
-}
+/* guide meta badge removed */
 
 .pill {
   display: inline-flex;
@@ -463,9 +444,28 @@ td strong {
   background: #5a677b;
 }
 
-.pill.target {
-  background: #222549;
+/* ── Target-dates stacked pills (matches orders page) ─────────────────── */
+
+.stacked-pills {
+  display: inline-flex;
+  flex-direction: column;
+  gap: 4px;
 }
+
+.target-date {
+  display: inline-flex;
+  align-items: center;
+  min-height: 24px;
+  padding: 0 12px;
+  border-radius: 999px;
+  background: #222549;
+  color: #ffffff;
+  font-size: 0.82rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+/* ── Status chip base ─────────────────────────────────────────────────── */
 
 .status-chip {
   display: inline-flex;
@@ -477,33 +477,100 @@ td strong {
   font-weight: 700;
 }
 
-.ended {
-  color: #64748b;
-  background: #eef2f7;
-}
+/* ── Work-status tone classes ─────────────────────────────────────────── */
 
-.active {
-  color: #00855e;
-  background: #d6f8e7;
-}
-
-.scheduled {
+/* SCHEDULED — calm blue */
+.status-scheduled {
   color: #0a7ecf;
   background: #dcedff;
 }
 
-.in-prep {
+/* OFFERED — amber/warm */
+.status-offered {
+  color: #a16207;
+  background: #fef9c3;
+}
+
+/* ACCEPTED — teal green */
+.status-accepted {
+  color: #00855e;
+  background: #d6f8e7;
+}
+
+/* IN_PREP — orange */
+.status-in-prep {
   color: #c86d1c;
   background: #fff0dd;
 }
 
-.cancelled {
+/* READY — lime/emerald */
+.status-ready {
+  color: #166534;
+  background: #dcfce7;
+}
+
+/* STARTED — indigo */
+.status-started {
+  color: #4338ca;
+  background: #e0e7ff;
+}
+
+/* REMINDER — purple */
+.status-reminder {
+  color: #7c3aed;
+  background: #ede9fe;
+}
+
+/* ENDED — neutral slate */
+.status-ended {
+  color: #64748b;
+  background: #eef2f7;
+}
+
+/* CLOSED — medium grey */
+.status-closed {
   color: #6b7280;
   background: #f1f5f9;
 }
 
+/* PAID_DATE — gold */
+.status-paid-date {
+  color: #92400e;
+  background: #fde68a;
+}
+
+/* CANCELLED — red-rose */
+.status-cancelled {
+  color: #9f1239;
+  background: #ffe4e6;
+}
+
 .notes {
   color: #8a837a;
+}
+
+/* ── Utility states ───────────────────────────────────────────────────── */
+
+.table-state {
+  text-align: center;
+  padding: 48px 24px;
+  color: #a8a29e;
+  font-size: 0.95rem;
+  font-style: italic;
+}
+
+.api-message {
+  margin: 12px 0 0;
+  padding: 12px 18px;
+  border-radius: 10px;
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.api-message.error {
+  color: #9f1239;
+  background: #fff1f2;
+  border: 1px solid #fecdd3;
 }
 
 .table-tfoot {

@@ -225,6 +225,8 @@ export interface WorkFilter {
   guideName?: string;
   status?: string;
   tourDate?: string;
+  fromDate?: string;
+  toDate?: string;
   isPrivate?: boolean;
   isShared?: boolean;
 }

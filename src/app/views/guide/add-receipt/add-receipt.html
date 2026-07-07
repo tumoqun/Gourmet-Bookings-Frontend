@@ -31,11 +31,9 @@
       </div>
 
       <!-- Estimated Tax -->
-      <div class="estimate-box">
-        <span>ESTIMATED TAX</span>
-        <strong>
-          {{ estimatedTax | currency }}
-        </strong>
+      <div class="form-group">
+        <label>Estimated Tax</label>
+        <input type="number" formControlName="estimatedTax" placeholder="Estimated Tax (editable if needed)">
       </div>
 
       <!-- Total -->

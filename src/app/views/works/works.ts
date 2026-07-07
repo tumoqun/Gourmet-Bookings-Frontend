@@ -58,6 +58,9 @@ export class Works {
   activeCalendar = false;
   calendarYear = new Date().getFullYear();
   calendarMonth = new Date().getMonth();
+  calendarSelectingFrom: boolean = true;
+  fromDate: string = '';
+  toDate: string = '';
   calendarWeekdays = [
     'Su',
     'Mo',
@@ -116,20 +119,36 @@ export class Works {
   ];
 
   async ngOnInit(): Promise<void> {
+    this.fromDate = this.formatDateToString(new Date());
+    this.toDate = this.formatDateToString(this.getDatePlus30Days());
+    this.filters.fromDate = this.fromDate;
+    this.filters.toDate = this.toDate;
     await this.loadWorks(this.pageNumber, this.pageSize, this.filters);
     await this.loadResellers();
     await this.loadResellerContacts();
     await this.loadAreas();
   }
 
+  private formatDateToString(date: Date): string {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  }
+
+  private getDatePlus30Days(): Date {
+    const date = new Date();
+    date.setDate(date.getDate() + 30);
+    return date;
+  }
+
   openDateCalendar(event: MouseEvent): void {
     event.stopPropagation();
     this.activeCalendar = !this.activeCalendar;
-    if (!this.filters.tourDate) {
+    if (!this.fromDate) {
       return;
     }
-    const [year, month] =
-      this.filters.tourDate.split('-').map(Number);
+    const [year, month] = this.fromDate.split('-').map(Number);
     if (!Number.isNaN(year) && !Number.isNaN(month)) {
       this.calendarYear = year;
       this.calendarMonth = month - 1;
@@ -172,18 +191,48 @@ export class Works {
     if (date <= 0) {
       return;
     }
-    this.filters.tourDate =
-      `${this.calendarYear}-${String(this.calendarMonth + 1).padStart(2, '0')}-${String(date).padStart(2, '0')}`;
-    this.activeCalendar = false;
+    const selectedDate = `${this.calendarYear}-${String(this.calendarMonth + 1).padStart(2, '0')}-${String(date).padStart(2, '0')}`;
+    
+    if (this.calendarSelectingFrom) {
+      this.fromDate = selectedDate;
+      this.calendarSelectingFrom = false;
+    } else {
+      if (selectedDate < this.fromDate) {
+        this.toDate = this.fromDate;
+        this.fromDate = selectedDate;
+      } else {
+        this.toDate = selectedDate;
+      }
+      this.filters.fromDate = this.fromDate;
+      this.filters.toDate = this.toDate;
+      this.activeCalendar = false;
+      this.calendarSelectingFrom = true;
+      this.loadWorks(this.pageNumber, this.pageSize, this.filters);
+    }
   }
 
   isSelectedCalendarDate(date: number): boolean {
-    if (date <= 0 || !this.filters.tourDate) {
+    if (date <= 0 || !this.fromDate) {
       return false;
     }
-    const currentDate =
-      `${this.calendarYear}-${String(this.calendarMonth + 1).padStart(2, '0')}-${String(date).padStart(2, '0')}`;
-    return this.filters.tourDate === currentDate;
+    const currentDate = `${this.calendarYear}-${String(this.calendarMonth + 1).padStart(2, '0')}-${String(date).padStart(2, '0')}`;
+    return currentDate >= this.fromDate && currentDate <= this.toDate;
+  }
+
+  isCalendarDateStart(date: number): boolean {
+    if (date <= 0 || !this.fromDate) {
+      return false;
+    }
+    const currentDate = `${this.calendarYear}-${String(this.calendarMonth + 1).padStart(2, '0')}-${String(date).padStart(2, '0')}`;
+    return currentDate === this.fromDate;
+  }
+
+  isCalendarDateEnd(date: number): boolean {
+    if (date <= 0 || !this.toDate) {
+      return false;
+    }
+    const currentDate = `${this.calendarYear}-${String(this.calendarMonth + 1).padStart(2, '0')}-${String(date).padStart(2, '0')}`;
+    return currentDate === this.toDate;
   }
 
   async loadResellers(): Promise<void> {
@@ -218,12 +267,19 @@ export class Works {
   }
 
   applySearchFilters(): void {
+    this.filters.fromDate = this.fromDate;
+    this.filters.toDate = this.toDate;
     console.log('filters', this.filters)
     this.loadWorks(this.pageNumber, this.pageSize, this.filters);
   }
 
   clearSearchFilters(): void {
     this.filters = {};
+    this.fromDate = this.formatDateToString(new Date());
+    this.toDate = this.formatDateToString(this.getDatePlus30Days());
+    this.filters.fromDate = this.fromDate;
+    this.filters.toDate = this.toDate;
+    this.calendarSelectingFrom = true;
     this.loadWorks(this.pageNumber, this.pageSize, this.filters);
     this.activeCalendar = false;
   }

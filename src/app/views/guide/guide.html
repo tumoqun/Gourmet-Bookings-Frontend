@@ -14,9 +14,13 @@
   <div class="filter-container">
     <div class="filter-grid bottom">
       <label class="date-field" (click)="openDateCalendar($event)">
-        <input type="text" placeholder="Tour Date" aria-label="Tour Date" [(ngModel)]="filters.requestedDate" readonly />
+        <input type="text" placeholder="Tour Date Range" aria-label="Tour Date Range" 
+          [value]="fromDate + ' → ' + toDate" readonly />
         <img class="date-icon" src="/ui-icons/date.png" alt="Date icon" />
         <div class="calendar-popover" *ngIf="activeCalendar">
+          <div class="calendar-mode-indicator">
+            {{ calendarSelectingFrom ? 'Select start date' : 'Select end date' }}
+          </div>
           <div class="calendar-header">
             <button type="button" (click)="changeCalendarMonth(-1, $event)">
               &lt;
@@ -36,7 +40,10 @@
           </div>
           <div class="calendar-dates">
             <button type="button" *ngFor="let date of buildCalendarDays(calendarYear, calendarMonth)"
-              [disabled]="date === 0" [class.selected]="isSelectedCalendarDate(date)"
+              [disabled]="date === 0" 
+              [class.selected]="isSelectedCalendarDate(date)"
+              [class.start]="isCalendarDateStart(date)"
+              [class.end]="isCalendarDateEnd(date)"
               (click)="selectCalendarDate(date, $event)">
               {{ date > 0 ? date : '' }}
             </button>
@@ -44,7 +51,7 @@
         </div>
       </label>
       <label>
-        <select aria-label="All Statuses" [(ngModel)]="filters.status">
+        <select aria-label="All Statuses" [(ngModel)]="filters.status" (ngModelChange)="onStatusChange($event)">
           <option value="undefined">All Statuses</option>
           <option *ngFor="let status of statuses" [value]="status.value">{{ status.label }}</option>
         </select>
@@ -55,7 +62,6 @@
           <span class="checkbox-indicator" [class.checked]="filters.isNewOffered"></span>
           <span>New Offers</span>
         </button>
-        <button class="apply" type="button" (click)="applySearchFilters()">Apply</button>
         <button class="clear" type="button" (click)="clearSearchFilters()">Clear Filters</button>
       </div>
     </div>
@@ -90,7 +96,7 @@
         </div>
         <div class="info-row">
           <span>Tour Duration</span>
-          <div class="info-data">{{ work.durationMinutes }}</div>
+          <div class="info-data">{{ work.durationMinutes / 60 }}h</div>
         </div>
         <div class="info-row">
           <span>Guests</span>
@@ -120,9 +126,38 @@
           <button *ngSwitchCase="'STARTED'" class="btn-danger" (click)="endWork(work.assignmentId)">
             End Work
           </button>
-          <button *ngSwitchCase="'ENDED'" class="btn-outline">
+          <button *ngSwitchCase="'ENDED'" class="btn-outline" (click)="openSalaryEntry(work)">
             Salary Entry
           </button>
+        </ng-container>
+      </div>
+    </div>
+  </div>
+
+  <div class="salary-dialog-backdrop" *ngIf="showSalaryModal">
+    <div class="salary-dialog">
+      <div class="salary-dialog-header">
+        <div>
+          <h3>Work Salary & Expenses</h3>
+          <h3 class="salary-dialog-subtitle">{{ salaryModalData?.serviceName }}</h3>
+        </div>
+        <button type="button" class="salary-dialog-close" (click)="closeSalaryEntry()">×</button>
+      </div>
+      <div class="salary-dialog-body">
+        <div *ngIf="salaryModalLoading" class="salary-row">
+          <strong>Loading salary details...</strong>
+        </div>
+        <div *ngIf="salaryModalError && !salaryModalLoading" class="salary-row">
+          <strong>{{ salaryModalError }}</strong>
+        </div>
+        <ng-container *ngIf="!salaryModalLoading && !salaryModalError && salaryModalData">
+          <div class="salary-row"><span>Start Time</span><strong>{{ salaryModalData.tourStartTime }} - {{ salaryModalData.tourDate }}</strong></div>
+          <div class="salary-row"><span>End Time</span><strong>{{ salaryModalData.tourEndTime }} - {{ salaryModalData.tourDate }}</strong></div>
+          <div class="salary-row"><span>Hours Earned</span><strong>{{ (salaryModalData.hoursEarned || 0) }}h</strong></div>
+          <div class="salary-row"><span>Hourly Salary</span><strong>$ {{ salaryModalData.hourlySalary | number:'1.2-2' }}</strong></div>
+          <div class="salary-row"><span>Taxable Salary Earned</span><strong>$ {{ salaryModalData.taxableSalary | number:'1.2-2' }}</strong></div>
+          <div class="salary-row"><span>Travel Expenses</span><strong>$ {{ salaryModalData.travelExpenses | number:'1.2-2' }}</strong></div>
+          <div class="salary-row"><span>Receipts For Tour</span><strong>$ {{ salaryModalData.receiptsForTour | number:'1.2-2' }}</strong></div>
         </ng-container>
       </div>
     </div>

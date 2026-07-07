@@ -82,6 +82,11 @@ select {
   background-repeat: no-repeat;
 }
 
+.date-field {
+  position: relative;
+  display: block;
+}
+
 .date-icon {
   position: absolute;
   top: 16px;
@@ -94,14 +99,17 @@ select {
 
 .calendar-popover {
   position: absolute;
+  top: calc(100% + 8px);
+  left: 0;
   z-index: 2;
-  width: 100%;
-  max-width: 320px;
+  width: min(100%, 320px);
+  max-width: 100%;
   padding: 16px;
   background: #ffffff;
   border: 1px solid #e5e2dc;
   border-radius: 18px;
   box-shadow: 0 18px 34px rgba(72, 64, 55, 0.12);
+  box-sizing: border-box;
 }
 
 .calendar-header {
@@ -161,9 +169,117 @@ select {
   border-color: transparent;
 }
 
+.calendar-dates button.start,
+.calendar-dates button.end {
+  background: #1f2345;
+  color: #fff;
+  border-color: transparent;
+  font-weight: 700;
+}
+
+.calendar-dates button.selected:not(.start):not(.end) {
+  background: #e5dccf;
+  color: #1f2345;
+}
+
+.calendar-mode-indicator {
+  text-align: center;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #8a829e;
+  margin-bottom: 12px;
+  padding: 8px;
+  background: #f7f6f3;
+  border-radius: 8px;
+}
+
 .calendar-dates button:disabled {
   background: transparent;
   cursor: default;
+}
+
+.salary-dialog-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+}
+
+.salary-dialog {
+  width: min(512px, calc(100vw - 24px));
+  max-width: calc(100vw - 24px);
+  background: #fff;
+  border-radius: 18px;
+  overflow: hidden;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.18);
+}
+
+.salary-dialog-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 16px;
+  border-bottom: 1px solid #ebe8e3;
+  background: #f5f5f4;
+}
+
+.salary-dialog-header h3 {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 700;
+}
+
+.salary-dialog-close {
+  width: 36px;
+  height: 36px;
+  border: none;
+  background: #f5f5f4;
+  color: #3b3a38;
+  font-size: 22px;
+  cursor: pointer;
+}
+
+.salary-dialog-body {
+  padding: 16px;
+  display: grid;
+  gap: 8px;
+}
+
+.salary-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  border-radius: 12px;
+}
+
+.salary-row span {
+  color: #57534e;
+  font-weight: 500;
+  width: 192px;
+}
+
+.salary-row strong {
+  color: #292524;
+  font-weight: 600;
+}
+
+.salary-dialog-actions {
+  display: flex;
+  justify-content: flex-end;
+  padding: 0 24px 24px;
+}
+
+.btn-secondary {
+  border: 1px solid #d6d3d1;
+  background: #ffffff;
+  color: #44403c;
+  border-radius: 10px;
+  padding: 12px 20px;
+  cursor: pointer;
 }
 
 .filter-toggles {
@@ -455,4 +571,160 @@ select {
   background: white;
   cursor: pointer;
   border: unset;
+}
+
+@media (max-width: 900px) {
+  .guide-wrapper {
+    padding: 24px 16px;
+  }
+
+  .topbar {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+
+  .filter-grid.bottom {
+    grid-template-columns: 1fr;
+  }
+
+  .filter-toggles {
+    justify-content: flex-start;
+    flex-wrap: wrap;
+  }
+
+  .work-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 640px) {
+  .guide-wrapper {
+    padding: 18px 12px;
+  }
+
+  .topbar h1 {
+    font-size: 28px;
+  }
+
+  .filter-container {
+    padding: 16px;
+    margin-top: 20px;
+    margin-bottom: 20px;
+  }
+
+  .filter-grid.bottom {
+    gap: 12px;
+  }
+
+  .work-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .work-card {
+    min-width: 0;
+  }
+
+  .card-header,
+  .card-footer {
+    align-items: flex-start;
+    gap: 10px;
+  }
+
+  .card-footer {
+    align-items: stretch;
+  }
+
+  .btn-detail,
+  .btn-primary,
+  .btn-danger,
+  .btn-outline,
+  .actions {
+    width: 100%;
+  }
+
+  .actions {
+    justify-content: flex-end;
+  }
+
+  .calendar-popover {
+    width: 100%;
+    max-width: 100%;
+    left: 0;
+    right: 0;
+    padding: 12px;
+  }
+
+  .calendar-header {
+    font-size: 0.95rem;
+    gap: 10px;
+  }
+
+  .calendar-weekdays span {
+    font-size: 0.72rem;
+  }
+
+  .calendar-dates button {
+    min-height: 34px;
+    border-radius: 10px;
+    font-size: 0.9rem;
+  }
+
+  .salary-dialog {
+    width: calc(100vw - 24px);
+    max-width: 100%;
+  }
+
+  .salary-dialog-header {
+    padding: 14px;
+    align-items: flex-start;
+  }
+
+  .salary-dialog-header h3 {
+    font-size: 18px;
+  }
+
+  .salary-dialog-body {
+    padding: 14px;
+    gap: 10px;
+  }
+
+  .salary-row {
+    /* flex-direction: column; */
+    gap: 4px;
+  }
+
+  .salary-row span {
+    width: auto;
+  }
+
+  .salary-row strong {
+    word-break: break-word;
+  }
+}
+
+@media (max-width: 480px) {
+  .topbar p {
+    font-size: 12px;
+    letter-spacing: 0.08em;
+  }
+
+  .offered-toggle {
+    width: 100%;
+    justify-content: start;
+  }
+
+  .clear {
+    width: 100%;
+    text-align: left;
+  }
+
+  .card-header h3 {
+    font-size: 18px;
+  }
+
+  .card-header p,
+  .info-row {
+    font-size: 14px;
+  }
 }

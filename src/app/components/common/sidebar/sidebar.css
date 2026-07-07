@@ -28,9 +28,10 @@
 }
 
 .logo-wrap img {
-  width: 120px;
-  height: 120px;
+  width: 92px;
+  height: 92px;
   display: block;
+  object-fit: contain;
 }
 
 .collapse-dot {
@@ -248,4 +249,31 @@
 .sidebar.collapsed .profile {
   justify-content: center;
   padding-left: 0;
+}
+
+@media (max-width: 900px) {
+  .sidebar {
+    width: 80px;
+    padding-inline: 10px;
+  }
+
+  .sidebar .nav-item span:last-child,
+  .sidebar .profile span:last-child,
+  .sidebar .sidebar-footer > a {
+    display: none;
+  }
+
+  .sidebar .nav-item {
+    justify-content: center;
+    padding: 0;
+  }
+
+  .sidebar .profile {
+    justify-content: center;
+    padding-left: 0;
+  }
+
+  .collapse-dot {
+    right: -10px;
+  }
 }

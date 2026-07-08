@@ -116,7 +116,7 @@
       </div>
 
       <!-- Action bar -->
-      <div class="action-bar">
+      <div class="action-bar" *ngIf="!isReadOnly">
         <div class="action-bar-left">
           <button class="action-btn add-btn" type="button" (click)="addAnother()" id="btn-add-another">
             <span class="action-icon add-icon" aria-hidden="true">
@@ -202,7 +202,7 @@
       <section class="guest-group-card" aria-labelledby="guest-group-title">
         <header class="guest-group-header">
           <h2 id="guest-group-title" class="guest-group-title">Guest Group: {{ guestGroupLabel }}</h2>
-          <button class="edit-btn" type="button" (click)="openEditGuestGroup()" id="btn-edit-guest-group">
+          <button class="edit-btn" type="button" (click)="openEditGuestGroup()" id="btn-edit-guest-group" *ngIf="!isReadOnly">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
               <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
               <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
@@ -236,7 +236,7 @@
                 <th>AGE</th>
                 <th>GENDER</th>
                 <th>ALLERGIES OR DIETARY RESTRICTIONS</th>
-                <th class="add-guest-th">
+                <th *ngIf="!isReadOnly" class="add-guest-th">
                   <button class="add-guest-btn" type="button" (click)="openAddGuest()" id="btn-add-guest">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                       <circle cx="12" cy="12" r="9"/>
@@ -256,7 +256,7 @@
                   <td>{{ guest.age }}</td>
                   <td>{{ guest.gender }}</td>
                   <td>{{ guest.allergies }}</td>
-                  <td class="guest-actions">
+                  <td *ngIf="!isReadOnly" class="guest-actions">
                     <button class="guest-action-btn edit" type="button" (click)="editGuest(i)" [attr.aria-label]="'Edit ' + guest.name">
                       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
                         <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
@@ -273,7 +273,7 @@
                     </button>
                   </td>
                 </ng-container>
-
+ 
                 <!-- Inline edit row -->
                 <ng-container *ngIf="editingGuestIndex === i && !isAddingGuest">
                   <td><input type="text" [(ngModel)]="guestMembers[i].name" [attr.aria-label]="'Name for guest ' + (i+1)" /></td>
@@ -287,7 +287,7 @@
                     </select>
                   </td>
                   <td><input type="text" [(ngModel)]="guestMembers[i].allergies" [attr.aria-label]="'Allergies for guest ' + (i+1)" /></td>
-                  <td class="guest-actions">
+                  <td *ngIf="!isReadOnly" class="guest-actions">
                     <button class="guest-action-btn save" type="button" (click)="saveGuestEdit(i)" aria-label="Save guest">
                       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
                         <polyline points="20 6 9 17 4 12"/>
@@ -301,9 +301,9 @@
                   </td>
                 </ng-container>
               </tr>
-
+ 
               <tr *ngIf="guestMembers.length === 0">
-                <td class="empty-guests" colspan="6">No guests added yet. Click "Add guest" to begin.</td>
+                <td class="empty-guests" [attr.colspan]="isReadOnly ? 5 : 6">No guests added yet. Click "Add guest" to begin.</td>
               </tr>
             </tbody>
           </table>

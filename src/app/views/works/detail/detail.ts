@@ -69,13 +69,16 @@ export class WorkDetail {
   newWorkStatus: string = '';
   confirmTextWork: string = '';
 
+  selectedImageUrl: string | null = null;
+  isImageModalOpen = false;
+
   constructor(
     private workService: WorkService,
     private guideService: GuideService,
     private itinerariesService: ItineraryService,
     private receiptService: ReceiptService,
     private cdr: ChangeDetectorRef,
-  ) { }
+  ) {}
 
   statusOptions: StatusOption[] = [
     {
@@ -204,8 +207,42 @@ export class WorkDetail {
   }
 
   formatTime(time: string): string {
-    const [hours, minutes] = time.split(':');
-    return `${hours}:${minutes}`;
+    if (!time) return '';
+    const [hourStr, minute] = time.split(':');
+    const hour = Number(hourStr);
+    const period = hour >= 12 ? 'PM' : 'AM';
+    const displayHour = hour % 12 || 12;
+    return `${displayHour}:${minute} ${period}`;
+  }
+
+  formatDateTime(date: string, time: string): string {
+    if (!date || !time) return '';
+    const dateTime = new Date(`${date}T${time}`);
+    const weekdays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+    const months = [
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec',
+    ];
+    const dayOfWeek = weekdays[dateTime.getDay()];
+    const day = dateTime.getDate().toString().padStart(2, '0');
+    const month = months[dateTime.getMonth()];
+    const year = dateTime.getFullYear().toString().slice(-2);
+    const hours = dateTime.getHours();
+    const minutes = dateTime.getMinutes().toString().padStart(2, '0');
+    const period = hours >= 12 ? 'PM' : 'AM';
+    const displayHour = hours % 12 || 12;
+
+    return `${dayOfWeek}, ${day}-${month}-${year} - ${displayHour}:${minutes}${period}`;
   }
 
   isStepActive(step: string): boolean {
@@ -216,13 +253,10 @@ export class WorkDetail {
   }
 
   getCurrentStepIndex(): number {
-    return this.workStatuses.findIndex(
-      s => s.value === this.workDetail.status
-    );
+    return this.workStatuses.findIndex((s) => s.value === this.workDetail.status);
   }
 
   onClickStep(status: string): void {
-    console.log('status', status)
     this.openConfirmWork = true;
     this.newWorkStatus = status;
     this.confirmTextWork = `Do you want to change assignment status to ${status.toLocaleLowerCase()}?`;
@@ -237,8 +271,7 @@ export class WorkDetail {
   changeWorkStatus(): void {
     this.workService.updateWorkStatus(this.workId, this.newWorkStatus).subscribe({
       next: () => {
-        this.getWorkDetail(Number(this.workId)),
-        this.onCloseConfirmWork();
+        (this.getWorkDetail(Number(this.workId)), this.onCloseConfirmWork());
       },
       error: (err) => {
         console.error(err);
@@ -264,16 +297,16 @@ export class WorkDetail {
     this.newGuideStatus = newStatus;
     switch (newStatus) {
       case 'ACCEPTED':
-        this.confirmTextGuide = 'Do you want to change assignment status to accepted?'
+        this.confirmTextGuide = 'Do you want to change assignment status to accepted?';
         break;
       case 'REJECTED':
-        this.confirmTextGuide = 'Do you want to change assignment status to rejected?'
+        this.confirmTextGuide = 'Do you want to change assignment status to rejected?';
         break;
       case 'REMOVED':
-        this.confirmTextGuide = 'Do you want to removed this guide?'
+        this.confirmTextGuide = 'Do you want to removed this guide?';
         break;
       case 'PENDING':
-        this.confirmTextGuide = 'Do you want to re-assign this guide?'
+        this.confirmTextGuide = 'Do you want to re-assign this guide?';
         break;
       default:
         break;
@@ -295,8 +328,7 @@ export class WorkDetail {
       })
       .subscribe({
         next: () => {
-          this.getWorkDetail(Number(this.workId)),
-          this.getWorkGuides(this.workId);
+          (this.getWorkDetail(Number(this.workId)), this.getWorkGuides(this.workId));
           this.closeGuideConfirm();
         },
         error: (err) => {
@@ -344,10 +376,10 @@ export class WorkDetail {
     this.newStopStatus = newStatus;
     switch (newStatus) {
       case 'CONFIRMED':
-        this.confirmTextStop = 'Do you want to confirm this itinerary?'
+        this.confirmTextStop = 'Do you want to confirm this itinerary?';
         break;
       case 'CANCELLED':
-        this.confirmTextStop = 'Do you want to cancel this itinerary?'
+        this.confirmTextStop = 'Do you want to cancel this itinerary?';
         break;
       default:
         break;
@@ -363,10 +395,7 @@ export class WorkDetail {
 
   changeStopStatus(): void {
     this.itinerariesService
-      .updateItineraryStopStatus(
-        this.stopSelectedId,
-        this.newStopStatus,
-      )
+      .updateItineraryStopStatus(this.stopSelectedId, this.newStopStatus)
       .subscribe({
         next: () => {
           this.loadItineraryStops(this.workId);
@@ -376,7 +405,7 @@ export class WorkDetail {
           console.error(err);
         },
       });
-  };
+  }
 
   get totalVolume(): number {
     return this.receipts.reduce((sum, receipt) => sum + receipt.amount, 0);
@@ -390,6 +419,12 @@ export class WorkDetail {
   }
 
   openReceiptPhoto(receipt: Receipt): void {
-    console.log('Open photo', receipt);
+    this.selectedImageUrl = receipt.imageUrl;
+    this.isImageModalOpen = true;
+  }
+
+  closeReceiptPhoto(): void {
+    this.isImageModalOpen = false;
+    this.selectedImageUrl = null;
   }
 }

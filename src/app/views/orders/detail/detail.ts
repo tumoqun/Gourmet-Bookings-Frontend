@@ -1,8 +1,10 @@
-import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { ApiService, Order, OrderAdditionalService, OrderGuest } from '../../../services/api.service';
+import { CapabilityService } from '../../../services/capability.service';
+import { AuthService } from '../../../services/auth.service';
 
 interface GuestMember {
   name: string;
@@ -33,6 +35,13 @@ interface RelatedOrder {
   styleUrl: './detail.css',
 })
 export class OrderDetail implements OnInit {
+  private readonly capability = inject(CapabilityService);
+  private readonly auth = inject(AuthService);
+
+  get isReadOnly(): boolean {
+    return this.capability.isGuide() || this.auth.tourGuideViewMode();
+  }
+
   protected isLoading = true;
   protected isConfirmingOrder = false;
   protected showConfirmDialog = false;
@@ -629,7 +638,11 @@ export class OrderDetail implements OnInit {
   }
 
   protected goBack(): void {
-    this.router.navigate(['/orders']);
+    if (this.isReadOnly) {
+      window.history.back();
+    } else {
+      this.router.navigate(['/orders']);
+    }
   }
 
   // ── Helpers ──────────────────────────────────────────────────────────────────

@@ -9,7 +9,7 @@
       *ngFor="let item of navItems()"
       [routerLink]="item.path"
       routerLinkActive="active"
-      [routerLinkActiveOptions]="{ exact: item.path !== '/works' }"
+      [routerLinkActiveOptions]="{ exact: item.path !== '/works' && item.path !== '/guide' }"
     >
       <img class="bottom-nav-icon" [src]="item.icon" [alt]="item.label + ' icon'" />
       <span>{{ item.label }}</span>

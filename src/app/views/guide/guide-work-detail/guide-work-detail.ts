@@ -94,7 +94,7 @@ export class GuideWorkDetail {
   }
 
   goToOrderDetails(id: number): void {
-    console.log('Go To Order Details', id);
+    this.router.navigate(['/orders', id]);
   }
 
   formatTime(time: string): string {

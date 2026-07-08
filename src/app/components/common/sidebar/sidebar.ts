@@ -36,13 +36,14 @@ export class Sidebar implements OnInit {
   ];
 
   protected readonly navItems = computed(() => {
-    if (this.auth.tourGuideViewMode() && this.capability.isAdmin()) {
-      return this.allNavItems.filter((item) => item.path === '/guide');
-    }
+    const isGuide = this.capability.isGuide();
 
-    return this.allNavItems.filter((item) =>
-      item.permissions.some((permission) => this.capability.can(permission)),
-    );
+    return this.allNavItems.filter((item) => {
+      if (item.path === '/guide' && !isGuide) {
+        return false;
+      }
+      return item.permissions.some((permission) => this.capability.can(permission));
+    });
   });
 
   protected readonly currentUser = this.auth.currentUser;

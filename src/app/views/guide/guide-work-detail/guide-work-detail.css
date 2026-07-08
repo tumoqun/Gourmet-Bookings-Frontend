@@ -335,7 +335,7 @@
 }
 
 .desktop-only {
-  display: block;
+  display: grid;
 }
 
 .guest-group-mobile {

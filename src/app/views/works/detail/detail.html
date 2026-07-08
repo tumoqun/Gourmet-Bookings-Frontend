@@ -61,32 +61,32 @@
   
     <div class="info-group">
       <label>TOUR DURATION</label>
-      <p *ngIf="workDetail.duration">{{ workDetail.duration }}hr</p>
+      <p>{{ workDetail.duration || '--' }}hr</p>
     </div>
   
     <div class="info-group">
       <label>NUMBER OF ADULTS</label>
-      <p *ngIf="workDetail.adultCount">{{ workDetail.adultCount }}</p>
+      <p>{{ workDetail.adultCount || '--' }}</p>
     </div>
   
     <div class="info-group">
       <label>NUMBER OF CHILDREN</label>
-      <p *ngIf="workDetail.childCount">{{ workDetail.childCount }}</p>
+      <p>{{ workDetail.childCount || '--' }}</p>
     </div>
   
     <div class="info-group">
       <label>AREA</label>
-      <p *ngIf="workDetail.areaName">{{ workDetail.areaName }}</p>
+      <p>{{ workDetail.areaName || '--' }}</p>
     </div>
   
     <div class="info-group">
       <label>PRODUCT CODE</label>
-      <p *ngIf="workDetail.workNumber">{{ workDetail.workNumber }}</p>
+      <p>{{ workDetail.workNumber || '--' }}</p>
     </div>
   
     <div class="info-group full-width">
       <label>MEETING POINT</label>
-      <p *ngIf="workDetail.locationAddress">{{ workDetail.locationAddress }}</p>
+      <p>{{ workDetail.locationAddress || '--' }}</p>
     </div>
   </div>
   <div class="table-card">
@@ -272,7 +272,7 @@
         </div>
         <!-- SCHEDULE -->
         <div>
-          {{ formatTime(item.scheduledTime) || '--' }}
+          {{ formatDateTime(item.tourDate , item.scheduledTime) || '--' }}
         </div>
         <!-- PHONE -->
         <div>
@@ -352,7 +352,7 @@
           {{ receipt.isVerified ? 'Yes' : 'No' }}
         </div>
         <div>
-          <img *ngIf="receipt.imageUrl" class="receipt-icon" src="{{ receipt.imageUrl }}" alt="receipt icon" (click)="openReceiptPhoto(receipt)" />
+          <img *ngIf="receipt.imageUrl" class="receipt-image" src="{{ receipt.imageUrl }}" alt="receipt icon" (click)="openReceiptPhoto(receipt)" />
           <img *ngIf="!receipt.imageUrl" class="photo-icon" src="/ui-icons/image-default.png" alt="photo icon" />
         </div>
         <div>
@@ -391,4 +391,10 @@
   </app-confirm-dialog>
   
   <app-add-stop *ngIf="showStopModal" [visible]="showStopModal" [serviceInfo]="stopService" (close)="closeStopModal()" (reload)="loadItineraryStops(workId)"></app-add-stop>
+
+  <div class="image-modal-backdrop" *ngIf="isImageModalOpen" (click)="closeReceiptPhoto()">
+    <div class="image-modal-content" (click)="$event.stopPropagation()">
+      <img [src]="selectedImageUrl" class="image-preview" />
+    </div>
+  </div>
 </section>

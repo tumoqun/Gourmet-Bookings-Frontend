@@ -23,8 +23,22 @@ export interface GuideAssignment {
 
 export interface GuideFilter {
   requestedDate?: string,
+  fromDate?: string;
+  toDate?: string;
   status?: string;
   isNewOffered?: boolean;
+}
+
+export interface GuideSalaryEntry {
+  tourDate: string;
+  tourStartTime: string;
+  serviceName: string;
+  tourEndTime: string;
+  hoursEarned: number;
+  hourlySalary: number;
+  taxableSalary: number;
+  travelExpenses: number;
+  receiptsForTour: number;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -41,15 +55,17 @@ export class GuidePortalService {
   }
 
   getAssignments(filters: GuideFilter): Observable<GuideAssignment[]> {
-    if (filters.isNewOffered) {
-      filters.status = 'OFFERED';
-      // delete filters.isNewOffered;
+    const apiFilters = { ...filters };
+    if (apiFilters.isNewOffered || apiFilters.status === 'OFFERED') {
+      apiFilters.status = 'SCHEDULED';
     }
+    delete apiFilters.isNewOffered;
+
     let params = new HttpParams({
       fromObject: {},
     });
 
-    Object.entries(filters).forEach(([key, value]) => {
+    Object.entries(apiFilters).forEach(([key, value]) => {
       const stringValue = String(value).trim();
       if (
         value == null ||
@@ -97,5 +113,15 @@ export class GuidePortalService {
       {},
       { ...this.getHttpOptions() },
     );
+  }
+
+  getGuideSalaryEntry(workId: number, guideId: number): Observable<GuideSalaryEntry> {
+    return this.http.get<GuideSalaryEntry>(`${this.apiUrl}/reports/tour-earnings`, {
+      ...this.getHttpOptions(),
+      params: {
+        workId,
+        guideId,
+      },
+    });
   }
 }

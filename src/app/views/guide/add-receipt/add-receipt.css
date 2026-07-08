@@ -43,8 +43,6 @@
 .modal-footer {
   justify-content: flex-end;
   gap: 16px;
-  margin-top: 24px;
-  border-top: 1px solid #eee;
   padding-top: 20px;
 }
 

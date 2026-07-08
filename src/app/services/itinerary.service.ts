@@ -15,6 +15,7 @@ export interface ItineraryStopItem {
   itineraryId: number;
   stopType: string;
   scheduledTime: string;
+  tourDate: string;
   supplierName: string;
   supplierPhone: string;
   addedBy: string;

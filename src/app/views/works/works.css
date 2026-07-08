@@ -227,6 +227,30 @@ select {
   border-color: transparent;
 }
 
+.calendar-dates button.start,
+.calendar-dates button.end {
+  background: #1f2345;
+  color: #fff;
+  border-color: transparent;
+  font-weight: 700;
+}
+
+.calendar-dates button.selected:not(.start):not(.end) {
+  background: #e5dccf;
+  color: #1f2345;
+}
+
+.calendar-mode-indicator {
+  text-align: center;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #8a829e;
+  margin-bottom: 12px;
+  padding: 8px;
+  background: #f7f6f3;
+  border-radius: 8px;
+}
+
 .calendar-dates button:disabled {
   background: transparent;
   cursor: default;

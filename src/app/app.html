@@ -3,4 +3,24 @@
   <div class="content-area">
     <router-outlet />
   </div>
+  <nav *ngIf="!hideSidebar" class="bottom-navbar">
+    <a
+      class="bottom-nav-item"
+      *ngFor="let item of navItems()"
+      [routerLink]="item.path"
+      routerLinkActive="active"
+      [routerLinkActiveOptions]="{ exact: item.path !== '/works' }"
+    >
+      <img class="bottom-nav-icon" [src]="item.icon" [alt]="item.label + ' icon'" />
+      <span>{{ item.label }}</span>
+    </a>
+    <a class="bottom-nav-item" href="/">
+      <img class="bottom-nav-icon" src="/ui-icons/support.png" alt="Support icon" />
+      <span>Support</span>
+    </a>
+    <button type="button" class="bottom-nav-item logout-btn" (click)="logout()">
+      <img class="bottom-nav-icon" src="/ui-icons/logout.png" alt="Logout icon" />
+      <span>Logout</span>
+    </button>
+  </nav>
 </main>

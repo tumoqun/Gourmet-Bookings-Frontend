@@ -59,6 +59,13 @@ export class GuideWorkDetail {
   otherExpenses: Expense[] = [];
   selectedReceiptId: number = 0;
   selectedExpenseId: number = 0;
+  expandedGuestGroups = new Set<number>();
+  expandedOrderGroups = new Set<number>();
+  ordersSectionOpen = false;
+  guidesSectionOpen = false;
+  itinerarySectionOpen = false;
+  receiptsSectionOpen = false;
+  expensesSectionOpen = false;
   selectedImageUrl: string | null = null;
   isImageModalOpen = false;
 
@@ -144,6 +151,9 @@ export class GuideWorkDetail {
     try {
       const workResponse = await this.workService.getWorkDetailForGuide(workId).toPromise();
       this.workDetail = workResponse || ({} as WorkDetailForGuideType);
+      if (this.workDetail && this.workDetail.status && this.workDetail.status.toUpperCase() === 'SCHEDULED') {
+        this.workDetail.status = 'OFFERED';
+      }
     } catch (error) {
       console.error('Error fetching work details:', error);
     } finally {
@@ -230,6 +240,74 @@ export class GuideWorkDetail {
     return this.receipts.reduce((sum, receipt) => sum + receipt.amount, 0);
   }
 
+  get totalExpenseVolume(): number {
+    return this.otherExpenses.reduce((sum, expense) => sum + expense.amount, 0);
+  }
+
+  isGuestGroupOpen(group: OrderGuestGroup): boolean {
+    return this.expandedGuestGroups.has(group.orderId);
+  }
+
+  toggleGuestGroup(group: OrderGuestGroup): void {
+    if (this.expandedGuestGroups.has(group.orderId)) {
+      this.expandedGuestGroups.delete(group.orderId);
+    } else {
+      this.expandedGuestGroups.add(group.orderId);
+    }
+  }
+
+  isOrderOpen(order: WorkOrderForGuide): boolean {
+    return this.expandedOrderGroups.has(order.orderId);
+  }
+
+  toggleOrder(order: WorkOrderForGuide): void {
+    if (this.expandedOrderGroups.has(order.orderId)) {
+      this.expandedOrderGroups.delete(order.orderId);
+    } else {
+      this.expandedOrderGroups.add(order.orderId);
+    }
+  }
+
+  isOrdersOpen(): boolean {
+    return this.ordersSectionOpen;
+  }
+
+  toggleOrdersGroup(): void {
+    this.ordersSectionOpen = !this.ordersSectionOpen;
+  }
+
+  isGuidesOpen(): boolean {
+    return this.guidesSectionOpen;
+  }
+
+  toggleGuidesGroup(): void {
+    this.guidesSectionOpen = !this.guidesSectionOpen;
+  }
+
+  isItineraryOpen(): boolean {
+    return this.itinerarySectionOpen;
+  }
+
+  toggleItineraryGroup(): void {
+    this.itinerarySectionOpen = !this.itinerarySectionOpen;
+  }
+
+  isReceiptsOpen(): boolean {
+    return this.receiptsSectionOpen;
+  }
+
+  toggleReceiptsGroup(): void {
+    this.receiptsSectionOpen = !this.receiptsSectionOpen;
+  }
+
+  isExpensesOpen(): boolean {
+    return this.expensesSectionOpen;
+  }
+
+  toggleExpensesGroup(): void {
+    this.expensesSectionOpen = !this.expensesSectionOpen;
+  }
+
   openReceiptModal(): void {
     this.openAddReceipt = true;
   }
@@ -281,6 +359,7 @@ export class GuideWorkDetail {
         amount: Number(data.totalAmount),
         fee: Number(data.fee),
         tax: Number(data.taxRate),
+        estimatedTax: Number(data.estimatedTax),
         checkNumber: data.tNumber ?? false,
         isVerified: data.passThrough ?? false,
         verifiedById: data.passThrough ? this.currentUser()?.id : undefined,
@@ -302,6 +381,7 @@ export class GuideWorkDetail {
         receiptTime,
         fee: Number(data.fee),
         tax: Number(data.taxRate),
+        estimatedTax: Number(data.estimatedTax),
         checkNumber: data.tNumber ?? false,
         isVerified: data.passThrough ?? false,
         verifiedById: data.passThrough ? this.currentUser()?.id : undefined,

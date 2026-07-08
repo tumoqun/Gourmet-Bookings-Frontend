@@ -37,6 +37,7 @@ export class AddReceipt {
     itineraryStopId: [''],
     fee: [0],
     taxRate: [0],
+    estimatedTax: [{ value: 0, disabled: true }],
     totalAmount: [{ value: 0, disabled: true }],
     overrideCalculation: [false],
     tNumber: [false],
@@ -58,10 +59,15 @@ export class AddReceipt {
   listenOverrideCalculation(): void {
     this.receiptForm.get('overrideCalculation')?.valueChanges.subscribe((override) => {
       const totalControl = this.receiptForm.get('totalAmount');
+      const estimatedTaxControl = this.receiptForm.get('estimatedTax');
       if (override) {
+        estimatedTaxControl?.enable();
         totalControl?.enable();
       } else {
+        estimatedTaxControl?.disable();
         totalControl?.disable();
+
+        this.updateEstimatedTax();
         this.updateTotalAmount();
       }
     });
@@ -70,11 +76,13 @@ export class AddReceipt {
   listenAutoCalculation(): void {
     this.receiptForm.get('fee')?.valueChanges.subscribe(() => {
       if (!this.receiptForm.get('overrideCalculation')?.value) {
+        this.updateEstimatedTax();
         this.updateTotalAmount();
       }
     });
     this.receiptForm.get('taxRate')?.valueChanges.subscribe(() => {
       if (!this.receiptForm.get('overrideCalculation')?.value) {
+        this.updateEstimatedTax();
         this.updateTotalAmount();
       }
     });
@@ -82,14 +90,20 @@ export class AddReceipt {
 
   calculateTotalAmount(): number {
     const fee = Number(this.receiptForm.get('fee')?.value) || 0;
-    const taxRate = Number(this.receiptForm.get('taxRate')?.value) || 0;
-    const tax = (fee * taxRate) / 100;
-    return Number((fee + tax).toFixed(2));
+    const estimatedTax = Number(this.receiptForm.get('estimatedTax')?.value) || 0;
+    return Number((fee + estimatedTax).toFixed(2));
   }
 
   updateTotalAmount(): void {
     const total = this.calculateTotalAmount();
     this.receiptForm.get('totalAmount')?.setValue(total, {
+      emitEvent: false,
+    });
+  }
+
+  updateEstimatedTax(): void {
+    const estimatedTax = this.estimatedTax;
+    this.receiptForm.get('estimatedTax')?.setValue(estimatedTax, {
       emitEvent: false,
     });
   }
@@ -124,6 +138,7 @@ export class AddReceipt {
             itineraryStopId: data.itineraryStopId?.toString() ?? '',
             fee: data.fee ?? 0,
             taxRate: data.tax ?? 0,
+            estimatedTax: data.estimatedTax ?? 0,
             totalAmount: data.amount ?? 0,
             overrideCalculation: isOverrideCalculation,
             tNumber: data.checkNumber ?? false,
@@ -137,12 +152,6 @@ export class AddReceipt {
           } else {
             totalAmountControl?.disable({ emitEvent: false });
           }
-          this.suppliers.unshift({
-            id: data.supplierId,
-            name: data.supplierName,
-            supplierType: data.supplierType,
-            itineraryStopId: data.itineraryStopId,
-          });
 
           this.cdr.detectChanges();
         },
@@ -200,6 +209,7 @@ export class AddReceipt {
       itineraryStopId: formValue.itineraryStopId ? Number(formValue.itineraryStopId) : undefined,
       fee: formValue.fee ?? 0,
       taxRate: formValue.taxRate ?? 0,
+      estimatedTax: formValue.estimatedTax ?? 0,
       totalAmount: formValue.totalAmount ?? 0,
       tNumber: formValue.tNumber ?? false,
       passThrough: formValue.passThrough ?? false,

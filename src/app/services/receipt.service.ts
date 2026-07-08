@@ -9,6 +9,7 @@ export interface ReceiptFormData {
   fee?: number;
   taxRate?: number;
   totalAmount?: number;
+  estimatedTax?: number;
   imageUrl?: string;
   tNumber?: boolean;
   passThrough?: boolean;
@@ -24,6 +25,7 @@ export interface ReceiptPayload {
   receiptTime: string;
   fee: number;
   tax: number;
+  estimatedTax: number;
   checkNumber: boolean;
   isVerified: boolean;
   verifiedById?: number;
@@ -39,6 +41,7 @@ export interface UpdateReceiptPayload {
   amount: number;
   fee: number;
   tax: number;
+  estimatedTax: number;
   checkNumber: boolean;
   isVerified: boolean;
   verifiedById?: number;
@@ -58,6 +61,7 @@ export interface Receipt {
   amount: number;
   tax: number;
   fee: number;
+  estimatedTax: number;
   currencyCode: string;
   receiptDate: string;
   receiptTime: string;

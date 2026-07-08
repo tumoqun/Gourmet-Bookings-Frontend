@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, computed, inject, OnInit } from '@angular/core';
+import { Component, computed, HostListener, inject, OnInit } from '@angular/core';
 import { Router, RouterLink, RouterLinkActive } from '@angular/router';
 import { AuthService } from '../../../services/auth.service';
 import { CapabilityService } from '../../../services/capability.service';
@@ -23,6 +23,7 @@ export class Sidebar implements OnInit {
   private readonly router = inject(Router);
 
   protected isSidebarCollapsed = false;
+  private readonly mobileBreakpoint = 900;
 
   private readonly allNavItems: NavigationItem[] = [
     { label: 'Catalog', icon: '/nav-icons/catalog.png', path: '/catalog', permissions: ['ASSIGNMENTS_READ'] },
@@ -57,13 +58,24 @@ export class Sidebar implements OnInit {
   });
 
   ngOnInit(): void {
+    this.syncSidebarState(window.innerWidth);
+
     if (this.auth.isLoggedIn() && !this.auth.currentUser()?.permissions?.length) {
       this.auth.me().subscribe();
     }
   }
 
+  @HostListener('window:resize')
+  protected onResize(): void {
+    this.syncSidebarState(window.innerWidth);
+  }
+
   protected toggleSidebar(): void {
     this.isSidebarCollapsed = !this.isSidebarCollapsed;
+  }
+
+  private syncSidebarState(width: number): void {
+    this.isSidebarCollapsed = width < this.mobileBreakpoint;
   }
 
   protected logout(): void {

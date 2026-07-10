@@ -32,17 +32,18 @@ export class Sidebar implements OnInit {
     { label: 'Works', icon: '/nav-icons/assignments.png', path: '/works', permissions: ['ASSIGNMENTS_READ'] },
     { label: 'Accounting', icon: '/nav-icons/job-accounting.png', path: '/accounting', permissions: ['ACCOUNTING_READ'] },
     { label: 'Management', icon: '/nav-icons/management.png', path: '/management', permissions: ['ASSIGNMENTS_READ'] },
-    { label: 'Tour Guide', icon: '/nav-icons/assignments.png', path: '/guide', permissions: ['GUIDE_TOURS_READ'] },
+    { label: 'Assignments', icon: '/nav-icons/assignments.png', path: '/guide', permissions: ['GUIDE_TOURS_READ'] },
   ];
 
   protected readonly navItems = computed(() => {
-    if (this.auth.tourGuideViewMode() && this.capability.isAdmin()) {
-      return this.allNavItems.filter((item) => item.path === '/guide');
-    }
+    const isGuide = this.capability.isGuide();
 
-    return this.allNavItems.filter((item) =>
-      item.permissions.some((permission) => this.capability.can(permission)),
-    );
+    return this.allNavItems.filter((item) => {
+      if (item.path === '/guide' && !isGuide) {
+        return false;
+      }
+      return item.permissions.some((permission) => this.capability.can(permission));
+    });
   });
 
   protected readonly currentUser = this.auth.currentUser;

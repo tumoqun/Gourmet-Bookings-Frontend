@@ -1,6 +1,7 @@
 import { Routes } from '@angular/router';
 import { authGuard } from './guards/auth.guard';
 import { permissionGuard } from './guards/permission.guard';
+import { guideGuard } from './guards/guide.guard';
 
 export const routes: Routes = [
   {
@@ -20,15 +21,18 @@ export const routes: Routes = [
   },
   {
     path: 'orders',
-    canActivate: [authGuard, permissionGuard],
-    data: { permissions: ['ORDERS_READ'] },
+    canActivate: [authGuard],
     children: [
       {
         path: '',
+        canActivate: [permissionGuard],
+        data: { permissions: ['ORDERS_READ'] },
         loadComponent: () => import('./views/orders/orders').then((m) => m.OrdersView),
       },
       {
         path: ':id',
+        canActivate: [permissionGuard],
+        data: { permissions: ['ORDERS_READ', 'GUIDE_TOURS_READ'] },
         loadComponent: () => import('./views/orders/detail/detail').then((m) => m.OrderDetail),
       },
     ],
@@ -50,8 +54,7 @@ export const routes: Routes = [
   },
   {
     path: 'guide',
-    canActivate: [authGuard, permissionGuard],
-    data: { permissions: ['GUIDE_TOURS_READ'] },
+    canActivate: [authGuard, guideGuard],
     children: [
       {
         path: '',

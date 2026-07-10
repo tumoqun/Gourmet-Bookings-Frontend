@@ -4,6 +4,7 @@ import { Sidebar } from './components/common/sidebar/sidebar';
 import { CommonModule } from '@angular/common';
 import { AuthService } from './services/auth.service';
 import { CapabilityService } from './services/capability.service';
+import { ToastContainerComponent } from './components/common/toast-container/toast-container';
 
 interface NavigationItem {
   label: string;
@@ -14,7 +15,7 @@ interface NavigationItem {
 
 @Component({
   selector: 'app-root',
-  imports: [CommonModule, RouterOutlet, Sidebar, RouterLink, RouterLinkActive],
+  imports: [CommonModule, RouterOutlet, Sidebar, RouterLink, RouterLinkActive, ToastContainerComponent],
   templateUrl: './app.html',
   styleUrl: './app.css',
 })
@@ -34,13 +35,14 @@ export class App {
   ];
 
   protected readonly navItems = computed(() => {
-    if (this.auth.tourGuideViewMode() && this.capability.isAdmin()) {
-      return this.allNavItems.filter((item) => item.path === '/guide');
-    }
+    const isGuide = this.capability.isGuide();
 
-    return this.allNavItems.filter((item) =>
-      item.permissions.some((permission) => this.capability.can(permission)),
-    );
+    return this.allNavItems.filter((item) => {
+      if (item.path === '/guide' && !isGuide) {
+        return false;
+      }
+      return item.permissions.some((permission) => this.capability.can(permission));
+    });
   });
 
   get hideSidebar(): boolean {

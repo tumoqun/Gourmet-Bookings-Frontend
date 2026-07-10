@@ -6,10 +6,13 @@ import { WorkDetailType, WorkGuide, WorkOrder, WorkService, WorkStatuses } from 
 import { AddGuide } from '../add-guide/add-guide';
 import { AddStop, ItineraryStatus } from '../add-stop/add-stop';
 import { WorkStatusClass } from '../works';
-import { ItineraryService, ItineraryStopItem } from '../../../services/itinerary.service';
+import { ItineraryService, ItineraryStopItem, Itinerary, ItineraryNote } from '../../../services/itinerary.service';
 import { Receipt, ReceiptService } from '../../../services/receipt.service';
 import { GuideService } from '../../../services/guide.service';
 import { ConfirmDialog } from '../../../components/common/confirm-dialog/confirm-dialog';
+import { ToastService } from '../../../services/toast.service';
+import { FileService } from '../../../services/file.service';
+import { environment } from '../../../../environments/environment';
 
 export type OrderStatus = 'Completed' | 'Active' | 'Scheduled';
 
@@ -69,13 +72,21 @@ export class WorkDetail {
   newWorkStatus: string = '';
   confirmTextWork: string = '';
 
+  selectedImageUrl: string | null = null;
+  isImageModalOpen = false;
+  private toast = inject(ToastService);
+  private fileService = inject(FileService);
+
+  itinerary: Itinerary | null = null;
+  isUploadingPdf = false;
+
   constructor(
     private workService: WorkService,
     private guideService: GuideService,
     private itinerariesService: ItineraryService,
     private receiptService: ReceiptService,
     private cdr: ChangeDetectorRef,
-  ) { }
+  ) {}
 
   statusOptions: StatusOption[] = [
     {
@@ -128,6 +139,7 @@ export class WorkDetail {
       this.getReceiptsByWork(Number(this.workId)),
       this.loadItineraryStops(Number(this.workId)),
     ]);
+    this.loadItinerary(Number(this.workId));
     this.stopService = {
       id: this.workDetail.serviceId,
       name: this.workDetail.serviceName,
@@ -204,8 +216,42 @@ export class WorkDetail {
   }
 
   formatTime(time: string): string {
-    const [hours, minutes] = time.split(':');
-    return `${hours}:${minutes}`;
+    if (!time) return '';
+    const [hourStr, minute] = time.split(':');
+    const hour = Number(hourStr);
+    const period = hour >= 12 ? 'PM' : 'AM';
+    const displayHour = hour % 12 || 12;
+    return `${displayHour}:${minute} ${period}`;
+  }
+
+  formatDateTime(date: string, time: string): string {
+    if (!date || !time) return '';
+    const dateTime = new Date(`${date}T${time}`);
+    const weekdays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+    const months = [
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec',
+    ];
+    const dayOfWeek = weekdays[dateTime.getDay()];
+    const day = dateTime.getDate().toString().padStart(2, '0');
+    const month = months[dateTime.getMonth()];
+    const year = dateTime.getFullYear().toString().slice(-2);
+    const hours = dateTime.getHours();
+    const minutes = dateTime.getMinutes().toString().padStart(2, '0');
+    const period = hours >= 12 ? 'PM' : 'AM';
+    const displayHour = hours % 12 || 12;
+
+    return `${dayOfWeek}, ${day}-${month}-${year} - ${displayHour}:${minutes}${period}`;
   }
 
   isStepActive(step: string): boolean {
@@ -216,13 +262,10 @@ export class WorkDetail {
   }
 
   getCurrentStepIndex(): number {
-    return this.workStatuses.findIndex(
-      s => s.value === this.workDetail.status
-    );
+    return this.workStatuses.findIndex((s) => s.value === this.workDetail.status);
   }
 
   onClickStep(status: string): void {
-    console.log('status', status)
     this.openConfirmWork = true;
     this.newWorkStatus = status;
     this.confirmTextWork = `Do you want to change assignment status to ${status.toLocaleLowerCase()}?`;
@@ -237,10 +280,11 @@ export class WorkDetail {
   changeWorkStatus(): void {
     this.workService.updateWorkStatus(this.workId, this.newWorkStatus).subscribe({
       next: () => {
-        this.getWorkDetail(Number(this.workId)),
-        this.onCloseConfirmWork();
+        this.toast.showSuccess('Work status updated successfully!');
+        (this.getWorkDetail(Number(this.workId)), this.onCloseConfirmWork());
       },
       error: (err) => {
+        this.toast.showError(err?.error?.message || 'Failed to update work status.');
         console.error(err);
       },
     });
@@ -264,16 +308,16 @@ export class WorkDetail {
     this.newGuideStatus = newStatus;
     switch (newStatus) {
       case 'ACCEPTED':
-        this.confirmTextGuide = 'Do you want to change assignment status to accepted?'
+        this.confirmTextGuide = 'Do you want to change assignment status to accepted?';
         break;
       case 'REJECTED':
-        this.confirmTextGuide = 'Do you want to change assignment status to rejected?'
+        this.confirmTextGuide = 'Do you want to change assignment status to rejected?';
         break;
       case 'REMOVED':
-        this.confirmTextGuide = 'Do you want to removed this guide?'
+        this.confirmTextGuide = 'Do you want to removed this guide?';
         break;
       case 'PENDING':
-        this.confirmTextGuide = 'Do you want to re-assign this guide?'
+        this.confirmTextGuide = 'Do you want to re-assign this guide?';
         break;
       default:
         break;
@@ -295,11 +339,12 @@ export class WorkDetail {
       })
       .subscribe({
         next: () => {
-          this.getWorkDetail(Number(this.workId)),
-          this.getWorkGuides(this.workId);
+          this.toast.showSuccess('Guide assignment updated successfully!');
+          (this.getWorkDetail(Number(this.workId)), this.getWorkGuides(this.workId));
           this.closeGuideConfirm();
         },
         error: (err) => {
+          this.toast.showError(err?.error?.message || 'Failed to update guide assignment.');
           console.error(err);
         },
       });
@@ -313,17 +358,80 @@ export class WorkDetail {
       })
       .subscribe({
         next: () => {
+          this.toast.showSuccess("Manager's note saved successfully!");
           guide.isEditNote = false;
           this.getWorkGuides(this.workId);
         },
         error: (err) => {
+          this.toast.showError(err?.error?.message || "Failed to save manager's note.");
           console.error(err);
         },
       });
   }
 
-  openTourNotes(): void {
-    console.log('Open tour notes');
+  loadItinerary(workId: number): void {
+    this.itinerariesService.getOrCreateItinerary(workId).subscribe({
+      next: (itinerary) => {
+        this.itinerary = itinerary;
+        this.cdr.detectChanges();
+      },
+      error: (err) => {
+        console.error('Error fetching/creating itinerary:', err);
+      },
+    });
+  }
+
+  onPdfSelected(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    if (!input.files?.length || !this.itinerary) {
+      return;
+    }
+
+    const file = input.files[0];
+    if (file.type !== 'application/pdf') {
+      this.toast.showError('Please select a valid PDF file.');
+      return;
+    }
+
+    this.isUploadingPdf = true;
+    this.cdr.detectChanges();
+
+    const folder = `work-notes/${this.workId}`;
+    this.fileService
+      .uploadFileToSupabase(file, folder)
+      .then((response) => {
+        if (response.error) {
+          throw response.error;
+        }
+        const fullPath = response.data.fullPath || '';
+        const noteUrl = `${environment.supabaseUrl}/storage/v1/object/public/${fullPath}`;
+        const noteName = file.name;
+
+        this.itinerariesService.addItineraryNote(this.itinerary!.id, noteUrl, noteName).subscribe({
+          next: (newNote) => {
+            this.toast.showSuccess('Tour Notes PDF uploaded successfully!');
+            if (!this.itinerary!.notes) {
+              this.itinerary!.notes = [];
+            }
+            this.itinerary!.notes.push(newNote);
+            this.isUploadingPdf = false;
+            input.value = '';
+            this.cdr.detectChanges();
+          },
+          error: (err) => {
+            this.toast.showError('Failed to save Tour Notes PDF file.');
+            this.isUploadingPdf = false;
+            this.cdr.detectChanges();
+            console.error(err);
+          },
+        });
+      })
+      .catch((error) => {
+        this.toast.showError('Failed to upload PDF file to storage.');
+        this.isUploadingPdf = false;
+        this.cdr.detectChanges();
+        console.error(error);
+      });
   }
 
   openStopModal(): void {
@@ -344,10 +452,10 @@ export class WorkDetail {
     this.newStopStatus = newStatus;
     switch (newStatus) {
       case 'CONFIRMED':
-        this.confirmTextStop = 'Do you want to confirm this itinerary?'
+        this.confirmTextStop = 'Do you want to confirm this itinerary?';
         break;
       case 'CANCELLED':
-        this.confirmTextStop = 'Do you want to cancel this itinerary?'
+        this.confirmTextStop = 'Do you want to cancel this itinerary?';
         break;
       default:
         break;
@@ -363,20 +471,19 @@ export class WorkDetail {
 
   changeStopStatus(): void {
     this.itinerariesService
-      .updateItineraryStopStatus(
-        this.stopSelectedId,
-        this.newStopStatus,
-      )
+      .updateItineraryStopStatus(this.stopSelectedId, this.newStopStatus)
       .subscribe({
         next: () => {
+          this.toast.showSuccess('Stop status updated successfully!');
           this.loadItineraryStops(this.workId);
           this.closeStopConfirm();
         },
         error: (err) => {
+          this.toast.showError(err?.error?.message || 'Failed to update stop status.');
           console.error(err);
         },
       });
-  };
+  }
 
   get totalVolume(): number {
     return this.receipts.reduce((sum, receipt) => sum + receipt.amount, 0);
@@ -390,6 +497,12 @@ export class WorkDetail {
   }
 
   openReceiptPhoto(receipt: Receipt): void {
-    console.log('Open photo', receipt);
+    this.selectedImageUrl = receipt.imageUrl;
+    this.isImageModalOpen = true;
+  }
+
+  closeReceiptPhoto(): void {
+    this.isImageModalOpen = false;
+    this.selectedImageUrl = null;
   }
 }

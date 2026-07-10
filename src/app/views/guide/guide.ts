@@ -8,6 +8,7 @@ import { GuideWorkStatuses } from '../../services/work.service';
 import { firstValueFrom } from 'rxjs';
 import { WorkStatusClass } from '../works/works';
 import { Router } from '@angular/router';
+import { ToastService } from '../../services/toast.service';
 
 @Component({
   selector: 'app-guide-view',
@@ -19,6 +20,7 @@ export class GuideView implements OnInit {
   private router = inject(Router);
   private readonly auth = inject(AuthService);
   protected readonly capability = inject(CapabilityService);
+  private readonly toast = inject(ToastService);
 
   protected assignments: GuideAssignment[] = [];
   protected loading: boolean = true;
@@ -261,19 +263,55 @@ export class GuideView implements OnInit {
   }
 
   protected accept(id: number): void {
-    this.guidePortal.acceptAssignment(id).subscribe({ next: () => this.loadAssignments() });
+    this.guidePortal.acceptAssignment(id).subscribe({
+      next: () => {
+        this.toast.showSuccess('Assignment accepted successfully!');
+        this.loadAssignments();
+      },
+      error: (err) => {
+        this.toast.showError(err?.error?.message || 'Failed to accept assignment.');
+        console.error(err);
+      }
+    });
   }
 
   protected reject(id: number): void {
-    this.guidePortal.rejectAssignment(id).subscribe({ next: () => this.loadAssignments() });
+    this.guidePortal.rejectAssignment(id).subscribe({
+      next: () => {
+        this.toast.showSuccess('Assignment rejected successfully!');
+        this.loadAssignments();
+      },
+      error: (err) => {
+        this.toast.showError(err?.error?.message || 'Failed to reject assignment.');
+        console.error(err);
+      }
+    });
   }
 
   protected startWork(id: number): void {
-    this.guidePortal.startWork(id).subscribe({ next: () => this.loadAssignments() });
+    this.guidePortal.startWork(id).subscribe({
+      next: () => {
+        this.toast.showSuccess('Work started successfully!');
+        this.loadAssignments();
+      },
+      error: (err) => {
+        this.toast.showError(err?.error?.message || 'Failed to start work.');
+        console.error(err);
+      }
+    });
   }
 
   protected endWork(id: number): void {
-    this.guidePortal.endWork(id).subscribe({ next: () => this.loadAssignments() });
+    this.guidePortal.endWork(id).subscribe({
+      next: () => {
+        this.toast.showSuccess('Work ended successfully!');
+        this.loadAssignments();
+      },
+      error: (err) => {
+        this.toast.showError(err?.error?.message || 'Failed to end work.');
+        console.error(err);
+      }
+    });
   }
 
   protected viewWorkDetail(id: number): void {

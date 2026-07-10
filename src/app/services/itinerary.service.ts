@@ -20,6 +20,7 @@ export interface ItineraryStopItem {
   supplierPhone: string;
   addedBy: string;
   createdAt: string;
+  noteUrl?: string;
 }
 
 export interface CreateItineraryStopRequest {
@@ -79,5 +80,53 @@ export class ItineraryService {
       { status },
       this.getHttpOptions(),
     );
-  };
+  }
+
+  getOrCreateItinerary(workId: number): Observable<Itinerary> {
+    return this.http.get<Itinerary>(
+      `${this.apiUrl}/itineraries/by-work/${workId}`,
+      this.getHttpOptions(),
+    );
+  }
+
+  addItineraryNote(id: number, noteUrl: string, noteName: string): Observable<ItineraryNote> {
+    return this.http.post<ItineraryNote>(
+      `${this.apiUrl}/itineraries/${id}/notes`,
+      { noteUrl, noteName },
+      this.getHttpOptions(),
+    );
+  }
+
+  deleteItineraryNote(id: number, noteId: number): Observable<void> {
+    return this.http.delete<void>(
+      `${this.apiUrl}/itineraries/${id}/notes/${noteId}`,
+      this.getHttpOptions(),
+    );
+  }
+
+  getNotesByWorkId(workId: number): Observable<ItineraryNote[]> {
+    return this.http.get<ItineraryNote[]>(
+      `${this.apiUrl}/itineraries/notes/by-work?workId=${workId}`,
+      this.getHttpOptions(),
+    );
+  }
+}
+
+export interface ItineraryNote {
+  id: number;
+  itineraryId: number;
+  noteUrl: string;
+  noteName: string;
+  createdAt: string;
+}
+
+export interface Itinerary {
+  id: number;
+  workId: number;
+  dayNumber: number;
+  dayTitle: string;
+  description?: string;
+  notes?: ItineraryNote[];
+  createdAt: string;
+  updatedAt?: string;
 }

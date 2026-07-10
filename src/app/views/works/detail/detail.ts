@@ -6,10 +6,13 @@ import { WorkDetailType, WorkGuide, WorkOrder, WorkService, WorkStatuses } from 
 import { AddGuide } from '../add-guide/add-guide';
 import { AddStop, ItineraryStatus } from '../add-stop/add-stop';
 import { WorkStatusClass } from '../works';
-import { ItineraryService, ItineraryStopItem } from '../../../services/itinerary.service';
+import { ItineraryService, ItineraryStopItem, Itinerary, ItineraryNote } from '../../../services/itinerary.service';
 import { Receipt, ReceiptService } from '../../../services/receipt.service';
 import { GuideService } from '../../../services/guide.service';
 import { ConfirmDialog } from '../../../components/common/confirm-dialog/confirm-dialog';
+import { ToastService } from '../../../services/toast.service';
+import { FileService } from '../../../services/file.service';
+import { environment } from '../../../../environments/environment';
 
 export type OrderStatus = 'Completed' | 'Active' | 'Scheduled';
 
@@ -71,6 +74,11 @@ export class WorkDetail {
 
   selectedImageUrl: string | null = null;
   isImageModalOpen = false;
+  private toast = inject(ToastService);
+  private fileService = inject(FileService);
+
+  itinerary: Itinerary | null = null;
+  isUploadingPdf = false;
 
   constructor(
     private workService: WorkService,
@@ -131,6 +139,7 @@ export class WorkDetail {
       this.getReceiptsByWork(Number(this.workId)),
       this.loadItineraryStops(Number(this.workId)),
     ]);
+    this.loadItinerary(Number(this.workId));
     this.stopService = {
       id: this.workDetail.serviceId,
       name: this.workDetail.serviceName,
@@ -271,9 +280,11 @@ export class WorkDetail {
   changeWorkStatus(): void {
     this.workService.updateWorkStatus(this.workId, this.newWorkStatus).subscribe({
       next: () => {
+        this.toast.showSuccess('Work status updated successfully!');
         (this.getWorkDetail(Number(this.workId)), this.onCloseConfirmWork());
       },
       error: (err) => {
+        this.toast.showError(err?.error?.message || 'Failed to update work status.');
         console.error(err);
       },
     });
@@ -328,10 +339,12 @@ export class WorkDetail {
       })
       .subscribe({
         next: () => {
+          this.toast.showSuccess('Guide assignment updated successfully!');
           (this.getWorkDetail(Number(this.workId)), this.getWorkGuides(this.workId));
           this.closeGuideConfirm();
         },
         error: (err) => {
+          this.toast.showError(err?.error?.message || 'Failed to update guide assignment.');
           console.error(err);
         },
       });
@@ -345,17 +358,80 @@ export class WorkDetail {
       })
       .subscribe({
         next: () => {
+          this.toast.showSuccess("Manager's note saved successfully!");
           guide.isEditNote = false;
           this.getWorkGuides(this.workId);
         },
         error: (err) => {
+          this.toast.showError(err?.error?.message || "Failed to save manager's note.");
           console.error(err);
         },
       });
   }
 
-  openTourNotes(): void {
-    console.log('Open tour notes');
+  loadItinerary(workId: number): void {
+    this.itinerariesService.getOrCreateItinerary(workId).subscribe({
+      next: (itinerary) => {
+        this.itinerary = itinerary;
+        this.cdr.detectChanges();
+      },
+      error: (err) => {
+        console.error('Error fetching/creating itinerary:', err);
+      },
+    });
+  }
+
+  onPdfSelected(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    if (!input.files?.length || !this.itinerary) {
+      return;
+    }
+
+    const file = input.files[0];
+    if (file.type !== 'application/pdf') {
+      this.toast.showError('Please select a valid PDF file.');
+      return;
+    }
+
+    this.isUploadingPdf = true;
+    this.cdr.detectChanges();
+
+    const folder = `work-notes/${this.workId}`;
+    this.fileService
+      .uploadFileToSupabase(file, folder)
+      .then((response) => {
+        if (response.error) {
+          throw response.error;
+        }
+        const fullPath = response.data.fullPath || '';
+        const noteUrl = `${environment.supabaseUrl}/storage/v1/object/public/${fullPath}`;
+        const noteName = file.name;
+
+        this.itinerariesService.addItineraryNote(this.itinerary!.id, noteUrl, noteName).subscribe({
+          next: (newNote) => {
+            this.toast.showSuccess('Tour Notes PDF uploaded successfully!');
+            if (!this.itinerary!.notes) {
+              this.itinerary!.notes = [];
+            }
+            this.itinerary!.notes.push(newNote);
+            this.isUploadingPdf = false;
+            input.value = '';
+            this.cdr.detectChanges();
+          },
+          error: (err) => {
+            this.toast.showError('Failed to save Tour Notes PDF file.');
+            this.isUploadingPdf = false;
+            this.cdr.detectChanges();
+            console.error(err);
+          },
+        });
+      })
+      .catch((error) => {
+        this.toast.showError('Failed to upload PDF file to storage.');
+        this.isUploadingPdf = false;
+        this.cdr.detectChanges();
+        console.error(error);
+      });
   }
 
   openStopModal(): void {
@@ -398,10 +474,12 @@ export class WorkDetail {
       .updateItineraryStopStatus(this.stopSelectedId, this.newStopStatus)
       .subscribe({
         next: () => {
+          this.toast.showSuccess('Stop status updated successfully!');
           this.loadItineraryStops(this.workId);
           this.closeStopConfirm();
         },
         error: (err) => {
+          this.toast.showError(err?.error?.message || 'Failed to update stop status.');
           console.error(err);
         },
       });

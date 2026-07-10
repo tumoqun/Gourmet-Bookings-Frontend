@@ -267,7 +267,7 @@
           <div class="guide-card-top">
             <div class="guide-card-name">
               {{ guide.name || '--' }}
-              <span *ngIf="guide.role.toLowerCase() === 'leader'" class="guide-badge">Leader</span>
+              <span *ngIf="guide.role && guide.role.toLowerCase() === 'leader'" class="guide-badge">Leader</span>
             </div>
             <span class="guide-status" [class.accepted]="guide.status.toLowerCase() === 'accepted'" [class.pending]="guide.status.toLowerCase() === 'pending'" [class.declined]="guide.status.toLowerCase() === 'declined'">
               {{ guide.status || '--' }}
@@ -342,10 +342,13 @@
   <div class="itinerary-group-mobile mobile-only">
     <div class="mobile-itinerary-card">
       <button type="button" class="orders-card-header" (click)="toggleItineraryGroup()">
-        <div class="orders-card-title">
+        <div class="orders-card-title" style="flex-grow: 1; display: flex; align-items: center; width: 100%;">
           <img class="orders-card-icon" src="/ui-icons/itinerary.png" alt="itinerary icon" />
-          <div>
-            <div class="orders-card-label">Itinerary</div>
+          <div style="flex-grow: 1; margin-right: 12px; text-align: left;">
+            <div class="orders-card-label" style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
+              <span>Itinerary</span>
+              <button class="view-notes-btn" (click)="openNotesModal(); $event.stopPropagation()" style="padding: 4px 8px; font-size: 11px; font-weight: 700; border: 1.5px solid #c89c4f; background: #fff; color: #c89c4f; border-radius: 6px; cursor: pointer; transition: all 0.15s;">View Notes</button>
+            </div>
             <div class="orders-card-count">{{ itineraryList.length }} item{{ itineraryList.length === 1 ? '' : 's' }}</div>
           </div>
         </div>
@@ -362,8 +365,9 @@
 
   <div class="table-card desktop-only">
     <!-- HEADER -->
-    <div class="table-header">
+    <div class="table-header" style="display: flex; justify-content: space-between; align-items: center;">
       <h2>Itinerary</h2>
+      <button class="view-notes-btn" (click)="openNotesModal()">View Notes</button>
     </div>
     <!-- TABLE -->
     <div class="table-contents">
@@ -627,4 +631,51 @@
   <app-confirm-dialog [visible]="openConfirmDeleteExpense" message="Do you want to delete this expense?" confirmText="Confirm" cancelText="Cancel"
     (confirm)="onConfirmDeleteExpense()" (cancel)="onCancelDeleteExpense()">
   </app-confirm-dialog>
+
+  <!-- TOUR NOTES DIALOG -->
+  <div class="notes-modal-backdrop" *ngIf="showNotesModal" (click)="closeNotesModal()">
+    <div class="notes-modal-card" (click)="$event.stopPropagation()">
+      <div class="notes-modal-header">
+        <h3>Tour Notes</h3>
+        <button class="close-modal-btn" (click)="closeNotesModal()">&times;</button>
+      </div>
+      <div class="notes-modal-body">
+        <div *ngIf="loadingItineraryNotes" class="loading-state">
+          <span>Loading tour notes...</span>
+        </div>
+        <div *ngIf="!loadingItineraryNotes && itineraryNotes.length === 0" class="empty-state">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="width: 48px; height: 48px; color: #a8a29e; margin-bottom: 12px; display: inline-block;">
+            <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"></path>
+            <polyline points="14 2 14 8 20 8"></polyline>
+            <line x1="16" y1="13" x2="8" y2="13"></line>
+            <line x1="16" y1="17" x2="8" y2="17"></line>
+            <polyline points="10 9 9 9 8 9"></polyline>
+          </svg>
+          <p>No tour notes available for this itinerary.</p>
+        </div>
+        <div *ngIf="!loadingItineraryNotes && itineraryNotes.length > 0" class="notes-links-list">
+          <div *ngFor="let note of itineraryNotes" class="note-download-item">
+            <div class="note-info">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="pdf-icon" style="width: 20px; height: 20px; color: #ef4444; flex-shrink: 0; margin-right: 8px;">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                <polyline points="14 2 14 8 20 8"></polyline>
+                <line x1="16" y1="13" x2="8" y2="13"></line>
+                <line x1="16" y1="17" x2="8" y2="17"></line>
+                <polyline points="10 9 9 9 8 9"></polyline>
+              </svg>
+              <span class="note-name" style="font-size: 14px; font-weight: 500; color: #292524; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 250px;" [title]="note.noteName">{{ note.noteName }}</span>
+            </div>
+            <button class="download-btn" (click)="downloadNote(note)" style="display: flex; align-items: center; gap: 6px; border: none; background: #c89c4f; color: #ffffff; padding: 6px 12px; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer;">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width: 14px; height: 14px; color: #fff;">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                <polyline points="7 10 12 15 17 10"></polyline>
+                <line x1="12" y1="15" x2="12" y2="3"></line>
+              </svg>
+              Download
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
 </section>

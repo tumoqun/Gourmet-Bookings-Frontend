@@ -11,11 +11,12 @@ import {
 import { CommonModule } from '@angular/common';
 import { WorkStatusClass } from '../../works/works';
 import { Receipt, ReceiptService, UpdateReceiptPayload } from '../../../services/receipt.service';
-import { ItineraryService, ItineraryStopItem } from '../../../services/itinerary.service';
+import { ItineraryService, ItineraryStopItem, ItineraryNote } from '../../../services/itinerary.service';
 import { AddReceipt } from '../add-receipt/add-receipt';
 import { AddExpense } from '../add-expense/add-expense';
 import { AuthService } from '../../../services/auth.service';
 import { ReceiptFormData, ReceiptPayload } from '../../../services/receipt.service';
+import { ToastService } from '../../../services/toast.service';
 import {
   Expense,
   ExpenseForm,
@@ -50,11 +51,15 @@ export class GuideWorkDetail {
   workDetail: WorkDetailForGuideType = {} as WorkDetailForGuideType;
   private readonly auth = inject(AuthService);
   readonly currentUser = this.auth.currentUser;
+  private readonly toast = inject(ToastService);
 
   orders: WorkOrderForGuide[] = [];
   guides: WorkGuide[] = [];
   receipts: Receipt[] = [];
   itineraryList: ItineraryStopItem[] = [];
+  itineraryNotes: ItineraryNote[] = [];
+  showNotesModal = false;
+  loadingItineraryNotes = false;
   orderGuests: OrderGuestGroup[] = [];
   otherExpenses: Expense[] = [];
   selectedReceiptId: number = 0;
@@ -198,6 +203,50 @@ export class GuideWorkDetail {
       this.loadingItineraries = false;
       this.cdr.detectChanges();
     }
+  }
+
+  openNotesModal(): void {
+    this.showNotesModal = true;
+    this.loadingItineraryNotes = true;
+    this.itinerariesService.getNotesByWorkId(this.workId).subscribe({
+      next: (notes) => {
+        this.itineraryNotes = notes || [];
+        this.loadingItineraryNotes = false;
+        this.cdr.detectChanges();
+      },
+      error: (err) => {
+        this.toast.showError('Failed to load itinerary notes.');
+        this.loadingItineraryNotes = false;
+        this.cdr.detectChanges();
+        console.error(err);
+      }
+    });
+  }
+
+  closeNotesModal(): void {
+    this.showNotesModal = false;
+  }
+
+  downloadNote(note: ItineraryNote): void {
+    if (!note.noteUrl) return;
+
+    this.toast.showSuccess(`Downloading "${note.noteName}"...`);
+    
+    fetch(note.noteUrl)
+      .then(response => response.blob())
+      .then(blob => {
+        const link = document.createElement('a');
+        link.href = window.URL.createObjectURL(blob);
+        link.download = note.noteName;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        this.toast.showSuccess(`"${note.noteName}" downloaded successfully.`);
+      })
+      .catch(err => {
+        console.error('Failed to download PDF:', err);
+        window.open(note.noteUrl, '_blank');
+      });
   }
 
   async getReceiptsByWork(workId: number): Promise<void> {
@@ -366,9 +415,16 @@ export class GuideWorkDetail {
         notes: data.note ?? '',
         imageUrl: data.imageUrl || '',
       };
-      this.receiptService.updateReceipt(this.selectedReceiptId, payload).subscribe(() => {
-        this.closeReceiptModal();
-        this.getReceiptsByWork(Number(this.workId));
+      this.receiptService.updateReceipt(this.selectedReceiptId, payload).subscribe({
+        next: () => {
+          this.toast.showSuccess('Receipt updated successfully!');
+          this.closeReceiptModal();
+          this.getReceiptsByWork(Number(this.workId));
+        },
+        error: (err) => {
+          this.toast.showError(err?.error?.message || 'Failed to update receipt.');
+          console.error(err);
+        }
       });
     } else {
       // add receipt
@@ -390,9 +446,16 @@ export class GuideWorkDetail {
         notes: data.note ?? '',
         imageUrl: data.imageUrl || '',
       };
-      this.receiptService.createReceipt(payload).subscribe(() => {
-        this.closeReceiptModal();
-        this.getReceiptsByWork(Number(this.workId));
+      this.receiptService.createReceipt(payload).subscribe({
+        next: () => {
+          this.toast.showSuccess('Receipt created successfully!');
+          this.closeReceiptModal();
+          this.getReceiptsByWork(Number(this.workId));
+        },
+        error: (err) => {
+          this.toast.showError(err?.error?.message || 'Failed to create receipt.');
+          console.error(err);
+        }
       });
     }
   }
@@ -403,9 +466,16 @@ export class GuideWorkDetail {
   }
 
   onConfirmDeleteReceipt() {
-    this.receiptService.deleteReceipt(this.selectedReceiptId).subscribe(() => {
-      this.openConfirmDeleteReceipt = false;
-      this.getReceiptsByWork(Number(this.workId));
+    this.receiptService.deleteReceipt(this.selectedReceiptId).subscribe({
+      next: () => {
+        this.toast.showSuccess('Receipt deleted successfully!');
+        this.openConfirmDeleteReceipt = false;
+        this.getReceiptsByWork(Number(this.workId));
+      },
+      error: (err) => {
+        this.toast.showError(err?.error?.message || 'Failed to delete receipt.');
+        console.error(err);
+      }
     });
   }
 
@@ -425,9 +495,16 @@ export class GuideWorkDetail {
         imageUrl: data.imageUrl || '',
         assignmentId: assignmentId || 0,
       };
-      this.expenseService.updateExpense(this.selectedExpenseId, payload).subscribe(() => {
-        this.closeExpenseModal();
-        this.getExpensesByWork(Number(this.workId));
+      this.expenseService.updateExpense(this.selectedExpenseId, payload).subscribe({
+        next: () => {
+          this.toast.showSuccess('Expense updated successfully!');
+          this.closeExpenseModal();
+          this.getExpensesByWork(Number(this.workId));
+        },
+        error: (err) => {
+          this.toast.showError(err?.error?.message || 'Failed to update expense.');
+          console.error(err);
+        }
       });
     } else {
       // add expense
@@ -441,17 +518,31 @@ export class GuideWorkDetail {
         expenseTime,
         submittedBy: this.currentUser()?.fullName || '',
       };
-      this.expenseService.createExpense(payload).subscribe(() => {
-        this.closeExpenseModal();
-        this.getExpensesByWork(Number(this.workId));
+      this.expenseService.createExpense(payload).subscribe({
+        next: () => {
+          this.toast.showSuccess('Expense created successfully!');
+          this.closeExpenseModal();
+          this.getExpensesByWork(Number(this.workId));
+        },
+        error: (err) => {
+          this.toast.showError(err?.error?.message || 'Failed to create expense.');
+          console.error(err);
+        }
       });
     }
   }
 
   onConfirmDeleteExpense() {
-    this.expenseService.deleteExpense(this.selectedExpenseId).subscribe(() => {
-      this.openConfirmDeleteExpense = false;
-      this.getExpensesByWork(Number(this.workId));
+    this.expenseService.deleteExpense(this.selectedExpenseId).subscribe({
+      next: () => {
+        this.toast.showSuccess('Expense deleted successfully!');
+        this.openConfirmDeleteExpense = false;
+        this.getExpensesByWork(Number(this.workId));
+      },
+      error: (err) => {
+        this.toast.showError(err?.error?.message || 'Failed to delete expense.');
+        console.error(err);
+      }
     });
   }
 

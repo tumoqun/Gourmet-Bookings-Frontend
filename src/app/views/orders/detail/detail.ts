@@ -5,6 +5,7 @@ import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { ApiService, Order, OrderAdditionalService, OrderGuest } from '../../../services/api.service';
 import { CapabilityService } from '../../../services/capability.service';
 import { AuthService } from '../../../services/auth.service';
+import { ToastService } from '../../../services/toast.service';
 
 interface GuestMember {
   name: string;
@@ -37,6 +38,7 @@ interface RelatedOrder {
 export class OrderDetail implements OnInit {
   private readonly capability = inject(CapabilityService);
   private readonly auth = inject(AuthService);
+  private readonly toast = inject(ToastService);
 
   get isReadOnly(): boolean {
     return this.capability.isGuide() || this.auth.tourGuideViewMode();
@@ -346,6 +348,7 @@ export class OrderDetail implements OnInit {
       guestEmail: this.editLeaderEmail,
     }).subscribe({
       next: (updated) => {
+        this.toast.showSuccess('Order updated successfully!');
         this.order = { ...this.order, ...updated };
         this.leaderPhone = updated.leaderPhone ?? this.editLeaderPhone;
         this.guestGroupNotes = updated.guestGroupNotes ?? this.editGuestGroupNotes;
@@ -360,8 +363,10 @@ export class OrderDetail implements OnInit {
         this.closeEditGuestGroup();
         this.cdr.detectChanges();
       },
-      error: () => {
-        this.guestGroupSaveError = 'Could not save guest group information.';
+      error: (err) => {
+        const errMsg = err?.error?.message || 'Could not save guest group information.';
+        this.guestGroupSaveError = errMsg;
+        this.toast.showError(errMsg);
         this.isSavingGuestGroup = false;
         this.cdr.detectChanges();
       },
@@ -434,6 +439,7 @@ export class OrderDetail implements OnInit {
     if (this.order?.id) {
         this.apiService.updateOrderGuests(this.order.id, guestsPayload).subscribe({
            next: (updatedGuests) => {
+               this.toast.showSuccess('Guest list updated successfully!');
                this.guestMembers = updatedGuests.map(g => ({
                    name: `${g.firstName || ''} ${g.lastName || ''}`.trim() || 'Guest',
                    phone: g.phoneNumber || '',
@@ -447,7 +453,8 @@ export class OrderDetail implements OnInit {
                this.closeAddGuest();
                this.cdr.detectChanges();
            },
-           error: () => {
+           error: (err) => {
+               this.toast.showError(err?.error?.message || 'Failed to update guest list.');
                console.error("Failed to sync guests");
                this.editingGuestIndex = null;
                this.closeAddGuest();
@@ -525,8 +532,13 @@ export class OrderDetail implements OnInit {
         }));
         this.apiService.updateOrderGuests(this.order.id, guestsPayload).subscribe({
             next: (updatedGuests) => {
+                this.toast.showSuccess('Guest removed successfully!');
                 this.order!.guests = updatedGuests;
                 this.cdr.detectChanges();
+            },
+            error: (err) => {
+                this.toast.showError(err?.error?.message || 'Failed to remove guest.');
+                console.error(err);
             }
         });
     }
@@ -561,14 +573,17 @@ export class OrderDetail implements OnInit {
 
     this.apiService.confirmOrder(this.order.id).subscribe({
       next: (updated) => {
+        this.toast.showSuccess('Order confirmed successfully!');
         this.order = { ...this.order, ...updated };
         this.progressStep = this.deriveProgressStep(updated.status?.code ?? this.order?.status?.code ?? '');
         this.isConfirmingOrder = false;
         this.cdr.detectChanges();
       },
-      error: () => {
+      error: (err) => {
+        const errMsg = err?.error?.message || 'Could not confirm this order.';
         this.isConfirmingOrder = false;
-        this.errorMessage = 'Could not confirm this order.';
+        this.errorMessage = errMsg;
+        this.toast.showError(errMsg);
         this.cdr.detectChanges();
       },
     });

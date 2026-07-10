@@ -1283,3 +1283,181 @@
     padding: 16px;
   }
 }
+
+/* VIEW NOTES BUTTON STYLE */
+.view-notes-btn {
+  border: 1.5px solid #c89c4f;
+  background: #fff;
+  color: #c89c4f;
+  padding: 8px 16px;
+  border-radius: 10px;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.15s ease-in-out;
+}
+.view-notes-btn:hover {
+  background: rgba(200, 156, 79, 0.05);
+}
+
+/* TOUR NOTES MODAL styles */
+.notes-modal-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0, 0, 0, 0.45);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1100;
+  animation: fadeInModal 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.notes-modal-card {
+  width: 90%;
+  max-width: 520px;
+  background: #ffffff;
+  border-radius: 16px;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border: 1px solid rgba(26, 28, 59, 0.08);
+  animation: scaleUpModal 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.notes-modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 18px 24px;
+  border-bottom: 1px solid #f2f2f2;
+}
+
+.notes-modal-header h3 {
+  font-size: 20px;
+  color: #1a1c3b;
+  margin: 0;
+}
+
+.close-modal-btn {
+  border: none;
+  background: none;
+  font-size: 28px;
+  color: #78716c;
+  cursor: pointer;
+  transition: color 0.15s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+}
+
+.close-modal-btn:hover {
+  color: #1c1917;
+}
+
+.notes-modal-body {
+  padding: 24px;
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+.notes-links-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.note-download-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 16px;
+  border: 1px solid #e7e5e4;
+  border-radius: 10px;
+  background: #fafaf9;
+  transition: all 0.15s ease-in-out;
+}
+
+.note-download-item:hover {
+  border-color: #c89c4f;
+  background: #fdfcfa;
+  transform: translateY(-1px);
+}
+
+.note-info {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex: 1;
+  min-width: 0;
+}
+
+.pdf-icon {
+  width: 20px;
+  height: 20px;
+  color: #ef4444;
+  flex-shrink: 0;
+}
+
+.note-name {
+  font-size: 14px;
+  font-weight: 500;
+  color: #292524;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.download-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  border: none;
+  background: #c89c4f;
+  color: #ffffff;
+  padding: 6px 12px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity 0.15s;
+}
+
+.download-btn:hover {
+  opacity: 0.9;
+}
+
+.download-btn svg {
+  width: 14px;
+  height: 14px;
+}
+
+.loading-state, .empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 32px 0;
+  text-align: center;
+  color: #78716c;
+}
+
+.empty-state p {
+  font-size: 14px;
+  margin: 0;
+}
+
+@keyframes fadeInModal {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes scaleUpModal {
+  from { transform: scale(0.95); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}

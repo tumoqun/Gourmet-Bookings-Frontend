@@ -4,6 +4,7 @@ import { Sidebar } from './components/common/sidebar/sidebar';
 import { CommonModule } from '@angular/common';
 import { AuthService } from './services/auth.service';
 import { CapabilityService } from './services/capability.service';
+import { ToastContainerComponent } from './components/common/toast-container/toast-container';
 
 interface NavigationItem {
   label: string;
@@ -14,7 +15,7 @@ interface NavigationItem {
 
 @Component({
   selector: 'app-root',
-  imports: [CommonModule, RouterOutlet, Sidebar, RouterLink, RouterLinkActive],
+  imports: [CommonModule, RouterOutlet, Sidebar, RouterLink, RouterLinkActive, ToastContainerComponent],
   templateUrl: './app.html',
   styleUrl: './app.css',
 })

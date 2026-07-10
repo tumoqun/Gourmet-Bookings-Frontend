@@ -236,10 +236,14 @@
     <div class="table-header">
       <h2>Itinerary</h2>
       <div class="header-actions">
-        <button class="notes-btn" (click)="openTourNotes()">
-          <span class="notes-text">Tour Notes</span>
-          <img class="link-icon" src="/ui-icons/link.png" alt="link icon" />
-        </button>
+        <ng-container *ngIf="itinerary">
+          <input #pdfInput type="file" accept="application/pdf" (change)="onPdfSelected($event)" hidden>
+          <button *ngIf="!isUploadingPdf" class="notes-btn upload-notes-btn" (click)="pdfInput.click()" style="display: flex; align-items: center;">
+            <span class="notes-text">Tour Notes</span>
+            <img class="link-icon" src="/ui-icons/link.png" alt="link icon" />
+          </button>
+          <span *ngIf="isUploadingPdf" class="uploading-text-notes" style="font-size: 13px; color: #caa04b; font-weight: 600; margin-right: 8px;">Uploading PDF...</span>
+        </ng-container>
         <button class="add-stop-btn" (click)="openStopModal()">
           Add Stop
         </button>

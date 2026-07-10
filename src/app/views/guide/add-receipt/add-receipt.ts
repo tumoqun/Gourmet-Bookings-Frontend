@@ -1,6 +1,6 @@
 import { CommonModule } from '@angular/common';
 import { ChangeDetectorRef, Component, EventEmitter, inject, Input, Output } from '@angular/core';
-import { FormBuilder, ReactiveFormsModule } from '@angular/forms';
+import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { SupplierSelectOption, SupplierService } from '../../../services/supplier.service';
 import { ActivatedRoute } from '@angular/router';
 import { Receipt, ReceiptFormData, ReceiptService } from '../../../services/receipt.service';
@@ -34,11 +34,11 @@ export class AddReceipt {
   uploading = false;
 
   receiptForm = this.fb.group({
-    itineraryStopId: [''],
-    fee: [0],
+    itineraryStopId: ['', Validators.required],
+    fee: [0, [Validators.required, Validators.min(0.01)]],
     taxRate: [0],
     estimatedTax: [{ value: 0, disabled: true }],
-    totalAmount: [{ value: 0, disabled: true }],
+    totalAmount: [{ value: 0, disabled: true }, [Validators.required, Validators.min(0.01)]],
     overrideCalculation: [false],
     tNumber: [false],
     passThrough: [false],

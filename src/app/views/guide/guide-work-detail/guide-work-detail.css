@@ -1461,3 +1461,230 @@
   from { transform: scale(0.95); opacity: 0; }
   to { transform: scale(1); opacity: 1; }
 }
+
+/* GROUP NOTES MODAL (EDIT GROUP STYLING ADAPTED) */
+.edit-group-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  background: rgba(0, 0, 0, 0.45);
+  backdrop-filter: blur(4px);
+}
+
+.edit-group-dialog {
+  width: min(600px, calc(100vw - 28px));
+  max-height: min(800px, calc(100vh - 28px));
+  display: flex;
+  flex-direction: column;
+  background: #fff;
+  border-radius: 12px;
+  color: #2d2b29;
+  overflow: hidden;
+  box-shadow: 0 22px 58px rgba(35, 31, 27, 0.16);
+  font-family: "Aptos", "Segoe UI", sans-serif;
+  animation: scaleUpModal 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.edit-group-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 24px 32px 14px;
+  border-bottom: 1px solid #d8d4ce;
+  flex-shrink: 0;
+}
+
+.edit-group-header h3 {
+  margin: 0;
+  font-size: 1.45rem;
+  line-height: 1.2;
+  font-weight: 800;
+  color: #1a1c3b;
+}
+
+.edit-group-close {
+  width: 28px;
+  height: 28px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+}
+
+.edit-group-close svg {
+  width: 27px;
+  height: 27px;
+  color: #9b9792;
+}
+
+.edit-group-body {
+  padding: 20px 32px 14px;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: #c4c0bc transparent;
+}
+
+.loading-state-padded {
+  padding: 40px 0;
+}
+
+.edit-group-field input:disabled {
+  background-color: #fafafa;
+  border-color: #e5e5e5;
+  color: #666;
+  cursor: not-allowed;
+}
+
+.edit-chip-select.disabled {
+  background-color: #fafafa;
+  border-color: #e5e5e5;
+  height: auto;
+  min-height: 43px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 6px 12px;
+  align-items: center;
+}
+
+.edit-chip-select.disabled .edit-request-chip {
+  margin: 0;
+  background: #fffaf1;
+  border-color: #d29a35;
+  padding: 8px;
+  border-radius: 4px;
+  font-size: 13px;
+  height: auto;
+}
+
+.empty-request-text {
+  color: #a3a3a3;
+  font-size: 14px;
+}
+
+.edit-group-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 18px;
+}
+
+.edit-group-field span {
+  font-size: 14px;
+  line-height: 1.25;
+  font-weight: 600;
+  color: #5b5650;
+}
+
+.edit-group-field input,
+.edit-chip-select {
+  width: 100%;
+  height: 43px;
+  box-sizing: border-box;
+  border: 1px solid #d5d1cb;
+  border-radius: 11px;
+  background: #fff;
+  color: #292827;
+  font-size: 1rem;
+  font-family: inherit;
+}
+
+.edit-group-field input {
+  padding: 0 16px;
+  outline: none;
+}
+
+.edit-chip-select {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 43px;
+  height: auto;
+  padding: 7px 16px;
+  position: relative;
+}
+
+.edit-request-chip {
+  display: inline-flex;
+  align-items: center;
+  height: 32px;
+  padding: 0 5px;
+  border: 1px solid #d29a35;
+  border-radius: 4px;
+  background: #fffaf1;
+  color: #2d2b29 !important;
+  font-size: 1rem !important; 
+  line-height: 1 !important;
+  font-weight: 400 !important;
+}
+
+.edit-group-footer {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 35px;
+  padding: 16px 32px 24px;
+  border-top: 1px solid #d8d4ce;
+  flex-shrink: 0;
+}
+
+.edit-group-cancel {
+  height: 40px;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 700;
+  cursor: pointer;
+  min-width: 93px;
+  border: 1px solid #dcd8d2;
+  background: #fff;
+  color: #2d2b29;
+  transition: background 0.15s;
+}
+
+.edit-group-cancel:hover {
+  background: #faf9f7;
+}
+
+/* MOBILE LAYOUT ADJUSTMENTS FOR NOTES */
+.orders-group-mobile .orders-card-item {
+  justify-content: space-between;
+  align-items: center;
+}
+
+.orders-group-mobile .view-notes-btn,
+.itinerary-group-mobile .view-notes-btn {
+  padding: 4px 8px;
+  font-size: 11px;
+  margin-right: 0;
+  border-radius: 6px;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.orders-card-title-flex {
+  flex-grow: 1;
+  display: flex;
+  align-items: center;
+  width: 100%;
+}
+
+.orders-card-meta-grow {
+  flex-grow: 1;
+  margin-right: 12px;
+  text-align: left;
+}
+
+.orders-card-label-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+}
+

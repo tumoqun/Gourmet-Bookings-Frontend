@@ -82,7 +82,7 @@
     </form>
 
     <div class="modal-footer">
-      <button class="btn-save" type="button" (click)="onSubmit()">
+      <button class="btn-save" type="button" (click)="onSubmit()" [disabled]="receiptForm.invalid || uploading">
         Save
       </button>
       <button class="btn-cancel" type="button" (click)="onCancel()">

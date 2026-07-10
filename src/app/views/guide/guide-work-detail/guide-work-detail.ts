@@ -25,6 +25,7 @@ import {
   UpdateExpensePayload,
 } from '../../../services/expense.service';
 import { ConfirmDialog } from '../../../components/common/confirm-dialog/confirm-dialog';
+import { ApiService, SpecialRequestType, Order } from '../../../services/api.service';
 
 @Component({
   selector: 'app-guide-work-detail',
@@ -52,6 +53,7 @@ export class GuideWorkDetail {
   private readonly auth = inject(AuthService);
   readonly currentUser = this.auth.currentUser;
   private readonly toast = inject(ToastService);
+  private readonly apiService = inject(ApiService);
 
   orders: WorkOrderForGuide[] = [];
   guides: WorkGuide[] = [];
@@ -60,6 +62,11 @@ export class GuideWorkDetail {
   itineraryNotes: ItineraryNote[] = [];
   showNotesModal = false;
   loadingItineraryNotes = false;
+  
+  showGroupNotesModal = false;
+  selectedOrderForNotes: Order | null = null;
+  loadingOrderNotes = false;
+
   orderGuests: OrderGuestGroup[] = [];
   otherExpenses: Expense[] = [];
   selectedReceiptId: number = 0;
@@ -247,6 +254,35 @@ export class GuideWorkDetail {
         console.error('Failed to download PDF:', err);
         window.open(note.noteUrl, '_blank');
       });
+  }
+
+  openGroupNotesModal(orderRow: WorkOrderForGuide): void {
+    this.showGroupNotesModal = true;
+    this.loadingOrderNotes = true;
+    this.selectedOrderForNotes = null;
+    this.cdr.detectChanges();
+
+    // this.loadSpecialRequestTypesIfNeeded();
+
+    this.apiService.getOrder(orderRow.orderId).subscribe({
+      next: (order) => {
+        this.selectedOrderForNotes = order;
+        this.loadingOrderNotes = false;
+        this.cdr.detectChanges();
+      },
+      error: (err) => {
+        this.toast.showError('Failed to load group notes information.');
+        this.loadingOrderNotes = false;
+        this.showGroupNotesModal = false;
+        this.cdr.detectChanges();
+        console.error(err);
+      }
+    });
+  }
+
+  closeGroupNotesModal(): void {
+    this.showGroupNotesModal = false;
+    this.selectedOrderForNotes = null;
   }
 
   async getReceiptsByWork(workId: number): Promise<void> {

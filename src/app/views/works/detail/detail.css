@@ -647,6 +647,14 @@
   border-bottom: none;
 }
 
+.receipt-image {
+  width: 32px;
+  height: 32px;
+  border-radius: 4px;
+  object-fit: cover;
+  cursor: pointer;
+}
+
 .receipts-footer {
   display: flex;
   flex-direction: column;
@@ -667,4 +675,26 @@
   font-size: 18px;
   font-weight: 800;
   color: #222;
+}
+
+.image-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.8);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 9999;
+}
+
+.image-modal-content {
+  max-width: 90%;
+  max-height: 90%;
+}
+
+.image-preview {
+  max-width: 100%;
+  max-height: 90vh;
+  border-radius: 8px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
 }

@@ -11,11 +11,12 @@ import {
 import { CommonModule } from '@angular/common';
 import { WorkStatusClass } from '../../works/works';
 import { Receipt, ReceiptService, UpdateReceiptPayload } from '../../../services/receipt.service';
-import { ItineraryService, ItineraryStopItem } from '../../../services/itinerary.service';
+import { ItineraryService, ItineraryStopItem, ItineraryNote } from '../../../services/itinerary.service';
 import { AddReceipt } from '../add-receipt/add-receipt';
 import { AddExpense } from '../add-expense/add-expense';
 import { AuthService } from '../../../services/auth.service';
 import { ReceiptFormData, ReceiptPayload } from '../../../services/receipt.service';
+import { ToastService } from '../../../services/toast.service';
 import {
   Expense,
   ExpenseForm,
@@ -24,6 +25,7 @@ import {
   UpdateExpensePayload,
 } from '../../../services/expense.service';
 import { ConfirmDialog } from '../../../components/common/confirm-dialog/confirm-dialog';
+import { ApiService, SpecialRequestType, Order } from '../../../services/api.service';
 
 @Component({
   selector: 'app-guide-work-detail',
@@ -50,15 +52,32 @@ export class GuideWorkDetail {
   workDetail: WorkDetailForGuideType = {} as WorkDetailForGuideType;
   private readonly auth = inject(AuthService);
   readonly currentUser = this.auth.currentUser;
+  private readonly toast = inject(ToastService);
+  private readonly apiService = inject(ApiService);
 
   orders: WorkOrderForGuide[] = [];
   guides: WorkGuide[] = [];
   receipts: Receipt[] = [];
   itineraryList: ItineraryStopItem[] = [];
+  itineraryNotes: ItineraryNote[] = [];
+  showNotesModal = false;
+  loadingItineraryNotes = false;
+  
+  showGroupNotesModal = false;
+  selectedOrderForNotes: Order | null = null;
+  loadingOrderNotes = false;
+
   orderGuests: OrderGuestGroup[] = [];
   otherExpenses: Expense[] = [];
   selectedReceiptId: number = 0;
   selectedExpenseId: number = 0;
+  expandedGuestGroups = new Set<number>();
+  expandedOrderGroups = new Set<number>();
+  ordersSectionOpen = false;
+  guidesSectionOpen = false;
+  itinerarySectionOpen = false;
+  receiptsSectionOpen = false;
+  expensesSectionOpen = false;
   selectedImageUrl: string | null = null;
   isImageModalOpen = false;
 
@@ -87,7 +106,7 @@ export class GuideWorkDetail {
   }
 
   goToOrderDetails(id: number): void {
-    console.log('Go To Order Details', id);
+    this.router.navigate(['/orders', id]);
   }
 
   formatTime(time: string): string {
@@ -144,6 +163,9 @@ export class GuideWorkDetail {
     try {
       const workResponse = await this.workService.getWorkDetailForGuide(workId).toPromise();
       this.workDetail = workResponse || ({} as WorkDetailForGuideType);
+      if (this.workDetail && this.workDetail.status && this.workDetail.status.toUpperCase() === 'SCHEDULED') {
+        this.workDetail.status = 'OFFERED';
+      }
     } catch (error) {
       console.error('Error fetching work details:', error);
     } finally {
@@ -190,6 +212,79 @@ export class GuideWorkDetail {
     }
   }
 
+  openNotesModal(): void {
+    this.showNotesModal = true;
+    this.loadingItineraryNotes = true;
+    this.itinerariesService.getNotesByWorkId(this.workId).subscribe({
+      next: (notes) => {
+        this.itineraryNotes = notes || [];
+        this.loadingItineraryNotes = false;
+        this.cdr.detectChanges();
+      },
+      error: (err) => {
+        this.toast.showError('Failed to load itinerary notes.');
+        this.loadingItineraryNotes = false;
+        this.cdr.detectChanges();
+        console.error(err);
+      }
+    });
+  }
+
+  closeNotesModal(): void {
+    this.showNotesModal = false;
+  }
+
+  downloadNote(note: ItineraryNote): void {
+    if (!note.noteUrl) return;
+
+    this.toast.showSuccess(`Downloading "${note.noteName}"...`);
+    
+    fetch(note.noteUrl)
+      .then(response => response.blob())
+      .then(blob => {
+        const link = document.createElement('a');
+        link.href = window.URL.createObjectURL(blob);
+        link.download = note.noteName;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        this.toast.showSuccess(`"${note.noteName}" downloaded successfully.`);
+      })
+      .catch(err => {
+        console.error('Failed to download PDF:', err);
+        window.open(note.noteUrl, '_blank');
+      });
+  }
+
+  openGroupNotesModal(orderRow: WorkOrderForGuide): void {
+    this.showGroupNotesModal = true;
+    this.loadingOrderNotes = true;
+    this.selectedOrderForNotes = null;
+    this.cdr.detectChanges();
+
+    // this.loadSpecialRequestTypesIfNeeded();
+
+    this.apiService.getOrder(orderRow.orderId).subscribe({
+      next: (order) => {
+        this.selectedOrderForNotes = order;
+        this.loadingOrderNotes = false;
+        this.cdr.detectChanges();
+      },
+      error: (err) => {
+        this.toast.showError('Failed to load group notes information.');
+        this.loadingOrderNotes = false;
+        this.showGroupNotesModal = false;
+        this.cdr.detectChanges();
+        console.error(err);
+      }
+    });
+  }
+
+  closeGroupNotesModal(): void {
+    this.showGroupNotesModal = false;
+    this.selectedOrderForNotes = null;
+  }
+
   async getReceiptsByWork(workId: number): Promise<void> {
     try {
       const receiptsResponse = await this.receiptService.getReceiptsByWork(workId).toPromise();
@@ -228,6 +323,74 @@ export class GuideWorkDetail {
 
   get totalVolume(): number {
     return this.receipts.reduce((sum, receipt) => sum + receipt.amount, 0);
+  }
+
+  get totalExpenseVolume(): number {
+    return this.otherExpenses.reduce((sum, expense) => sum + expense.amount, 0);
+  }
+
+  isGuestGroupOpen(group: OrderGuestGroup): boolean {
+    return this.expandedGuestGroups.has(group.orderId);
+  }
+
+  toggleGuestGroup(group: OrderGuestGroup): void {
+    if (this.expandedGuestGroups.has(group.orderId)) {
+      this.expandedGuestGroups.delete(group.orderId);
+    } else {
+      this.expandedGuestGroups.add(group.orderId);
+    }
+  }
+
+  isOrderOpen(order: WorkOrderForGuide): boolean {
+    return this.expandedOrderGroups.has(order.orderId);
+  }
+
+  toggleOrder(order: WorkOrderForGuide): void {
+    if (this.expandedOrderGroups.has(order.orderId)) {
+      this.expandedOrderGroups.delete(order.orderId);
+    } else {
+      this.expandedOrderGroups.add(order.orderId);
+    }
+  }
+
+  isOrdersOpen(): boolean {
+    return this.ordersSectionOpen;
+  }
+
+  toggleOrdersGroup(): void {
+    this.ordersSectionOpen = !this.ordersSectionOpen;
+  }
+
+  isGuidesOpen(): boolean {
+    return this.guidesSectionOpen;
+  }
+
+  toggleGuidesGroup(): void {
+    this.guidesSectionOpen = !this.guidesSectionOpen;
+  }
+
+  isItineraryOpen(): boolean {
+    return this.itinerarySectionOpen;
+  }
+
+  toggleItineraryGroup(): void {
+    this.itinerarySectionOpen = !this.itinerarySectionOpen;
+  }
+
+  isReceiptsOpen(): boolean {
+    return this.receiptsSectionOpen;
+  }
+
+  toggleReceiptsGroup(): void {
+    this.receiptsSectionOpen = !this.receiptsSectionOpen;
+  }
+
+  isExpensesOpen(): boolean {
+    return this.expensesSectionOpen;
+  }
+
+  toggleExpensesGroup(): void {
+    this.expensesSectionOpen = !this.expensesSectionOpen;
   }
 
   openReceiptModal(): void {
@@ -281,15 +444,23 @@ export class GuideWorkDetail {
         amount: Number(data.totalAmount),
         fee: Number(data.fee),
         tax: Number(data.taxRate),
+        estimatedTax: Number(data.estimatedTax),
         checkNumber: data.tNumber ?? false,
         isVerified: data.passThrough ?? false,
         verifiedById: data.passThrough ? this.currentUser()?.id : undefined,
         notes: data.note ?? '',
         imageUrl: data.imageUrl || '',
       };
-      this.receiptService.updateReceipt(this.selectedReceiptId, payload).subscribe(() => {
-        this.closeReceiptModal();
-        this.getReceiptsByWork(Number(this.workId));
+      this.receiptService.updateReceipt(this.selectedReceiptId, payload).subscribe({
+        next: () => {
+          this.toast.showSuccess('Receipt updated successfully!');
+          this.closeReceiptModal();
+          this.getReceiptsByWork(Number(this.workId));
+        },
+        error: (err) => {
+          this.toast.showError(err?.error?.message || 'Failed to update receipt.');
+          console.error(err);
+        }
       });
     } else {
       // add receipt
@@ -302,6 +473,7 @@ export class GuideWorkDetail {
         receiptTime,
         fee: Number(data.fee),
         tax: Number(data.taxRate),
+        estimatedTax: Number(data.estimatedTax),
         checkNumber: data.tNumber ?? false,
         isVerified: data.passThrough ?? false,
         verifiedById: data.passThrough ? this.currentUser()?.id : undefined,
@@ -310,9 +482,16 @@ export class GuideWorkDetail {
         notes: data.note ?? '',
         imageUrl: data.imageUrl || '',
       };
-      this.receiptService.createReceipt(payload).subscribe(() => {
-        this.closeReceiptModal();
-        this.getReceiptsByWork(Number(this.workId));
+      this.receiptService.createReceipt(payload).subscribe({
+        next: () => {
+          this.toast.showSuccess('Receipt created successfully!');
+          this.closeReceiptModal();
+          this.getReceiptsByWork(Number(this.workId));
+        },
+        error: (err) => {
+          this.toast.showError(err?.error?.message || 'Failed to create receipt.');
+          console.error(err);
+        }
       });
     }
   }
@@ -323,9 +502,16 @@ export class GuideWorkDetail {
   }
 
   onConfirmDeleteReceipt() {
-    this.receiptService.deleteReceipt(this.selectedReceiptId).subscribe(() => {
-      this.openConfirmDeleteReceipt = false;
-      this.getReceiptsByWork(Number(this.workId));
+    this.receiptService.deleteReceipt(this.selectedReceiptId).subscribe({
+      next: () => {
+        this.toast.showSuccess('Receipt deleted successfully!');
+        this.openConfirmDeleteReceipt = false;
+        this.getReceiptsByWork(Number(this.workId));
+      },
+      error: (err) => {
+        this.toast.showError(err?.error?.message || 'Failed to delete receipt.');
+        console.error(err);
+      }
     });
   }
 
@@ -345,9 +531,16 @@ export class GuideWorkDetail {
         imageUrl: data.imageUrl || '',
         assignmentId: assignmentId || 0,
       };
-      this.expenseService.updateExpense(this.selectedExpenseId, payload).subscribe(() => {
-        this.closeExpenseModal();
-        this.getExpensesByWork(Number(this.workId));
+      this.expenseService.updateExpense(this.selectedExpenseId, payload).subscribe({
+        next: () => {
+          this.toast.showSuccess('Expense updated successfully!');
+          this.closeExpenseModal();
+          this.getExpensesByWork(Number(this.workId));
+        },
+        error: (err) => {
+          this.toast.showError(err?.error?.message || 'Failed to update expense.');
+          console.error(err);
+        }
       });
     } else {
       // add expense
@@ -361,17 +554,31 @@ export class GuideWorkDetail {
         expenseTime,
         submittedBy: this.currentUser()?.fullName || '',
       };
-      this.expenseService.createExpense(payload).subscribe(() => {
-        this.closeExpenseModal();
-        this.getExpensesByWork(Number(this.workId));
+      this.expenseService.createExpense(payload).subscribe({
+        next: () => {
+          this.toast.showSuccess('Expense created successfully!');
+          this.closeExpenseModal();
+          this.getExpensesByWork(Number(this.workId));
+        },
+        error: (err) => {
+          this.toast.showError(err?.error?.message || 'Failed to create expense.');
+          console.error(err);
+        }
       });
     }
   }
 
   onConfirmDeleteExpense() {
-    this.expenseService.deleteExpense(this.selectedExpenseId).subscribe(() => {
-      this.openConfirmDeleteExpense = false;
-      this.getExpensesByWork(Number(this.workId));
+    this.expenseService.deleteExpense(this.selectedExpenseId).subscribe({
+      next: () => {
+        this.toast.showSuccess('Expense deleted successfully!');
+        this.openConfirmDeleteExpense = false;
+        this.getExpensesByWork(Number(this.workId));
+      },
+      error: (err) => {
+        this.toast.showError(err?.error?.message || 'Failed to delete expense.');
+        console.error(err);
+      }
     });
   }
 

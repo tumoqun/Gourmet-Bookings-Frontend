@@ -58,9 +58,13 @@
     <div class="filter-grid bottom">
       <label class="date-field" (click)="openDateCalendar($event)">
         <span>Tour Date</span>
-        <input type="text" placeholder="Tour Date" aria-label="Tour Date" [(ngModel)]="filters.tourDate" readonly />
+        <input type="text" placeholder="Tour Date Range" aria-label="Tour Date Range" 
+          [value]="fromDate + ' → ' + toDate" readonly />
         <img class="date-icon" src="/ui-icons/date.png" alt="Date icon" />
         <div class="calendar-popover" *ngIf="activeCalendar">
+          <div class="calendar-mode-indicator">
+            {{ calendarSelectingFrom ? 'Select start date' : 'Select end date' }}
+          </div>
           <div class="calendar-header">
             <button type="button" (click)="changeCalendarMonth(-1, $event)">
               &lt;
@@ -80,7 +84,10 @@
           </div>
           <div class="calendar-dates">
             <button type="button" *ngFor="let date of buildCalendarDays(calendarYear, calendarMonth)" [disabled]="date === 0"
-              [class.selected]="isSelectedCalendarDate(date)" (click)="selectCalendarDate(date, $event)">
+              [class.selected]="isSelectedCalendarDate(date)"
+              [class.start]="isCalendarDateStart(date)"
+              [class.end]="isCalendarDateEnd(date)"
+              (click)="selectCalendarDate(date, $event)">
               {{ date > 0 ? date : '' }}
             </button>
           </div>

@@ -38,6 +38,9 @@ export interface Order {
   guestEmail?: string;
   leaderPhone?: string;
   guestGroupNotes?: string;
+  guestSpecialRequests?: string;
+  hiredCarDriverGuide?: string;
+  internalInformation?: string;
   adultCount?: number;
   childCount?: number;
   dietaryRestrictions?: string;

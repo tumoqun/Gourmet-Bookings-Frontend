@@ -2,6 +2,7 @@ import { Component, inject, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { AuthService } from '../../services/auth.service';
 import { DEV_TEST_ACCOUNTS } from '../../models/auth.model';
+import { ToastService } from '../../services/toast.service';
 
 @Component({
   selector: 'app-login-view',
@@ -11,6 +12,7 @@ import { DEV_TEST_ACCOUNTS } from '../../models/auth.model';
 })
 export class LoginView implements OnInit {
   private readonly auth = inject(AuthService);
+  private readonly toast = inject(ToastService);
 
   ngOnInit(): void {
     if (sessionStorage.getItem('gb_session_expired') === '1') {
@@ -43,15 +45,19 @@ export class LoginView implements OnInit {
     this.auth.login({ email: this.email, password: this.password }).subscribe({
       next: () => {
         this.loading.set(false);
+        this.toast.showSuccess('Logged in successfully!');
         this.auth.navigateHome();
       },
       error: (err) => {
         this.loading.set(false);
         if (err?.status === 401 && err?.statusText === 'Session expired') {
           this.error.set('Your session expired. Please sign in again.');
+          this.toast.showError('Your session expired. Please sign in again.');
           return;
         }
-        this.error.set(err?.error?.message || 'Invalid email or password.');
+        const errMsg = err?.error?.message || 'Invalid email or password.';
+        this.error.set(errMsg);
+        this.toast.showError(errMsg);
       },
     });
   }

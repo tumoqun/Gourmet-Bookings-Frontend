@@ -65,17 +65,13 @@
     </div>
   </div>
 
-  <div class="table-card" *ngFor="let group of orderGuests">
-    <div class="table-header">
+  <div class="table-card guest-group-card" *ngFor="let group of orderGuests">
+    <div class="table-header desktop-only">
       <h2>
         Guest Group: {{ group.adultCount }} Adult {{ group.childCount }} Children
       </h2>
-      <button class="edit-button">
-        <img class="edit-icon" src="/ui-icons/edit-icon.png" alt="edit icon" />
-        <span>Edit</span>
-      </button>
     </div>
-    <div class="guest-info">
+    <div class="guest-info desktop-only">
       <div>
         <label>LEADER PHONE NUMBER</label>
         <p>{{ group.leaderPhone || '--' }}</p>
@@ -89,23 +85,56 @@
         <p>{{ group.averageAge || '--' }}</p>
       </div>
     </div>
-    <div class="table-contents">
-      <div class="guest-row table-head">
+
+    <div class="guest-group-mobile mobile-only">
+      <button type="button" class="guest-group-collapse" (click)="toggleGuestGroup(group)">
+        <div class="guest-group-title-wrap">
+          <div style="display: flex; align-items: center; gap: 12px;">
+            <img class="guest-group-icon" src="/ui-icons/guest-group.png" alt="guest group icon" />
+            <div style="display: flex; align-items: start; flex-direction: column; gap: 4px;">
+              <div class="guest-group-title">Guest Group</div>
+              <div class="guest-group-summary">
+                {{ group.adultCount + group.childCount || 0 }} guests • {{ group.adultCount }} adults • {{ group.childCount }} child
+              </div>
+              <div class="guest-group-pic">PIC: {{ group.leaderPhone || '--' }}</div>
+            </div>
+          </div>
+          <img class="collapse-arrow" [class.open]="isGuestGroupOpen(group)" src="/ui-icons/arrow-down.png" alt="collapse arrow" />
+        </div>
+        <div class="guest-group-content" [class.collapsed]="!isGuestGroupOpen(group)">
+          <div *ngIf="!group.guests || group.guests.length === 0" class="guest-card-mobile">
+            <p>No guest found.</p>
+          </div>
+          <div class="guest-card-mobile" *ngFor="let guest of group.guests">
+            <div class="guest-card-main">
+              <div class="guest-card-left">
+                <div class="guest-card-name">{{ guest.firstName }} {{ guest.lastName }}</div>
+                <div class="guest-card-meta">Adult • {{ guest.gender || '--' }} • Age {{ guest.age || '--' }}</div>
+                <div class="guest-card-phone"><img src="/ui-icons/phone.png" alt="Phone icon" />{{ guest.phoneNumber || '--' }}</div>
+              </div>
+              <div class="guest-card-right">
+                <div *ngIf="guest.allergies" class="guest-card-allergy-label">Allergy:</div>
+                <div *ngIf="guest.allergies" class="guest-card-allergy-value">{{ guest.allergies }}</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </button>
+    </div>
+
+    <div class="table-contents desktop-only">
+      <div class="guest-row table-head guest-table-head">
         <div>NAME</div>
         <div>PHONE NUMBER</div>
         <div>AGE</div>
         <div>GENDER</div>
         <div>ALLERGIES OR DIETARY RESTRICTIONS</div>
         <div>SPECIAL OCCASION</div>
-        <div class="add-guest">
-          <span>+</span>
-          <span>Add guest</span>
-        </div>
       </div>
-      <div *ngIf="!group.guests || group.guests.length === 0" class="guest-row">
+      <div *ngIf="!group.guests || group.guests.length === 0" class="guest-row guest-card">
         <p>No guest found.</p>
       </div>
-      <div class="guest-row" *ngFor="let guest of group.guests">
+      <div class="guest-row guest-card" *ngFor="let guest of group.guests">
         <div>
           {{ guest.firstName }} {{ guest.lastName }}
         </div>
@@ -128,15 +157,11 @@
         <div>
           {{ guest.specialOccasion || '--' }}
         </div>
-        <div class="guest-actions">
-          <img class="edit-icon" src="/ui-icons/edit-icon.png" alt="edit icon" />
-          <img class="delete-icon" src="/ui-icons/delete-icon.png" alt="delete icon" />
-        </div>
       </div>
     </div>
   </div>
 
-  <div class="table-card">
+  <div class="table-card desktop-only">
     <!-- HEADER -->
     <div class="table-header">
       <h2>Related Orders</h2>
@@ -191,7 +216,7 @@
             {{ order.status }}
           </span>
         </div>
-        <div class="notes-link">
+        <div class="notes-link" (click)="openGroupNotesModal(order)" style="cursor: pointer;">
           View Notes
         </div>
         <div class="details-link" (click)="goToOrderDetails(order.orderId)">
@@ -201,7 +226,68 @@
     </div>
   </div>
 
-  <div class="table-card">
+  <!-- ORDERS MOBILE -->
+  <div class="orders-group-mobile mobile-only">
+    <div class="mobile-orders-card">
+      <button type="button" class="orders-card-header" (click)="toggleOrdersGroup()">
+        <div class="orders-card-title">
+          <img class="orders-card-icon" src="/ui-icons/order.png" alt="orders icon" />
+          <div>
+            <div class="orders-card-label">Related Orders</div>
+            <div class="orders-card-count">{{ orders.length }} order{{ orders.length === 1 ? '' : 's' }}</div>
+          </div>
+        </div>
+        <img class="collapse-arrow" [class.open]="isOrdersOpen()" src="/ui-icons/arrow-down.png" alt="collapse arrow" />
+      </button>
+      <div class="orders-card-list" [class.collapsed]="!isOrdersOpen()">
+        <div class="orders-card-item" *ngFor="let order of orders" (click)="goToOrderDetails(order.orderId)">
+          <div>
+            <div class="orders-item-title">{{ order.contactName }}</div>
+            <div class="orders-item-meta">{{ formatTourDateTime(order.tourDate, order.tourStartTime) }}</div>
+          </div>
+          <button class="view-notes-btn" (click)="openGroupNotesModal(order); $event.stopPropagation()">
+            View Notes
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- GUIDES MOBILE -->
+  <div class="guides-group-mobile mobile-only">
+    <div class="mobile-guides-card">
+      <button type="button" class="orders-card-header" (click)="toggleGuidesGroup()">
+        <div class="orders-card-title">
+          <!-- <div class="orders-card-icon">👤</div> -->
+           <img class="orders-card-icon" src="/ui-icons/guides.png" alt="guides icon" />
+          <div>
+            <div class="orders-card-label">Guides</div>
+            <div class="orders-card-count">{{ guides.length }} assigned • {{ guides.filter(g => g.status.toLowerCase() === 'accepted').length }} accepted</div>
+          </div>
+        </div>
+        <img class="collapse-arrow" [class.open]="isGuidesOpen()" src="/ui-icons/arrow-down.png" alt="collapse arrow" />
+      </button>
+      <div class="orders-card-list" [class.collapsed]="!isGuidesOpen()">
+        <button type="button" class="guide-card-item" *ngFor="let guide of guides">
+          <div class="guide-card-top">
+            <div class="guide-card-name">
+              {{ guide.name || '--' }}
+              <span *ngIf="guide.role && guide.role.toLowerCase() === 'leader'" class="guide-badge">Leader</span>
+            </div>
+            <span class="guide-status" [class.accepted]="guide.status.toLowerCase() === 'accepted'" [class.pending]="guide.status.toLowerCase() === 'pending'" [class.declined]="guide.status.toLowerCase() === 'declined'">
+              {{ guide.status || '--' }}
+            </span>
+          </div>
+          <div class="guide-card-phone">
+            <img src="/ui-icons/phone.png" alt="phone" />
+            {{ guide.phone || '--' }}
+          </div>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div class="table-card desktop-only">
     <!-- HEADER -->
     <div class="table-header">
       <h2>Guides</h2>
@@ -257,10 +343,36 @@
     </div>
   </div>
 
-  <div class="table-card">
+  <!-- ITINERARY MOBILE -->
+  <div class="itinerary-group-mobile mobile-only">
+    <div class="mobile-itinerary-card">
+      <button type="button" class="orders-card-header" (click)="toggleItineraryGroup()">
+        <div class="orders-card-title orders-card-title-flex">
+          <img class="orders-card-icon" src="/ui-icons/itinerary.png" alt="itinerary icon" />
+          <div class="orders-card-meta-grow">
+            <div class="orders-card-label orders-card-label-row">
+              <span>Itinerary</span>
+              <button class="view-notes-btn" (click)="openNotesModal(); $event.stopPropagation()">View Notes</button>
+            </div>
+            <div class="orders-card-count">{{ itineraryList.length }} item{{ itineraryList.length === 1 ? '' : 's' }}</div>
+          </div>
+        </div>
+        <img class="collapse-arrow" [class.open]="isItineraryOpen()" src="/ui-icons/arrow-down.png" alt="collapse arrow" />
+      </button>
+      <div class="orders-card-list" [class.collapsed]="!isItineraryOpen()">
+        <button type="button" class="orders-card-item" *ngFor="let item of itineraryList">
+          <div class="orders-item-title">{{ item.supplierName || '--' }}</div>
+          <div class="orders-item-meta">{{ formatTourDateTime(item.tourDate , item.scheduledTime) || '--' }}</div>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div class="table-card desktop-only">
     <!-- HEADER -->
-    <div class="table-header">
+    <div class="table-header" style="display: flex; justify-content: space-between; align-items: center;">
       <h2>Itinerary</h2>
+      <button class="view-notes-btn" (click)="openNotesModal()">View Notes</button>
     </div>
     <!-- TABLE -->
     <div class="table-contents">
@@ -314,12 +426,45 @@
     </div>
   </div>
 
-  <div class="table-card">
+  <!-- RECEIPTS MOBILE -->
+  <div class="receipt-group-mobile mobile-only">
+    <div class="mobile-receipt-card">
+      <button type="button" class="orders-card-header" (click)="toggleReceiptsGroup()">
+        <div class="orders-card-title">
+          <img class="orders-card-icon" src="/ui-icons/receipt.png" alt="receipt icon" />
+          <div>
+            <div class="orders-card-label">Receipts</div>
+            <div class="orders-card-count">
+              <span>{{ receipts.length }} receipt{{ receipts.length === 1 ? '' : 's' }}</span>
+            </div>
+            <div class="orders-card-count">
+              <span>Total ${{ formatCurrency(totalVolume) }}</span>
+            </div>
+          </div>
+        </div>
+        <div class="receipt-card-actions">
+          <button class="add-button" (click)="openReceiptModal()">Add</button>
+          <img class="collapse-arrow" [class.open]="isReceiptsOpen()" src="/ui-icons/arrow-down.png" alt="collapse arrow" />
+        </div>
+      </button>
+      <div class="orders-card-list" [class.collapsed]="!isReceiptsOpen()">
+        <button type="button" class="receipt-card-item" *ngFor="let item of receipts">
+          <div style="display: flex; align-items: center; gap: 8px">
+            <div class="orders-item-title">{{ item.supplierName }}</div>
+            <div class="orders-item-meta">{{ formatTourDateTime(item.receiptDate, item.receiptTime) || '--' }}</div>
+          </div>
+          <div style="text-align: right;">{{item.amount | currency}}</div>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div class="table-card desktop-only">
     <div class="table-header">
       <h2>Receipts</h2>
       <button class="add-button" (click)="openReceiptModal()">Add Receipt</button>
     </div>
-    <div class="table-table">
+    <div class="table-contents">
       <div class="receipt-row table-head">
         <div>RESTAURANT</div>
         <div>NOTES</div>
@@ -342,16 +487,16 @@
           {{ receipt.supplierName || '--' }}
         </div>
         <div>
-          {{ receipt.notes }}
+          {{ receipt.notes || '--' }}
         </div>
         <div>
-          ${{ formatCurrency(receipt.fee) }}
+          ${{ formatCurrency(receipt.fee) || '--' }}
         </div>
         <div>
-          ${{ formatCurrency(receipt.tax) }}
+          ${{ formatCurrency(receipt.tax) || '--' }}
         </div>
         <div class="bold">
-          ${{ formatCurrency(receipt.amount) }}
+          ${{ formatCurrency(receipt.amount) || '--' }}
         </div>
         <div>
           <img *ngIf="receipt.imageUrl" class="receipt-image" src="{{ receipt.imageUrl }}" alt="receipt icon"
@@ -381,7 +526,41 @@
     </div>
   </div>
 
-  <div class="table-card">
+  <!-- OTHER EXPENSES MOBILE -->
+  <div class="receipt-group-mobile mobile-only">
+    <div class="mobile-receipt-card">
+      <button type="button" class="orders-card-header" (click)="toggleExpensesGroup()">
+        <div class="orders-card-title">
+          <img class="orders-card-icon" src="/ui-icons/expense.png" alt="receipt icon" />
+          <div>
+            <div class="orders-card-label">Other Expenses</div>
+            <div class="orders-card-count">
+              <span>{{ otherExpenses.length }} expense{{ otherExpenses.length === 1 ? '' : 's' }}</span>
+            </div>
+            <div class="orders-card-count">
+              <span>Total ${{ formatCurrency(totalExpenseVolume) }}</span>
+            </div>
+          </div>
+        </div>
+        <div class="receipt-card-actions">
+          <button class="add-button" (click)="openExpenseModal()">Add</button>
+          <img class="collapse-arrow" [class.open]="isExpensesOpen()" src="/ui-icons/arrow-down.png"
+            alt="collapse arrow" />
+        </div>
+      </button>
+      <div class="orders-card-list" [class.collapsed]="!isExpensesOpen()">
+        <button type="button" class="receipt-card-item" *ngFor="let item of otherExpenses">
+          <div style="display: flex; align-items: center; gap: 8px">
+            <div class="orders-item-title">{{ item.name }}</div>
+            <div class="orders-item-meta">{{ item.createdAt | date:'dd/MM/yyyy HH:mm' }}</div>
+          </div>
+          <div style="text-align: right;">{{item.amount | currency}}</div>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div class="table-card desktop-only">
     <div class="table-header">
       <h2>Other Expenses</h2>
       <button class="add-button" (click)="openExpenseModal()">Add Expense</button>
@@ -407,10 +586,10 @@
           {{ expenses.name || '--' }}
         </div>
         <div>
-          {{ expenses.notes }}
+          {{ expenses.notes || '--' }}
         </div>
         <div>
-          ${{ formatCurrency(expenses.amount) }}
+          ${{ formatCurrency(expenses.amount) || '--' }}
         </div>
         <div>
           <img *ngIf="expenses.imageUrl" class="expenses-image" src="{{ expenses.imageUrl }}" alt="expenses icon"
@@ -434,7 +613,7 @@
           TOTAL VOLUME
         </div>
         <div class="footer-total">
-          ${{ formatCurrency(totalVolume) }}
+          ${{ formatCurrency(totalExpenseVolume) }}
         </div>
       </div>
     </div>
@@ -457,4 +636,116 @@
   <app-confirm-dialog [visible]="openConfirmDeleteExpense" message="Do you want to delete this expense?" confirmText="Confirm" cancelText="Cancel"
     (confirm)="onConfirmDeleteExpense()" (cancel)="onCancelDeleteExpense()">
   </app-confirm-dialog>
+
+  <!-- TOUR NOTES DIALOG -->
+  <div class="notes-modal-backdrop" *ngIf="showNotesModal" (click)="closeNotesModal()">
+    <div class="notes-modal-card" (click)="$event.stopPropagation()">
+      <div class="notes-modal-header">
+        <h3>Tour Notes</h3>
+        <button class="close-modal-btn" (click)="closeNotesModal()">&times;</button>
+      </div>
+      <div class="notes-modal-body">
+        <div *ngIf="loadingItineraryNotes" class="loading-state">
+          <span>Loading tour notes...</span>
+        </div>
+        <div *ngIf="!loadingItineraryNotes && itineraryNotes.length === 0" class="empty-state">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="width: 48px; height: 48px; color: #a8a29e; margin-bottom: 12px; display: inline-block;">
+            <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"></path>
+            <polyline points="14 2 14 8 20 8"></polyline>
+            <line x1="16" y1="13" x2="8" y2="13"></line>
+            <line x1="16" y1="17" x2="8" y2="17"></line>
+            <polyline points="10 9 9 9 8 9"></polyline>
+          </svg>
+          <p>No tour notes available for this itinerary.</p>
+        </div>
+        <div *ngIf="!loadingItineraryNotes && itineraryNotes.length > 0" class="notes-links-list">
+          <div *ngFor="let note of itineraryNotes" class="note-download-item">
+            <div class="note-info">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="pdf-icon" style="width: 20px; height: 20px; color: #ef4444; flex-shrink: 0; margin-right: 8px;">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                <polyline points="14 2 14 8 20 8"></polyline>
+                <line x1="16" y1="13" x2="8" y2="13"></line>
+                <line x1="16" y1="17" x2="8" y2="17"></line>
+                <polyline points="10 9 9 9 8 9"></polyline>
+              </svg>
+              <span class="note-name" style="font-size: 14px; font-weight: 500; color: #292524; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 250px;" [title]="note.noteName">{{ note.noteName }}</span>
+            </div>
+            <button class="download-btn" (click)="downloadNote(note)" style="display: flex; align-items: center; gap: 6px; border: none; background: #c89c4f; color: #ffffff; padding: 6px 12px; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer;">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width: 14px; height: 14px; color: #fff;">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                <polyline points="7 10 12 15 17 10"></polyline>
+                <line x1="12" y1="15" x2="12" y2="3"></line>
+              </svg>
+              Download
+            </button>
+      </div>
+    </div>
+  </div>
+    </div>
+  </div>
+  <!-- GROUP NOTES DIALOG (READ-ONLY VIEW GROUP INFORMATION) -->
+  <div class="edit-group-overlay" *ngIf="showGroupNotesModal" role="dialog" aria-modal="true" aria-labelledby="view-group-title">
+    <div class="edit-group-dialog">
+      <header class="edit-group-header">
+        <h3 id="view-group-title">Group Notes Information</h3>
+        <button class="edit-group-close" type="button" (click)="closeGroupNotesModal()" aria-label="Close">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <line x1="18" y1="6" x2="6" y2="18"/>
+            <line x1="6" y1="6" x2="18" y2="18"/>
+          </svg>
+        </button>
+      </header>
+
+      <div class="edit-group-body">
+        <div *ngIf="loadingOrderNotes" class="loading-state loading-state-padded">
+          <p>Loading group notes details...</p>
+        </div>
+
+        <div *ngIf="!loadingOrderNotes && selectedOrderForNotes">
+          <label class="edit-group-field">
+            <span>Leader Phone Number</span>
+            <input type="text" [value]="selectedOrderForNotes.leaderPhone || ''" disabled />
+          </label>
+          <label class="edit-group-field">
+            <span>Guest Group Notes</span>
+            <input type="text" [value]="selectedOrderForNotes.guestGroupNotes || ''" disabled />
+          </label>
+          <label class="edit-group-field">
+            <span>Leader Mail</span>
+            <input type="email" [value]="selectedOrderForNotes.guestEmail || ''" disabled />
+          </label>
+          <label class="edit-group-field">
+            <span>Allergies or Dietary Restrictions</span>
+            <input type="text" [value]="selectedOrderForNotes.dietaryRestrictions || ''" disabled />
+          </label>
+
+          <label class="edit-group-field">
+            <span>Special Requests</span>
+            <div class="edit-chip-select disabled">
+              <span class="edit-request-chip" *ngFor="let request of selectedOrderForNotes.specialRequests">
+                {{ request.label }}
+              </span>
+              <span *ngIf="!selectedOrderForNotes.specialRequests || selectedOrderForNotes.specialRequests.length === 0" class="empty-request-text">
+                None
+              </span>
+            </div>
+          </label>
+
+          <label class="edit-group-field">
+            <span>Guests Special Requests</span>
+            <input type="text" [value]="selectedOrderForNotes.guestSpecialRequests || ''" disabled />
+          </label>
+          <label class="edit-group-field">
+            <span>Hired Car / Driver / Handover Guide</span>
+            <input type="text" [value]="selectedOrderForNotes.hiredCarDriverGuide || ''" disabled />
+          </label>
+        </div>
+      </div>
+
+      <footer class="edit-group-footer">
+        <button class="edit-group-cancel" type="button" (click)="closeGroupNotesModal()">Close</button>
+      </footer>
+    </div>
+  </div>
 </section>
+

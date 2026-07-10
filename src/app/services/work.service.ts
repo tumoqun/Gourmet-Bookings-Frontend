@@ -5,15 +5,12 @@ import { environment } from '../../environments/environment';
 
 export const WorkStatuses: { label: string, value: string }[] = [
   { label: 'Scheduled', value: 'SCHEDULED' },
-  { label: 'Offered', value: 'OFFERED' },
   { label: 'In Prep', value: 'IN_PREP' },
   { label: 'Accepted', value: 'ACCEPTED' },
-  { label: 'Reminder', value: 'REMINDER' },
   { label: 'Ready', value: 'READY' },
   { label: 'Started', value: 'STARTED' },
   { label: 'Ended', value: 'ENDED' },
   { label: 'Closed', value: 'CLOSED' },
-  { label: 'Paid Date', value: 'PAID_DATE' },
 ];
 
 export const GuideWorkStatuses: { label: string, value: string }[] = [
@@ -225,6 +222,8 @@ export interface WorkFilter {
   guideName?: string;
   status?: string;
   tourDate?: string;
+  fromDate?: string;
+  toDate?: string;
   isPrivate?: boolean;
   isShared?: boolean;
 }

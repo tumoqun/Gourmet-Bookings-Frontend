@@ -99,9 +99,14 @@
           <span class="info-value">{{ endTime }}</span>
         </div>
 
-        <div class="info-field full-row">
+        <div class="info-field">
           <span class="info-label">PICK UP</span>
           <span class="info-value">{{ pickupInfo }}&nbsp;&nbsp;&nbsp;<strong>{{ pickupTime }}</strong></span>
+        </div>
+
+        <div class="info-field">
+          <span class="info-label">ADULT/ CHILD</span>
+          <span class="info-value">{{ order?.adultCount ?? 0 }}/ {{ order?.childCount ?? 0 }}</span>
         </div>
 
         <div class="info-field full-row">
@@ -174,16 +179,16 @@
             </svg>
           </button>
 
-          <button class="doc-btn signed" type="button" id="btn-waiver">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-              <polyline points="20 6 9 17 4 12"/>
-            </svg>
-            Waiver · Signed
-            <svg class="link-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-              <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/>
-              <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>
-            </svg>
-          </button>
+<!--          <button class="doc-btn signed" type="button" id="btn-waiver">-->
+<!--            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">-->
+<!--              <polyline points="20 6 9 17 4 12"/>-->
+<!--            </svg>-->
+<!--            Waiver · Signed-->
+<!--            <svg class="link-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">-->
+<!--              <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/>-->
+<!--              <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>-->
+<!--            </svg>-->
+<!--          </button>-->
         </div>
       </div>
 
@@ -194,6 +199,131 @@
           <div class="confirm-dialog-actions">
             <button class="confirm-dialog-cancel" type="button" (click)="closeConfirmDialog()">Cancel</button>
             <button class="confirm-dialog-confirm" type="button" (click)="confirmOrder()">Confirm</button>
+          </div>
+        </div>
+      </div>
+
+      <div
+        *ngIf="makeOfferPopupOpen"
+        class="make-offer-overlay"
+        role="presentation"
+        (click)="closeMakeOfferPopup()"
+      >
+        <div
+          class="make-offer-dialog"
+          role="dialog"
+          aria-modal="true"
+          aria-label="Make offer"
+          (click)="$event.stopPropagation()"
+        >
+          <div class="section">
+            <div class="section-title">Service Details</div>
+            <div class="meta-grid">
+              <div class="meta-item"><div class="label">Service Name</div><div class="value">{{ offerOrder?.orderServices?.[0]?.serviceNameSnapshot || 'N/A' }}</div></div>
+              <div class="meta-item"><div class="label">Type</div><div class="value">{{ offerOrder?.isPrivate ? 'Private' : 'Group Experience' }}</div></div>
+              <div class="meta-item"><div class="label">Date &amp; Time</div><div class="value">{{ formatDate(offerTargetDate) }}, {{ formatTime(offerStartTime) }}</div></div>
+            </div>
+            <div class="meta-grid">
+              <div class="meta-item"><div class="label">Duration</div><div class="value">{{ formatDuration(offerOrder?.orderServices?.[0]?.service?.durationMinutes) }}</div></div>
+              <div class="meta-item">
+                <div class="label">Guests</div>
+                <div class="value">
+                  {{ offerOrder?.adultCount || 0 }} {{ (offerOrder?.adultCount || 0) === 1 ? 'Adult' : 'Adults' }}, {{ offerOrder?.childCount || 0 }} {{ (offerOrder?.childCount || 0) === 1 ? 'Child' : 'Children' }}
+                </div>
+              </div>
+            </div>
+            <div class="pickup-row">
+              <div class="label"><i class="ti ti-map-pin" style="font-size:12px;color:#c9a96e" aria-hidden="true"></i> Pick up details</div>
+              <div class="value">{{ getPickupLocation() }}</div>
+            </div>
+            <div class="pickup-row">
+              <div class="label"><i class="ti ti-flag" style="font-size:12px;color:#c9a96e" aria-hidden="true"></i> Drop off details</div>
+              <div class="value">{{ getDropoffLocation() }}</div>
+            </div>
+          </div>
+
+          <div class="section">
+            <div class="inner-card">
+              <div class="select-row">
+                <select [(ngModel)]="selectedServiceForOffer">
+                  <option *ngFor="let service of services" [value]="service.id">{{ service.name }}</option>
+                </select>
+                <i class="ti ti-chevron-down chevron" aria-hidden="true"></i>
+              </div>
+              <div class="date-time-row">
+                <label class="dt-input dt-input-editable">
+                  <input type="date" [(ngModel)]="offerTargetDate" aria-label="Offer target date">
+                </label>
+                <label class="dt-input dt-input-editable">
+                  <input type="time" [(ngModel)]="offerStartTime" aria-label="Offer start time">
+                </label>
+              </div>
+            </div>
+          </div>
+
+          <div class="section">
+            <div class="section-title">Financial Breakdown</div>
+            <div class="fin-grid">
+              <div class="fin-field">
+                <div class="label">Net Price</div>
+                <div class="fin-input"><span class="sym">$</span><input type="text" [(ngModel)]="offerNetPrice" (input)="calculateTotals()"></div>
+              </div>
+              <div class="fin-field">
+                <div class="label">Discount</div>
+                <div class="disc-combo">
+                  <div class="fin-input" style="flex:1"><input type="text" [(ngModel)]="offerDiscountPercent" (input)="onDiscountPercentInput()"></div>
+                  <span class="disc-pct">%</span>
+                  <div class="fin-input" style="width:90px"><span class="sym">$</span><input type="text" [(ngModel)]="offerDiscountAmount" (input)="onDiscountAmountInput()"></div>
+                </div>
+              </div>
+              <div class="fin-field">
+                <div class="label">PU/DO Fee</div>
+                <div class="fin-input"><span class="sym">$</span><input type="text" [(ngModel)]="offerPuDoFee" (input)="calculateTotals()"></div>
+              </div>
+              <div class="fin-field">
+                <div class="label">Commission</div>
+                <div class="disc-combo">
+                  <div class="fin-input" style="flex:1"><input type="text" [(ngModel)]="offerCommissionPercent" (input)="onCommissionPercentInput()"></div>
+                  <span class="disc-pct">%</span>
+                  <div class="fin-input" style="width:90px"><span class="sym">$</span><input type="text" [(ngModel)]="offerCommissionAmount" (input)="onCommissionAmountInput()"></div>
+                </div>
+              </div>
+            </div>
+            <div class="totals-area">
+              <div></div>
+              <div class="totals-right">
+                <div class="total-line">
+                  <span class="tl-label">Subtotal</span>
+                  <span class="tl-val">$ {{ offerSubtotal }}</span>
+                </div>
+                <div class="total-line">
+                  <span class="tl-label">Estimated Tax</span>
+                  <span class="tl-val">$ {{ offerEstimatedTax }}</span>
+                </div>
+                <div class="total-line total-final">
+                  <span class="tl-label">Total Amount</span>
+                  <span class="tl-val">$ {{ offerTotalAmount }}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="notes-section">
+            <div class="notes-label">Pricing Notes &amp; Internal Context</div>
+            <textarea [(ngModel)]="offerPricingNotes" placeholder="Add specific notes about this offer or special guest requests..."></textarea>
+          </div>
+
+          <div class="footer">
+            <div class="toggle-wrap">
+              <button class="toggle" type="button" role="switch" [class.active]="hostConfirmationRequired" [attr.aria-checked]="hostConfirmationRequired" (click)="toggleHostConfirmation()" aria-label="Require host confirmation"></button>
+              <span>Require Host Confirmation</span>
+            </div>
+            <div class="actions">
+              <button class="btn-cancel" type="button" (click)="closeMakeOfferPopup()">Cancel</button>
+              <button class="btn-confirm" type="button" [disabled]="isSendingOffer" (click)="sendOffer()">
+                {{ isSendingOffer ? 'Saving...' : (hostConfirmationRequired ? 'Make Offer' : 'Confirm Offer') }}
+              </button>
+            </div>
           </div>
         </div>
       </div>

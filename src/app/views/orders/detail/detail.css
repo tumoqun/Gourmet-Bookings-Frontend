@@ -105,6 +105,394 @@ h1 {
 
 /* ── shared card shell ───────────────────────────────────────────────────── */
 
+.make-offer-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 2000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+.make-offer-dialog {
+  background: #fff;
+  border: 0.5px solid #e0e0e0;
+  border-radius: 8px;
+  padding: 0;
+  overflow: hidden;
+  width: min(680px, 100%);
+  max-height: 90vh;
+  overflow-y: auto;
+  flex-shrink: 0;
+}
+
+.section {
+  padding: 20px 24px;
+  border-bottom: 0.5px solid #e0e0e0;
+}
+
+.section-title {
+  font-size: 15px;
+  font-weight: 500;
+  margin-bottom: 16px;
+}
+
+.meta-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 12px 8px;
+  margin-bottom: 12px;
+}
+
+.meta-item .label {
+  font-size: 10px;
+  font-weight: 500;
+  color: #888;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  margin-bottom: 3px;
+}
+
+.meta-item .value {
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.meta-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px 8px;
+  margin-bottom: 14px;
+}
+
+.pickup-row {
+  margin-bottom: 10px;
+}
+
+.pickup-row .label {
+  font-size: 10px;
+  font-weight: 500;
+  color: #888;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  margin-bottom: 3px;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.pickup-row .value {
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.inner-card {
+  border: 0.5px solid #e0e0e0;
+  border-radius: 6px;
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.select-row {
+  position: relative;
+}
+
+.select-row select {
+  width: 100%;
+  border: none;
+  background: transparent;
+  font-size: 14px;
+  font-weight: 500;
+  color: #333;
+  appearance: none;
+  cursor: pointer;
+  padding-right: 20px;
+  outline: none;
+  font-family: inherit;
+}
+
+.chevron {
+  position: absolute;
+  right: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  pointer-events: none;
+  color: #888;
+}
+
+.date-time-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.dt-input {
+  border: 0.5px solid #e0e0e0;
+  border-radius: 6px;
+  padding: 8px 10px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.dt-input span {
+  color: #333;
+  font-size: 13px;
+}
+
+.dt-input i {
+  color: #888;
+  font-size: 16px;
+}
+
+.dt-input-editable input {
+  border: none;
+  background: transparent;
+  color: #333;
+  font-size: 13px;
+  width: 100%;
+  padding: 0;
+  outline: none;
+  font-family: inherit;
+}
+
+.fin-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+  margin-bottom: 14px;
+}
+
+.fin-field .label {
+  font-size: 10px;
+  font-weight: 500;
+  color: #888;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  margin-bottom: 5px;
+}
+
+.fin-input {
+  border: 0.5px solid #e0e0e0;
+  border-radius: 6px;
+  padding: 8px 10px;
+  font-size: 13px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.fin-input .sym {
+  color: #888;
+  font-size: 12px;
+}
+
+.fin-input input {
+  border: none;
+  background: transparent;
+  font-size: 13px;
+  font-weight: 500;
+  font-family: inherit;
+  color: #333;
+  outline: none;
+  width: 100%;
+}
+
+.disc-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.disc-combo {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.disc-combo .fin-input {
+  flex: 1;
+}
+
+.disc-pct {
+  color: #888;
+  font-size: 13px;
+  flex-shrink: 0;
+}
+
+.totals-area {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+  margin-bottom: 0;
+}
+
+.totals-right {
+  border: 0.5px solid #e0e0e0;
+  border-radius: 6px;
+  padding: 14px;
+}
+
+.total-line {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: 8px;
+}
+
+.total-line .tl-label {
+  font-size: 10px;
+  font-weight: 500;
+  color: #888;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.total-line .tl-val {
+  font-size: 15px;
+  font-weight: 500;
+}
+
+.total-final {
+  border-top: 0.5px solid #e0e0e0;
+  padding-top: 10px;
+  margin-top: 4px;
+}
+
+.total-final .tl-label {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #333;
+}
+
+.total-final .tl-val {
+  font-size: 22px;
+  font-weight: 600;
+}
+
+.notes-section {
+  padding: 16px 24px;
+  border-bottom: 0.5px solid #e0e0e0;
+}
+
+.notes-label {
+  font-size: 10px;
+  font-weight: 500;
+  color: #888;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  margin-bottom: 8px;
+}
+
+.notes-section textarea {
+  width: 100%;
+  border: 0.5px solid #e0e0e0;
+  border-radius: 6px;
+  padding: 10px 12px;
+  font-size: 13px;
+  font-family: inherit;
+  color: #333;
+  background: #fff;
+  resize: none;
+  outline: none;
+  min-height: 72px;
+}
+
+.notes-section textarea::placeholder {
+  color: #aaa;
+}
+
+.footer {
+  padding: 16px 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.toggle-wrap {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.toggle {
+  width: 40px;
+  height: 22px;
+  border: none;
+  background: #d6d6d6;
+  border-radius: 11px;
+  position: relative;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.toggle::after {
+  content: '';
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 16px;
+  height: 16px;
+  background: #fff;
+  border-radius: 50%;
+  transition: left 0.15s;
+}
+
+.toggle.active {
+  background: #c9a96e;
+}
+
+.toggle.active::after {
+  left: 20px;
+}
+
+.actions {
+  display: flex;
+  gap: 10px;
+}
+
+.btn-cancel {
+  background: #fff;
+  border: 0.5px solid #d0d0d0;
+  border-radius: 6px;
+  padding: 9px 20px;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  color: #333;
+}
+
+.btn-cancel:hover {
+  background: #f0f0f0;
+}
+
+.btn-confirm {
+  background: #c9a96e;
+  border: none;
+  border-radius: 6px;
+  padding: 9px 20px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  cursor: pointer;
+  color: #fff;
+}
+
+.btn-confirm:hover {
+  background: #b8955a;
+}
+
 .progress-bar-card,
 .guest-group-card,
 .related-orders-card {
@@ -495,7 +883,6 @@ h1 {
   border: 1px solid #ededed;
   border-radius: 16px;
   margin: -10px;
-  margin-bottom: 12px;
 }
 
 .guest-table {
@@ -1335,7 +1722,6 @@ h1 {
   border: 1px solid #ededed;
   border-radius: 16px;
   margin: -10px;
-  margin-bottom: 12px;
 }
 
 .related-table {

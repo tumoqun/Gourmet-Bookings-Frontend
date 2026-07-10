@@ -129,6 +129,7 @@ export class OrdersView implements OnInit {
   protected selectedFilterRequestedDate = '';
   protected selectedFilterOfferedDate = '';
   protected filterPrivateOnly = false;
+  protected filterSharedOnly = false;
   protected activeCalendarField: 'requested' | 'offered' | null = null;
   protected calendarMonth = new Date().getMonth();
   protected calendarYear = new Date().getFullYear();
@@ -167,7 +168,7 @@ export class OrdersView implements OnInit {
   protected handoffTextNewOrder = '';
   protected selectedAreaId?: number;
   protected selectedServiceTypeId?: number;
-  protected dropoffSelected: 'DROP' | 'HAND' = 'DROP';
+  protected dropoffSelected?: 'DROP' | 'HAND';
   protected isPrivateNewOrder = true;
   protected ref1NewOrder = '';
   protected ref2NewOrder = '';
@@ -340,8 +341,19 @@ export class OrdersView implements OnInit {
       );
     }
 
-    if (this.filterPrivateOnly) {
-      filtered = filtered.filter((order) => order.type === "P");
+    if (this.filterPrivateOnly || this.filterSharedOnly) {
+      filtered = filtered.filter((order) => {
+        if (this.filterPrivateOnly && this.filterSharedOnly) {
+          return order.type === "P" || order.type === "S";
+        }
+        if (this.filterPrivateOnly) {
+          return order.type === "P";
+        }
+        if (this.filterSharedOnly) {
+          return order.type === "S";
+        }
+        return true;
+      });
     }
 
     this.filteredOrders = filtered;
@@ -369,6 +381,7 @@ export class OrdersView implements OnInit {
     this.selectedFilterRequestedDate = '';
     this.selectedFilterOfferedDate = '';
     this.filterPrivateOnly = false;
+    this.filterSharedOnly = false;
     this.activeCalendarField = null;
     this.applySearchFilters();
   }
@@ -445,6 +458,13 @@ export class OrdersView implements OnInit {
 
   protected togglePrivateFilter(): void {
     this.filterPrivateOnly = !this.filterPrivateOnly;
+    if (this.filterPrivateOnly) this.filterSharedOnly = false;
+    this.applySearchFilters();
+  }
+
+  protected toggleSharedFilter(): void {
+    this.filterSharedOnly = !this.filterSharedOnly;
+    if (this.filterSharedOnly) this.filterPrivateOnly = false;
     this.applySearchFilters();
   }
 
@@ -687,7 +707,7 @@ export class OrdersView implements OnInit {
     this.dropoffVehicleType = undefined;
     this.dropoffDistanceId = undefined;
     this.handoffTextNewOrder = '';
-    this.dropoffSelected = 'DROP';
+    this.dropoffSelected = undefined;
     this.isPrivateNewOrder = true;
     this.ref1NewOrder = '';
     this.ref2NewOrder = '';
@@ -809,7 +829,6 @@ export class OrdersView implements OnInit {
       && this.hasValue(this.picEmailNewOrder)
       && this.hasValue(this.ref1NewOrder)
       && this.selectedResellerId != null
-      && this.selectedAgentId != null
       && this.selectedContactId != null;
   }
 
@@ -1327,8 +1346,22 @@ export class OrdersView implements OnInit {
   }
 
   protected goToAssignment(): void {
-    // TODO: Implement go to assignment functionality
-    console.log('Go to assignment for order:', this.orderForAction);
+    if (!this.orderForAction) {
+      return;
+    }
+
+    this.apiService.getOrderWorkId(this.orderForAction).subscribe({
+      next: (workId) => {
+        if (workId) {
+          this.router.navigate(['/works', workId]);
+        } else {
+          this.errorMessage = 'No work is linked to this order yet.';
+        }
+      },
+      error: () => {
+        this.errorMessage = 'Could not load the linked work for this order.';
+      },
+    });
   }
 
   protected openConfirmOrderDialog(): void {
@@ -1481,7 +1514,7 @@ export class OrdersView implements OnInit {
 
     const subtotal = discountedNet + puDoFee - calculatedCommission;
     const safeSubtotal = Math.max(0, subtotal);
-    const tax = safeSubtotal * 0.08; // 8% tax rate
+    const tax = safeSubtotal * 0.10; // 10% tax rate
     const total = safeSubtotal + tax;
 
     this.offerSubtotal = this.formatCurrency(safeSubtotal);
@@ -1515,6 +1548,27 @@ export class OrdersView implements OnInit {
 
   protected sendOffer(): void {
     if (!this.offerOrder?.id || this.isSendingOffer) {
+      return;
+    }
+
+    // If the order is already in OFFERED status and the user chose to not require host
+    // confirmation, perform a confirmation instead of sending a new offer (backend
+    // rejects sendOffer for orders already OFFERED).
+    const isOffered = this.offerOrder?.status?.code?.toUpperCase() === 'OFFERED';
+    if (isOffered && !this.hostConfirmationRequired) {
+      this.isSendingOffer = true;
+      this.errorMessage = '';
+      this.apiService.confirmOrder(this.offerOrder.id).subscribe({
+        next: () => {
+          this.isSendingOffer = false;
+          this.closeMakeOfferPopup();
+          this.loadOrders();
+        },
+        error: () => {
+          this.isSendingOffer = false;
+          this.errorMessage = 'Could not confirm this offer.';
+        }
+      });
       return;
     }
 
@@ -1660,7 +1714,7 @@ export class OrdersView implements OnInit {
       status: order.status?.label ?? order.status?.code ?? 'Requested',
       statusTone: this.getStatusTone(order.status?.code ?? ''),
       statusCode: order.status?.code ?? '',
-      guide: order.guide ?? 'Unassigned',
+      guide: order.guide ?? '-',
     };
   }
 

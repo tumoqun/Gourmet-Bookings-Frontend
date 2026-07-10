@@ -1433,7 +1433,7 @@ td strong {
 }
 
 .actions-cell {
-  justify-content: flex-end;
+  justify-content: center;
   gap: 12px;
   white-space: nowrap;
 }
@@ -1473,8 +1473,8 @@ td strong {
 
 .more-action::before {
   position: absolute;
-  top: 5px;
-  left: 7px;
+  top: 4.5px;
+  left: 7.5px;
   width: 3px;
   height: 3px;
   border-radius: 999px;
@@ -2330,7 +2330,7 @@ td strong {
   background: #ffffff;
   font-size: 24px;
   font-weight: 500;
-  line-height: 1;
+  line-height: 0.4;
   cursor: pointer;
 }
 
@@ -2585,4 +2585,30 @@ td strong {
     flex-direction: column;
     gap: 12px;
   }
+}
+
+.type-switch {
+  display: inline-flex;
+  background: #f6f1e6;
+  border-radius: 14px;
+  overflow: hidden;
+  height: 42px;
+  border: 1px solid #c5a05a;
+}
+.type-switch button {
+  border: none;
+  background: transparent;
+  color: #1f2345;
+  padding: 0 16px;
+  font-size: 0.77rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  cursor: pointer;
+  min-width: 104px;
+  transition: all 0.2s ease;
+}
+.type-switch button.active {
+  background: #1f2345;
+  color: #ffffff;
 }

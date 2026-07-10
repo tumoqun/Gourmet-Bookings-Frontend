@@ -31,7 +31,7 @@ export class Sidebar implements OnInit {
     { label: 'Works', icon: '/nav-icons/assignments.png', path: '/works', permissions: ['ASSIGNMENTS_READ'] },
     { label: 'Accounting', icon: '/nav-icons/job-accounting.png', path: '/accounting', permissions: ['ACCOUNTING_READ'] },
     { label: 'Management', icon: '/nav-icons/management.png', path: '/management', permissions: ['ASSIGNMENTS_READ'] },
-    { label: 'Tour Guide', icon: '/nav-icons/assignments.png', path: '/guide', permissions: ['GUIDE_TOURS_READ'] },
+    { label: 'Assignments', icon: '/nav-icons/assignments.png', path: '/guide', permissions: ['GUIDE_TOURS_READ'] },
   ];
 
   protected readonly navItems = computed(() => {

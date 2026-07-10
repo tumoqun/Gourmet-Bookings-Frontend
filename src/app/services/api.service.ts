@@ -325,6 +325,10 @@ export class ApiService {
     return this.http.post<Order>(`${this.apiUrl}/orders/${id}/confirm`, {}, this.getHttpOptions());
   }
 
+  getOrderWorkId(id: number): Observable<number> {
+    return this.http.get<number>(`${this.apiUrl}/orders/${id}/work-id`);
+  }
+
   // Service endpoints
   getServices(): Observable<Service[]> {
     return this.http.get<Service[]>(`${this.apiUrl}/services`);

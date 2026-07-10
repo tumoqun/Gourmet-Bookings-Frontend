@@ -2,7 +2,7 @@ import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
-import { ApiService, Order, OrderAdditionalService, OrderGuest } from '../../../services/api.service';
+import { ApiService, OfferCreateRequest, Order, OrderAdditionalService, OrderGuest, Service } from '../../../services/api.service';
 
 interface GuestMember {
   name: string;
@@ -97,6 +97,29 @@ export class OrderDetail implements OnInit {
   protected signboardAttached = false;
   protected isLinkCopied = false;
 
+  // Make offer popup state
+  protected makeOfferPopupOpen = false;
+  protected isSendingOffer = false;
+  protected offerPricingNotes = '';
+  protected hostConfirmationRequired = false;
+  protected offerOrder?: Order;
+  protected services: Service[] = [];
+  protected selectedServiceForOffer?: number;
+  protected offerTargetDate = '';
+  protected offerStartTime = '';
+  protected offerDays = 0;
+  protected offerNetPrice = '';
+  protected offerDiscountPercent = '0';
+  protected offerDiscountAmount = '0.00';
+  protected offerPuDoFee = '0.00';
+  protected offerCommissionPercent = '10';
+  protected offerCommissionAmount = '0.00';
+  protected offerSubtotal = '0.00';
+  protected offerEstimatedTax = '0.00';
+  protected offerTotalAmount = '0.00';
+  protected offerDiscountInputSource: 'percent' | 'amount' | null = null;
+  protected offerCommissionInputSource: 'percent' | 'amount' | null = null;
+
   constructor(
     private apiService: ApiService,
     private route: ActivatedRoute,
@@ -109,6 +132,8 @@ export class OrderDetail implements OnInit {
 
     const idParam = this.route.snapshot.paramMap.get('id');
     this.orderId = idParam ? Number(idParam) : undefined;
+
+    this.loadServices();
 
     if (this.orderId) {
       this.loadOrder(this.orderId);
@@ -566,7 +591,234 @@ export class OrderDetail implements OnInit {
   }
 
   protected makeOffer(): void {
-    console.log('Make offer for', this.order?.id);
+    if (!this.order?.id) {
+      return;
+    }
+
+    this.populateOfferForm(this.order);
+    this.makeOfferPopupOpen = true;
+    this.cdr.detectChanges();
+
+    this.apiService.getOrder(this.order.id).subscribe({
+      next: (order) => {
+        this.populateOfferForm(order);
+        this.offerOrder = order;
+        this.cdr.detectChanges();
+      },
+      error: () => {
+        this.errorMessage = 'Could not load order details for offer.';
+      },
+    });
+  }
+
+  protected closeMakeOfferPopup(): void {
+    this.makeOfferPopupOpen = false;
+    this.offerOrder = undefined;
+    this.offerPricingNotes = '';
+    this.hostConfirmationRequired = false;
+    this.offerTargetDate = '';
+    this.offerStartTime = '';
+    this.offerNetPrice = '';
+    this.offerDiscountPercent = '0';
+    this.offerDiscountAmount = '0.00';
+    this.offerPuDoFee = '0.00';
+    this.offerCommissionPercent = '10';
+    this.offerCommissionAmount = '0.00';
+    this.offerSubtotal = '0.00';
+    this.offerEstimatedTax = '0.00';
+    this.offerTotalAmount = '0.00';
+    this.offerDays = 0;
+    this.selectedServiceForOffer = undefined;
+    this.isSendingOffer = false;
+  }
+
+  private populateOfferForm(order: Order): void {
+    const firstService = order.orderServices?.[0];
+    this.offerOrder = order;
+    this.offerPricingNotes = '';
+    this.hostConfirmationRequired = false;
+    this.selectedServiceForOffer = firstService?.service?.id;
+    this.offerTargetDate = firstService?.targetDate?.substring(0, 10) || '';
+    this.offerStartTime = firstService?.startTime ? this.normalizeTime(firstService.startTime) : '';
+    this.offerDays = 0;
+    this.offerNetPrice = this.formatCurrency(order.totalFeeAmount || 0);
+    this.offerDiscountPercent = '0';
+    this.offerDiscountAmount = '0.00';
+    this.offerPuDoFee = this.formatCurrency(this.getAdditionalServicesTotal());
+    this.offerCommissionPercent = '10';
+    this.offerCommissionAmount = '0.00';
+    this.calculateTotals();
+  }
+
+  protected getPickupLocation(): string {
+    const pickup = this.offerOrder?.additionalServices?.find(
+      (s) => s.kind.toUpperCase() === 'PICKUP'
+    );
+    if (!pickup) {
+      return 'None required';
+    }
+    return pickup.location?.trim() || '-';
+  }
+
+  protected getDropoffLocation(): string {
+    const dropoff = this.offerOrder?.additionalServices?.find(
+      (s) => s.kind.toUpperCase() === 'DROPOFF'
+    );
+    if (!dropoff) {
+      return 'None required';
+    }
+    return dropoff.location?.trim() || '-';
+  }
+
+  protected formatDuration(minutes?: number): string {
+    if (minutes == null || minutes <= 0) {
+      return 'N/A';
+    }
+    const hours = Math.floor(minutes / 60);
+    const mins = minutes % 60;
+    if (mins === 0) {
+      return hours === 1 ? '1 hour' : `${hours} hours`;
+    }
+    const hourPart = hours > 0 ? (hours === 1 ? '1 hour ' : `${hours} hours `) : '';
+    return `${hourPart}${mins} min`.trim();
+  }
+
+  protected calculateTotals(): void {
+    const netPrice = parseFloat(this.offerNetPrice.replace(/,/g, '')) || 0;
+    const discountPercent = parseFloat(this.offerDiscountPercent) || 0;
+    const discountAmount = this.parseCurrencyInput(this.offerDiscountAmount);
+    const puDoFee = parseFloat(this.offerPuDoFee.replace(/,/g, '')) || 0;
+    const commissionPercent = parseFloat(this.offerCommissionPercent) || 0;
+    const commissionAmount = this.parseCurrencyInput(this.offerCommissionAmount);
+
+    let calculatedDiscount = discountAmount;
+    let calculatedDiscountPercent = discountPercent;
+
+    if (this.offerDiscountInputSource === 'percent') {
+      calculatedDiscount = netPrice * (discountPercent / 100);
+      calculatedDiscountPercent = discountPercent;
+    } else if (this.offerDiscountInputSource === 'amount') {
+      calculatedDiscount = discountAmount;
+      calculatedDiscountPercent = netPrice > 0 ? (discountAmount / netPrice) * 100 : 0;
+    } else if (discountPercent > 0) {
+      calculatedDiscount = netPrice * (discountPercent / 100);
+    }
+
+    const discountedNet = Math.max(0, netPrice - calculatedDiscount);
+
+    let calculatedCommission = commissionAmount;
+    let calculatedCommissionPercent = commissionPercent;
+    if (this.offerCommissionInputSource === 'percent') {
+      calculatedCommission = discountedNet * (commissionPercent / 100);
+      calculatedCommissionPercent = commissionPercent;
+    } else if (this.offerCommissionInputSource === 'amount') {
+      calculatedCommission = commissionAmount;
+      calculatedCommissionPercent = discountedNet > 0 ? (commissionAmount / discountedNet) * 100 : 0;
+    } else if (commissionPercent > 0) {
+      calculatedCommission = discountedNet * (commissionPercent / 100);
+    }
+
+    this.offerDiscountPercent = this.formatPercent(calculatedDiscountPercent);
+    this.offerDiscountAmount = this.formatCurrency(calculatedDiscount);
+    this.offerCommissionPercent = this.formatPercent(calculatedCommissionPercent);
+    this.offerCommissionAmount = this.formatCurrency(calculatedCommission);
+
+    const subtotal = discountedNet + puDoFee - calculatedCommission;
+    const safeSubtotal = Math.max(0, subtotal);
+    const tax = safeSubtotal * 0.10;
+    const total = safeSubtotal + tax;
+
+    this.offerSubtotal = this.formatCurrency(safeSubtotal);
+    this.offerEstimatedTax = this.formatCurrency(tax);
+    this.offerTotalAmount = this.formatCurrency(total);
+  }
+
+  protected onDiscountPercentInput(): void {
+    this.offerDiscountInputSource = 'percent';
+    this.calculateTotals();
+  }
+
+  protected onDiscountAmountInput(): void {
+    this.offerDiscountInputSource = 'amount';
+    this.calculateTotals();
+  }
+
+  protected onCommissionPercentInput(): void {
+    this.offerCommissionInputSource = 'percent';
+    this.calculateTotals();
+  }
+
+  protected onCommissionAmountInput(): void {
+    this.offerCommissionInputSource = 'amount';
+    this.calculateTotals();
+  }
+
+  protected toggleHostConfirmation(): void {
+    this.hostConfirmationRequired = !this.hostConfirmationRequired;
+  }
+
+  protected sendOffer(): void {
+    if (!this.offerOrder?.id || this.isSendingOffer) {
+      return;
+    }
+
+    // If the order is already in OFFERED status and the user chose to not require host
+    // confirmation, perform a confirmation instead of sending a new offer.
+    const isOffered = this.offerOrder?.status?.code?.toUpperCase() === 'OFFERED';
+    if (isOffered && !this.hostConfirmationRequired) {
+      this.isSendingOffer = true;
+      this.errorMessage = '';
+      this.apiService.confirmOrder(this.offerOrder.id).subscribe({
+        next: () => {
+          this.isSendingOffer = false;
+          this.closeMakeOfferPopup();
+          if (this.orderId) {
+            this.loadOrder(this.orderId);
+          }
+        },
+        error: () => {
+          this.isSendingOffer = false;
+          this.errorMessage = 'Could not confirm this offer.';
+        }
+      });
+      return;
+    }
+
+    this.calculateTotals();
+
+    const request: OfferCreateRequest = {
+      serviceId: this.selectedServiceForOffer ? Number(this.selectedServiceForOffer) : undefined,
+      targetDate: this.offerTargetDate || undefined,
+      startTime: this.offerStartTime ? `${this.offerStartTime}:00` : undefined,
+      netPrice: this.parseCurrencyInput(this.offerNetPrice),
+      discountPercent: this.parseCurrencyInput(this.offerDiscountPercent),
+      discountAmount: this.parseCurrencyInput(this.offerDiscountAmount),
+      puDoFee: this.parseCurrencyInput(this.offerPuDoFee),
+      commissionPercent: this.parseCurrencyInput(this.offerCommissionPercent),
+      commissionAmount: this.parseCurrencyInput(this.offerCommissionAmount),
+      subtotal: this.parseCurrencyInput(this.offerSubtotal),
+      estimatedTax: this.parseCurrencyInput(this.offerEstimatedTax),
+      totalAmount: this.parseCurrencyInput(this.offerTotalAmount),
+      pricingNotes: this.offerPricingNotes,
+      hostConfirmationRequired: this.hostConfirmationRequired,
+    };
+
+    this.isSendingOffer = true;
+    this.errorMessage = '';
+
+    this.apiService.sendOffer(this.offerOrder.id, request).subscribe({
+      next: () => {
+        this.isSendingOffer = false;
+        this.closeMakeOfferPopup();
+        if (this.orderId) {
+          this.loadOrder(this.orderId);
+        }
+      },
+      error: () => {
+        this.isSendingOffer = false;
+        this.errorMessage = 'Could not confirm this offer.';
+      },
+    });
   }
 
   protected copyLink(): void {
@@ -640,6 +892,17 @@ export class OrderDetail implements OnInit {
     );
   }
 
+  protected loadServices(): void {
+    this.apiService.getServices().subscribe({
+      next: (services) => {
+        this.services = services;
+      },
+      error: () => {
+        this.services = [];
+      },
+    });
+  }
+
   protected formatDate(dateString?: string): string {
     if (!dateString) return '—';
     const parts = dateString.substring(0, 10).split('-');
@@ -663,6 +926,54 @@ export class OrderDetail implements OnInit {
     const date = new Date();
     date.setHours(hh, mm, 0, 0);
     return date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }).replace(' ', ' ');
+  }
+
+  private parseCurrencyInput(value: string): number {
+    return parseFloat(value.replace(/,/g, '')) || 0;
+  }
+
+  protected getOfferTotalFee(): number {
+    if (!this.offerOrder) {
+      return 0;
+    }
+
+    let total = this.offerOrder.totalFeeAmount || 0;
+    if (this.offerOrder.additionalServices) {
+      this.offerOrder.additionalServices.forEach((service) => {
+        if (service.feeAmount) {
+          total += service.feeAmount;
+        }
+      });
+    }
+
+    return total;
+  }
+
+  protected getAdditionalServicesTotal(): number {
+    if (!this.offerOrder?.additionalServices) {
+      return 0;
+    }
+
+    return this.offerOrder.additionalServices.reduce((sum, service) => {
+      return sum + (service.feeAmount || 0);
+    }, 0);
+  }
+
+  private normalizeTime(time: string): string {
+    const [hour = '', minute = ''] = time.split(':');
+    return `${hour.padStart(2, '0')}:${minute.padStart(2, '0')}`;
+  }
+
+  protected formatCurrency(amount?: number): string {
+    return (amount ?? 0).toLocaleString();
+  }
+
+  private formatPercent(value: number): string {
+    if (!Number.isFinite(value) || value === 0) {
+      return '0';
+    }
+    const rounded = Math.round(value * 100) / 100;
+    return rounded.toString();
   }
 
   private buildTodayLabel(): string {

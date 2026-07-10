@@ -213,6 +213,24 @@ describe('OrdersView', () => {
     expect(targetDateInput.getAttribute('min')).toBe(expectedMinDate);
   });
 
+  it('should allow advancing step one without selecting an original agent', () => {
+    const fixture = createFixture();
+    const compiled = openNewOrderDialog(fixture);
+
+    const dialog = getDialog(compiled);
+    setInputValue(dialog.querySelector('input[placeholder="Enter Name"]') as HTMLInputElement, 'Alexander Pierce');
+    selectOptionByText(dialog.querySelector('#new-order-reseller') as HTMLSelectElement, mockReseller.name);
+    fixture.detectChanges();
+    selectOptionByText(dialog.querySelector('select:not(#new-order-reseller):not(#new-order-agent)') as HTMLSelectElement, mockContact.name);
+    setInputValue(dialog.querySelector('input[type="email"][placeholder="Enter Email"]') as HTMLInputElement, mockContact.email);
+    setInputValue(dialog.querySelectorAll('input[placeholder="Enter Reference Number"]')[0] as HTMLInputElement, 'REF-1');
+    fixture.detectChanges();
+
+    clickPrimaryAction(compiled, fixture);
+
+    expect(getDialog(compiled).querySelector('.order-details-heading')?.textContent).toContain('Service Details');
+  });
+
   function fillStepThreeDropoff(compiled: HTMLElement, fixture: ReturnType<typeof createFixture>) {
     const dialog = getDialog(compiled);
     setInputValue(dialog.querySelector('input[name="voucherNumber"]') as HTMLInputElement, 'VOUCH-1');
@@ -282,6 +300,22 @@ describe('OrdersView', () => {
     fixture.detectChanges();
 
     expect(view.cancelOrder).toHaveBeenCalledWith(1);
+  });
+
+  it('should navigate to the linked work details page when opening assignments', () => {
+    const fixture = createFixture();
+    const view = fixture.componentInstance as any;
+    const routerSpy = spyOn(view.router, 'navigate');
+
+    view.orderForAction = 1;
+    view.goToAssignment();
+
+    const req = httpMock.expectOne('/api/orders/1/work-id');
+    expect(req.request.method).toBe('GET');
+    req.flush(42);
+    fixture.detectChanges();
+
+    expect(routerSpy).toHaveBeenCalledWith(['/works', 42]);
   });
 
   it('should filter orders by reference text', async () => {

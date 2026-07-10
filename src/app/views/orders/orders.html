@@ -135,14 +135,22 @@
           </div>
         </label>
         <div class="filter-toggles">
-          <button
-            class="private-toggle"
-            type="button"
-            [class.active]="filterPrivateOnly"
-            (click)="togglePrivateFilter()"
-          >
-            Private
-          </button>
+          <div class="type-switch">
+            <button
+              type="button"
+              [class.active]="filterPrivateOnly"
+              (click)="togglePrivateFilter()"
+            >
+              Private
+            </button>
+            <button
+              type="button"
+              [class.active]="filterSharedOnly"
+              (click)="toggleSharedFilter()"
+            >
+              Shared
+            </button>
+          </div>
           <button class="allotment-toggle" type="button" aria-label="Allotment Only">
             <span class="checkbox-indicator" aria-hidden="true"></span>
             <span>Allotment Only</span>
@@ -225,17 +233,17 @@
                 </span>
               </td>
               <td>-</td>
-              <td><strong>VND {{ order.fee }}</strong></td>
+              <td><strong>$ {{ order.fee }}</strong></td>
               <td><span class="status {{ order.statusTone }}">{{ order.status }}</span></td>
               <td>
                 <span class="guide">
-                  <span class="guide-icon"></span>
+                  <span class="guide-icon" *ngIf="order.guide !== '-'"></span>
                   <strong>{{ order.guide }}</strong>
                 </span>
               </td>
               <td>
                 <span class="actions-cell">
-                  <a class="view-action" type="button" (click)="submitOrder(order.id)">View Reminder</a>
+<!--                  <a class="view-action" type="button" (click)="submitOrder(order.id)">View Reminder</a>-->
                   <button
                     class="more-action"
                     type="button"
@@ -280,7 +288,7 @@
               <td style="padding-left:0">
                 <div class="summary value">
                   <span style="font-size: 0.75rem; color: #b9b4ac; font-weight:700; text-transform:uppercase; letter-spacing:0.05em; display:block;">Total Volume</span>
-                  <strong style="color: #1f2345; font-size: 1.05rem; display:block; margin-top:4px;">VND {{ formatCurrency(totalVolume) }}</strong>
+                  <strong style="color: #1f2345; font-size: 1.05rem; display:block; margin-top:4px;">$ {{ formatCurrency(totalVolume) }}</strong>
                 </div>
               </td>
               <td colspan="3"></td>
@@ -538,7 +546,7 @@
                  <input type="radio" name="drop-service-type" [ngModel]="dropoffSelected" (ngModelChange)="onDropoffSelectionChange($event)" [value]="'HAND'" />
                </label>
             </div>
-            <ng-container *ngIf="dropoffSelected === 'DROP'; else handoffFields">
+            <ng-container *ngIf="dropoffSelected !== 'HAND'; else handoffFields">
               <p>The suggested drop-off time will be included in the order offer or confirmation</p>
               <input type="text" placeholder="Enter Drop-off Location" aria-label="Drop-off location" [(ngModel)]="dropoffLocationNewOrder" name="dropoffLocation" />
               <select aria-label="Drop-off vehicle type" [(ngModel)]="dropoffVehicleType" name="dropoffVehicleType">
@@ -692,7 +700,7 @@
           <line x1="8" y1="17" x2="12" y2="17"/>
         </svg>
       </span>
-      Go to Assignment
+      View Work Details
     </div>
     }
 
@@ -874,26 +882,26 @@
         <div class="fin-grid">
           <div class="fin-field">
             <div class="label">Net Price</div>
-            <div class="fin-input"><span class="sym">VND</span><input type="text" [(ngModel)]="offerNetPrice" (input)="calculateTotals()"></div>
+            <div class="fin-input"><span class="sym">$</span><input type="text" [(ngModel)]="offerNetPrice" (input)="calculateTotals()"></div>
           </div>
           <div class="fin-field">
             <div class="label">Discount</div>
             <div class="disc-combo">
               <div class="fin-input" style="flex:1"><input type="text" [(ngModel)]="offerDiscountPercent" (input)="onDiscountPercentInput()"></div>
               <span class="disc-pct">%</span>
-              <div class="fin-input" style="width:90px"><span class="sym">VND</span><input type="text" [(ngModel)]="offerDiscountAmount" (input)="onDiscountAmountInput()"></div>
+              <div class="fin-input" style="width:90px"><span class="sym">$</span><input type="text" [(ngModel)]="offerDiscountAmount" (input)="onDiscountAmountInput()"></div>
             </div>
           </div>
           <div class="fin-field">
             <div class="label">PU/DO Fee</div>
-            <div class="fin-input"><span class="sym">VND</span><input type="text" [(ngModel)]="offerPuDoFee" (input)="calculateTotals()"></div>
+            <div class="fin-input"><span class="sym">$</span><input type="text" [(ngModel)]="offerPuDoFee" (input)="calculateTotals()"></div>
           </div>
           <div class="fin-field">
             <div class="label">Commission</div>
             <div class="disc-combo">
               <div class="fin-input" style="flex:1"><input type="text" [(ngModel)]="offerCommissionPercent" (input)="onCommissionPercentInput()"></div>
               <span class="disc-pct">%</span>
-              <div class="fin-input" style="width:90px"><span class="sym">VND</span><input type="text" [(ngModel)]="offerCommissionAmount" (input)="onCommissionAmountInput()"></div>
+              <div class="fin-input" style="width:90px"><span class="sym">$</span><input type="text" [(ngModel)]="offerCommissionAmount" (input)="onCommissionAmountInput()"></div>
             </div>
           </div>
         </div>
@@ -902,15 +910,15 @@
           <div class="totals-right">
             <div class="total-line">
               <span class="tl-label">Subtotal</span>
-              <span class="tl-val">VND {{ offerSubtotal }}</span>
+              <span class="tl-val">$ {{ offerSubtotal }}</span>
             </div>
             <div class="total-line">
               <span class="tl-label">Estimated Tax</span>
-              <span class="tl-val">VND {{ offerEstimatedTax }}</span>
+              <span class="tl-val">$ {{ offerEstimatedTax }}</span>
             </div>
             <div class="total-line total-final">
               <span class="tl-label">Total Amount</span>
-              <span class="tl-val">VND {{ offerTotalAmount }}</span>
+              <span class="tl-val">$ {{ offerTotalAmount }}</span>
             </div>
           </div>
         </div>

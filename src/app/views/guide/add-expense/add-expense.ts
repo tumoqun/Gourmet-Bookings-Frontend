@@ -1,6 +1,6 @@
 import { CommonModule } from '@angular/common';
 import { ChangeDetectorRef, Component, EventEmitter, inject, Input, Output } from '@angular/core';
-import { FormBuilder, ReactiveFormsModule } from '@angular/forms';
+import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Expense, ExpenseForm, ExpenseService } from '../../../services/expense.service';
 import { FileService } from '../../../services/file.service';
 import { environment } from '../../../../environments/environment';
@@ -27,8 +27,8 @@ export class AddExpense {
   uploading = false;
 
   expenseForm = this.fb.group({
-    name: [''],
-    amount: [0],
+    name: ['', Validators.required],
+    amount: [0, [Validators.required, Validators.min(0.01)]],
     notes: [''],
     imageUrl: [''],
   });

@@ -216,7 +216,7 @@
             {{ order.status }}
           </span>
         </div>
-        <div class="notes-link">
+        <div class="notes-link" (click)="openGroupNotesModal(order)" style="cursor: pointer;">
           View Notes
         </div>
         <div class="details-link" (click)="goToOrderDetails(order.orderId)">
@@ -240,10 +240,15 @@
         <img class="collapse-arrow" [class.open]="isOrdersOpen()" src="/ui-icons/arrow-down.png" alt="collapse arrow" />
       </button>
       <div class="orders-card-list" [class.collapsed]="!isOrdersOpen()">
-        <button type="button" class="orders-card-item" *ngFor="let order of orders" (click)="goToOrderDetails(order.orderId)">
-          <div class="orders-item-title">{{ order.contactName }}</div>
-          <div class="orders-item-meta">{{ formatTourDateTime(order.tourDate, order.tourStartTime) }}</div>
-        </button>
+        <div class="orders-card-item" *ngFor="let order of orders" (click)="goToOrderDetails(order.orderId)">
+          <div>
+            <div class="orders-item-title">{{ order.contactName }}</div>
+            <div class="orders-item-meta">{{ formatTourDateTime(order.tourDate, order.tourStartTime) }}</div>
+          </div>
+          <button class="view-notes-btn" (click)="openGroupNotesModal(order); $event.stopPropagation()">
+            View Notes
+          </button>
+        </div>
       </div>
     </div>
   </div>
@@ -342,12 +347,12 @@
   <div class="itinerary-group-mobile mobile-only">
     <div class="mobile-itinerary-card">
       <button type="button" class="orders-card-header" (click)="toggleItineraryGroup()">
-        <div class="orders-card-title" style="flex-grow: 1; display: flex; align-items: center; width: 100%;">
+        <div class="orders-card-title orders-card-title-flex">
           <img class="orders-card-icon" src="/ui-icons/itinerary.png" alt="itinerary icon" />
-          <div style="flex-grow: 1; margin-right: 12px; text-align: left;">
-            <div class="orders-card-label" style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
+          <div class="orders-card-meta-grow">
+            <div class="orders-card-label orders-card-label-row">
               <span>Itinerary</span>
-              <button class="view-notes-btn" (click)="openNotesModal(); $event.stopPropagation()" style="padding: 4px 8px; font-size: 11px; font-weight: 700; border: 1.5px solid #c89c4f; background: #fff; color: #c89c4f; border-radius: 6px; cursor: pointer; transition: all 0.15s;">View Notes</button>
+              <button class="view-notes-btn" (click)="openNotesModal(); $event.stopPropagation()">View Notes</button>
             </div>
             <div class="orders-card-count">{{ itineraryList.length }} item{{ itineraryList.length === 1 ? '' : 's' }}</div>
           </div>
@@ -673,9 +678,74 @@
               </svg>
               Download
             </button>
-          </div>
-        </div>
       </div>
     </div>
   </div>
+    </div>
+  </div>
+  <!-- GROUP NOTES DIALOG (READ-ONLY VIEW GROUP INFORMATION) -->
+  <div class="edit-group-overlay" *ngIf="showGroupNotesModal" role="dialog" aria-modal="true" aria-labelledby="view-group-title">
+    <div class="edit-group-dialog">
+      <header class="edit-group-header">
+        <h3 id="view-group-title">Group Notes Information</h3>
+        <button class="edit-group-close" type="button" (click)="closeGroupNotesModal()" aria-label="Close">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <line x1="18" y1="6" x2="6" y2="18"/>
+            <line x1="6" y1="6" x2="18" y2="18"/>
+          </svg>
+        </button>
+      </header>
+
+      <div class="edit-group-body">
+        <div *ngIf="loadingOrderNotes" class="loading-state loading-state-padded">
+          <p>Loading group notes details...</p>
+        </div>
+
+        <div *ngIf="!loadingOrderNotes && selectedOrderForNotes">
+          <label class="edit-group-field">
+            <span>Leader Phone Number</span>
+            <input type="text" [value]="selectedOrderForNotes.leaderPhone || ''" disabled />
+          </label>
+          <label class="edit-group-field">
+            <span>Guest Group Notes</span>
+            <input type="text" [value]="selectedOrderForNotes.guestGroupNotes || ''" disabled />
+          </label>
+          <label class="edit-group-field">
+            <span>Leader Mail</span>
+            <input type="email" [value]="selectedOrderForNotes.guestEmail || ''" disabled />
+          </label>
+          <label class="edit-group-field">
+            <span>Allergies or Dietary Restrictions</span>
+            <input type="text" [value]="selectedOrderForNotes.dietaryRestrictions || ''" disabled />
+          </label>
+
+          <label class="edit-group-field">
+            <span>Special Requests</span>
+            <div class="edit-chip-select disabled">
+              <span class="edit-request-chip" *ngFor="let request of selectedOrderForNotes.specialRequests">
+                {{ request.label }}
+              </span>
+              <span *ngIf="!selectedOrderForNotes.specialRequests || selectedOrderForNotes.specialRequests.length === 0" class="empty-request-text">
+                None
+              </span>
+            </div>
+          </label>
+
+          <label class="edit-group-field">
+            <span>Guests Special Requests</span>
+            <input type="text" [value]="selectedOrderForNotes.guestSpecialRequests || ''" disabled />
+          </label>
+          <label class="edit-group-field">
+            <span>Hired Car / Driver / Handover Guide</span>
+            <input type="text" [value]="selectedOrderForNotes.hiredCarDriverGuide || ''" disabled />
+          </label>
+        </div>
+      </div>
+
+      <footer class="edit-group-footer">
+        <button class="edit-group-cancel" type="button" (click)="closeGroupNotesModal()">Close</button>
+      </footer>
+    </div>
+  </div>
 </section>
+

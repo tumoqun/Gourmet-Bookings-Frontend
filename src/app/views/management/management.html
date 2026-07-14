@@ -1,0 +1,237 @@
+<div class="management-page">
+  <section class="management-content" aria-labelledby="management-title">
+    <header class="topbar">
+      <div>
+        <h1 id="management-title">Management</h1>
+        <p>{{ todayLabel }}</p>
+      </div>
+    </header>
+
+    <div class="status-tabs" aria-label="Management tabs">
+      <button
+        type="button"
+        *ngFor="let tab of tabs"
+        [class.active]="tab.id === activeTab"
+        (click)="setTab(tab.id)"
+      >
+        <span>{{ tab.label }}</span>
+      </button>
+    </div>
+
+    <!-- Active Tab: Users -->
+    <ng-container *ngIf="activeTab === 'Users'">
+      <section class="filters-card" aria-label="Filters">
+        <div class="filter-actions">
+          <label class="search-field">
+            <input aria-label="Search" placeholder="Search Name" [(ngModel)]="searchQuery" (input)="applyFilters()" />
+          </label>
+          <button class="primary-action" type="button" (click)="openAddModal()">
+            + Add User
+          </button>
+        </div>
+      </section>
+
+      <section class="table-card" aria-label="Users data table">
+        <div class="table-scroll">
+          <table>
+            <thead>
+              <tr>
+                <th>Full Name</th>
+                <th>Email Address</th>
+                <th>Role</th>
+                <th>Status</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              <!-- Loading -->
+              <tr *ngIf="isLoading && paginatedUsers.length === 0">
+                <td class="table-state" colspan="5">Loading users…</td>
+              </tr>
+
+              <!-- Empty -->
+              <tr *ngIf="!isLoading && paginatedUsers.length === 0">
+                <td class="table-state" colspan="5">No users found.</td>
+              </tr>
+
+              <!-- Data rows -->
+              <tr *ngFor="let user of paginatedUsers">
+                <td><strong>{{ user.fullName }}</strong></td>
+                <td>{{ user.email }}</td>
+                <td>
+                  <span class="pill role-pill">{{ user.role?.name || 'No Role' }}</span>
+                </td>
+                <td>
+                  <span class="status-chip" [class.active]="user.isActive" [class.inactive]="!user.isActive">
+                    {{ user.isActive ? 'Active' : 'Inactive' }}
+                  </span>
+                </td>
+                <td>
+                  <div class="action-buttons">
+                    <button class="action-btn edit" type="button" aria-label="Edit user" (click)="openEditModal(user)">
+                      <!-- Edit pencil SVG icon -->
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                        <path d="M18.5 2.5a2.121 2.121 0 1 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                      </svg>
+                    </button>
+                    <button class="action-btn delete" type="button" aria-label="Delete user" (click)="confirmDelete(user)">
+                      <!-- Trash bin SVG icon -->
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polyline points="3 6 5 6 21 6"></polyline>
+                        <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                        <line x1="10" y1="11" x2="10" y2="17"></line>
+                        <line x1="14" y1="11" x2="14" y2="17"></line>
+                      </svg>
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <footer class="table-footer" *ngIf="filteredUsers.length > 0">
+          <div class="pagination-controls">
+            <div class="rows-control">
+              <span>Show:</span>
+              <div class="rows-select-wrapper">
+                <select class="rows-select" [ngModel]="pageSize" (change)="onPageSizeChange($event)">
+                  <option *ngFor="let size of pageSizeOptions" [value]="size">
+                    {{ size }}
+                  </option>
+                </select>
+                <img class="dropdown-icon" src="/ui-icons/arrow-down.png" alt="Dropdown icon" />
+              </div>
+              <span>rows</span>
+            </div>
+            <div class="pagination" aria-label="Pagination">
+              <!-- First -->
+              <button class="pagination-item" type="button" (click)="goToFirstPage()" [disabled]="pageNumber === 0">
+                <img class="page-edge first" src="/ui-icons/first-prev.png" alt="First page" />
+              </button>
+              <!-- Previous -->
+              <button class="pagination-item" type="button" (click)="goToPreviousPage()" [disabled]="pageNumber === 0">
+                <img class="page-edge previous" src="/ui-icons/next.png" alt="Previous page" style="transform: rotate(180deg);" />
+              </button>
+              <!-- Dynamic Pages -->
+              <button *ngFor="let page of visiblePages" type="button" class="page-button" [class.active]="page === pageNumber"
+                (click)="goToPage(page)">
+                {{ page + 1 }}
+              </button>
+              <!-- Next -->
+              <button class="pagination-item" type="button" (click)="goToNextPage()" [disabled]="pageNumber >= totalPages - 1">
+                <img class="page-edge next" src="/ui-icons/next.png" alt="Next page" />
+              </button>
+              <!-- Last -->
+              <button class="pagination-item" type="button" (click)="goToLastPage()" [disabled]="pageNumber >= totalPages - 1">
+                <img class="page-edge last" src="/ui-icons/last-next.png" alt="Last page" />
+              </button>
+            </div>
+            <span>{{ totalElements }} records</span>
+          </div>
+        </footer>
+      </section>
+    </ng-container>
+
+    <!-- Placeholders for other tabs -->
+    <ng-container *ngIf="activeTab !== 'Users'">
+      <section class="placeholder-section">
+        <div class="placeholder-card">
+          <h3>{{ activeTab }} Management</h3>
+          <p>This tab is currently under development. Please check back later.</p>
+        </div>
+      </section>
+    </ng-container>
+
+  </section>
+</div>
+
+<!-- Add/Edit User Form Modal -->
+<div class="modal-backdrop" *ngIf="isModalOpen" (click)="closeModal()">
+  <div class="modal-dialog" (click)="$event.stopPropagation()">
+    <header class="modal-header">
+      <h2>{{ modalTitle }}</h2>
+      <button class="close-btn" type="button" aria-label="Close modal" (click)="closeModal()">&times;</button>
+    </header>
+
+    <form class="modal-body" (ngSubmit)="saveUser()">
+      <label class="field">
+        <span>Full Name</span>
+        <input
+          type="text"
+          name="fullName"
+          [(ngModel)]="fullName"
+          placeholder="Enter full name"
+          required
+        />
+      </label>
+
+      <label class="field">
+        <span>Email Address</span>
+        <input
+          type="email"
+          name="email"
+          [(ngModel)]="email"
+          placeholder="Enter email address"
+          required
+          [disabled]="isEditMode"
+        />
+      </label>
+
+      <label class="field">
+        <span>Role</span>
+        <select name="role" [(ngModel)]="role" required [disabled]="isEditMode">
+          <option value="">Select Role</option>
+          <ng-container *ngFor="let r of roles">
+            <option *ngIf="isEditMode || r.code !== 'ADMIN'" [value]="r.code">{{ r.name }}</option>
+          </ng-container>
+        </select>
+      </label>
+
+      <!-- Conditional field: Reseller mapping if AGENT role chosen -->
+      <label class="field" *ngIf="role === 'AGENT'">
+        <span>Reseller Association</span>
+        <select name="resellerId" [(ngModel)]="resellerId" required>
+          <option [value]="null">Select Reseller</option>
+          <option *ngFor="let r of resellers" [value]="r.id">{{ r.name }}</option>
+        </select>
+      </label>
+
+      <!-- Conditional field: Salary Scale mapping if GUIDE role chosen -->
+      <label class="field" *ngIf="role === 'GUIDE'">
+        <span>Salary Scale</span>
+        <select name="salaryScaleKey" [(ngModel)]="salaryScaleKey" required>
+          <option value="">Select Salary Scale</option>
+          <option *ngFor="let s of salaryScales" [value]="s.scaleKey">
+            {{ s.scaleKey }} ({{ s.hourlySalary | currency:'VND':'symbol':'1.0-0' }}/hr)
+          </option>
+        </select>
+      </label>
+
+      <footer class="modal-footer">
+        <button class="secondary-btn" type="button" (click)="closeModal()">Cancel</button>
+        <button class="primary-btn" type="submit" [disabled]="saving || !isFormValid()">
+          {{ saving ? 'Saving…' : 'Save' }}
+        </button>
+      </footer>
+    </form>
+  </div>
+</div>
+
+<!-- Delete Confirmation Dialog -->
+<div class="modal-backdrop delete-backdrop" *ngIf="isDeleteConfirmOpen" (click)="closeDeleteConfirm()">
+  <div class="modal-dialog delete-dialog" (click)="$event.stopPropagation()">
+    <header class="modal-header">
+      <h2>Delete User</h2>
+      <button class="close-btn" type="button" aria-label="Close dialog" (click)="closeDeleteConfirm()">&times;</button>
+    </header>
+    <div class="modal-body delete-body">
+      <p>Are you sure you want to delete user <strong>{{ userToDelete?.fullName }}</strong> ({{ userToDelete?.email }})?</p>
+      <footer class="modal-footer">
+        <button class="secondary-btn" type="button" (click)="closeDeleteConfirm()">Cancel</button>
+        <button class="primary-btn danger-btn" type="button" (click)="deleteUser()">Delete User</button>
+      </footer>
+    </div>
+  </div>
+</div>

@@ -549,6 +549,80 @@ td strong {
   color: #8a837a;
 }
 
+.accounting-row {
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+}
+
+.accounting-row:hover {
+  background: #faf8f4;
+}
+
+/* ── Review modal ─────────────────────────────────────────────────────── */
+
+.review-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: rgba(15, 23, 42, 0.55);
+  backdrop-filter: blur(4px);
+  box-sizing: border-box;
+}
+
+.review-modal {
+  position: relative;
+  width: min(1280px, 100%);
+  max-height: calc(100vh - 48px);
+  border: 1px solid #ebe8e3;
+  border-radius: 22px;
+  background: #ffffff;
+  box-shadow: 0 28px 64px rgba(31, 35, 69, 0.22);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.review-modal-close {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  z-index: 2;
+  width: 36px;
+  height: 36px;
+  border: 0;
+  border-radius: 10px;
+  background: #f5f5f4;
+  color: #3b3a38;
+  font-size: 1.4rem;
+  line-height: 1;
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+}
+
+.review-modal-close:hover {
+  background: #ebe8e3;
+}
+
+.review-modal-body {
+  overflow: auto;
+  padding: 28px 32px 32px;
+}
+
+@media (max-width: 760px) {
+  .review-modal-backdrop {
+    padding: 12px;
+  }
+
+  .review-modal-body {
+    padding: 20px 14px 24px;
+  }
+}
+
 /* ── Utility states ───────────────────────────────────────────────────── */
 
 .table-state {

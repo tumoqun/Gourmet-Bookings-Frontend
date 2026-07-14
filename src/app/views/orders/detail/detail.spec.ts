@@ -71,4 +71,18 @@ describe('OrderDetail guest editing', () => {
     expect(component.guestMembers[0].allergies).toBe('Peanuts');
     expect(component.isAddingGuest).toBeFalse();
   });
+
+  it('navigates to the linked work when view work details is selected', () => {
+    const router = { navigate: jasmine.createSpy('navigate') } as any;
+    const cdr = { detectChanges: jasmine.createSpy('detectChanges') } as any;
+    const detail = new OrderDetail(apiService, { snapshot: { paramMap: { get: () => '1' } } } as any, router, cdr);
+
+    detail.order = { id: 42 } as any;
+    apiService.getOrderWorkId = jasmine.createSpy('getOrderWorkId').and.returnValue(of(77));
+
+    detail.goToAssignment();
+
+    expect(apiService.getOrderWorkId).toHaveBeenCalledWith(42);
+    expect(router.navigate).toHaveBeenCalledWith(['/works', 77]);
+  });
 });

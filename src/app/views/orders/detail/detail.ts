@@ -845,6 +845,25 @@ export class OrderDetail implements OnInit {
     });
   }
 
+  protected goToAssignment(): void {
+    if (!this.order?.id) {
+      return;
+    }
+
+    this.apiService.getOrderWorkId(this.order.id).subscribe({
+      next: (workId) => {
+        if (workId) {
+          this.router.navigate(['/works', workId]);
+        } else {
+          this.errorMessage = 'No work is linked to this order yet.';
+        }
+      },
+      error: () => {
+        this.errorMessage = 'Could not load the linked work for this order.';
+      },
+    });
+  }
+
   protected copyLink(): void {
     const url = window.location.href;
 

@@ -6,6 +6,7 @@ import {
   AccountingItem,
   AccountingFilter,
 } from '../../services/accounting.service';
+import { AccountingReview } from './accounting-review/accounting-review';
 
 type AccountingTabId = 'all' | 'urgent' | 'guide-allowances' | 'pass-through';
 
@@ -48,7 +49,7 @@ const STATUS_TONE_MAP: Record<string, string> = {
 
 @Component({
   selector: 'app-accounting-view',
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, AccountingReview],
   templateUrl: './accounting.html',
   styleUrl: './accounting.css',
 })
@@ -94,6 +95,8 @@ export class AccountingView implements OnInit {
   protected currentPage = 1;
   protected totalPages = 1;
   protected totalElements = 0;
+
+  protected showReviewModal = false;
 
   constructor(
     private accountingService: AccountingService,
@@ -229,6 +232,14 @@ export class AccountingView implements OnInit {
 
   protected setTab(tab: AccountingTabId): void {
     this.activeTab = tab;
+  }
+
+  protected openReview(_row: AccountingRow): void {
+    this.showReviewModal = true;
+  }
+
+  protected closeReview(): void {
+    this.showReviewModal = false;
   }
 
   protected togglePrivate(): void {

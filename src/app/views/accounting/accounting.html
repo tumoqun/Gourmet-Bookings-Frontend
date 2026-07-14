@@ -118,7 +118,11 @@
             </tr>
 
             <!-- Data rows -->
-            <tr *ngFor="let row of rows">
+            <tr
+              *ngFor="let row of rows"
+              class="accounting-row"
+              (click)="openReview(row)"
+            >
               <!-- Guide column — name only, no meta badge -->
               <td class="guide-cell">
                 <div class="guide-row" [class.multi]="row.guides.length > 1">
@@ -193,4 +197,29 @@
       </div>
     </section>
   </section>
+
+  <div
+    class="review-modal-backdrop"
+    *ngIf="showReviewModal"
+    (click)="closeReview()"
+    role="presentation"
+  >
+    <div
+      class="review-modal"
+      role="dialog"
+      aria-modal="true"
+      aria-label="Accounting review"
+      (click)="$event.stopPropagation()"
+    >
+      <button
+        class="review-modal-close"
+        type="button"
+        aria-label="Close review"
+        (click)="closeReview()"
+      >&times;</button>
+      <div class="review-modal-body">
+        <app-accounting-review />
+      </div>
+    </div>
+  </div>
 </div>

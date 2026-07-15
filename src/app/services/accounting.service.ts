@@ -51,6 +51,30 @@ export interface AccountingFilter {
   isPrivate?: boolean;
 }
 
+export interface GuideBasicInfo {
+  avatar: string | null;
+  fullName: string | null;
+}
+
+export interface AssignmentAccountingDetail {
+  guides: GuideBasicInfo[];
+  serviceName: string | null;
+  durationMinutes: number | null;
+  tourType: string | null;
+  guestCount: number | null;
+  statusCode: string | null;
+  statusName: string | null;
+  startTime: string | null;
+  endTime: string | null;
+  standardHoursEarned: number;
+  extraHoursEarned: number;
+  tourHoursEarned: number;
+  hourlySalary: number;
+  taxableSalaryEarned: number;
+  travelExpenses: number;
+  tourReceipts: number;
+}
+
 // ─── Service ──────────────────────────────────────────────────────────────────
 
 @Injectable({ providedIn: 'root' })
@@ -96,6 +120,20 @@ export class AccountingService {
 
     return this.http.get<AccountingPageResponse>(
       `${this.apiUrl}/accounting`,
+      { params },
+    );
+  }
+
+  getAccountingDetail(
+    workId: number,
+    guideId: number,
+  ): Observable<AssignmentAccountingDetail> {
+    const params = new HttpParams()
+      .set('workId', workId.toString())
+      .set('guideId', guideId.toString());
+
+    return this.http.get<AssignmentAccountingDetail>(
+      `${this.apiUrl}/accounting/detail`,
       { params },
     );
   }

@@ -1,70 +1,38 @@
 <section class="review" aria-label="Accounting review">
-  <div class="review-main">
-    <!-- Header: guide + title + activity log -->
+  <div *ngIf="loading" class="review-state">Loading review…</div>
+  <div *ngIf="!loading && error" class="review-state review-state-error">{{ error }}</div>
+
+  <div *ngIf="!loading && !error && detail" class="review-main">
     <div class="review-header">
       <aside class="guide-panel">
-        <div class="guide-avatar" aria-hidden="true">
-          <img src="/ui-icons/image-default.png" alt="" />
+        <div class="guide-avatar">
+          <img [src]="primaryGuideAvatarUrl()" alt="" />
         </div>
-        <p class="guide-name">James Anderson</p>
-        <div class="guide-thumbs" aria-hidden="true">
-          <img src="/ui-icons/image-default.png" alt="" />
-          <img src="/ui-icons/image-default.png" alt="" />
-          <img src="/ui-icons/image-default.png" alt="" />
+        <p class="guide-name">{{ primaryGuideName }}</p>
+        <div class="guide-others" *ngIf="otherGuides.length > 0">
+          <div class="guide-other" *ngFor="let guide of otherGuides">
+            <img
+              class="guide-other-avatar"
+              [src]="guideAvatarUrl(guide.avatar)"
+              alt=""
+            />
+            <span class="guide-other-name">{{ guide.fullName || '--' }}</span>
+          </div>
         </div>
       </aside>
 
       <div class="header-body">
         <div class="title-row">
-          <h2 class="service-title">The Drunken Tiger - 3</h2>
-          <span class="group-pill">GROUP</span>
+          <h2 class="service-title">{{ detail.serviceName || '--' }}</h2>
+          <span class="group-pill">{{ tourTypeLabel }}</span>
         </div>
 
-<!--        <div class="activity-card">-->
-<!--          <button class="activity-add" type="button" aria-label="Add activity note">+</button>-->
-
-<!--          <div class="activity-list">-->
-<!--            <article class="activity-item">-->
-<!--              <div class="activity-meta">-->
-<!--                <span>16:27 14/04/2026</span>-->
-<!--                <span class="activity-author">James Anderson</span>-->
-<!--              </div>-->
-<!--              <div class="activity-body">-->
-<!--                <p>Guest confirmed returned to hotel safely</p>-->
-<!--                <div class="activity-actions">-->
-<!--                  <button type="button" class="icon-btn" aria-label="Edit note">-->
-<!--                    <img src="/ui-icons/edit-icon.png" alt="" />-->
-<!--                  </button>-->
-<!--                  <button type="button" class="icon-btn" aria-label="View attachment">-->
-<!--                    <img src="/ui-icons/image-default.png" alt="" />-->
-<!--                  </button>-->
-<!--                </div>-->
-<!--              </div>-->
-<!--            </article>-->
-
-<!--            <article class="activity-item">-->
-<!--              <div class="activity-meta">-->
-<!--                <span>17:00 14/04/2026</span>-->
-<!--                <span class="activity-author">Mika Chen</span>-->
-<!--              </div>-->
-<!--              <div class="activity-body">-->
-<!--                <p>Restaurant receipt received</p>-->
-<!--                <div class="activity-actions">-->
-<!--                  <button type="button" class="icon-btn" aria-label="Edit note">-->
-<!--                    <img src="/ui-icons/edit-icon.png" alt="" />-->
-<!--                  </button>-->
-<!--                  <button type="button" class="icon-btn" aria-label="View attachment">-->
-<!--                    <img src="/ui-icons/image-default.png" alt="" />-->
-<!--                  </button>-->
-<!--                </div>-->
-<!--              </div>-->
-<!--            </article>-->
-<!--          </div>-->
-<!--        </div>-->
+        <!-- Activity log — skipped for now
+        <div class="activity-card">...</div>
+        -->
       </div>
     </div>
 
-    <!-- Order Status -->
     <div class="status-section">
       <div class="status-header">
         <h3>Order Status</h3>
@@ -74,209 +42,118 @@
         </div>
       </div>
 
-      <div class="stepper" role="list" aria-label="Order status steps">
-        <div class="stepper-bar">
-          <div class="step active" role="listitem" aria-current="step">
-            <span class="step-circle">1</span>
+      <div class="stepper" aria-label="Order status steps">
+        <div class="stepper-track">
+          <div class="stepper-line" aria-hidden="true">
+            <div class="stepper-line-fill" [style.width.%]="progressFillPercent"></div>
           </div>
-          <div class="step" role="listitem"><span class="step-circle">2</span></div>
-          <div class="step" role="listitem"><span class="step-circle">3</span></div>
-          <div class="step" role="listitem"><span class="step-circle">4</span></div>
-          <div class="step" role="listitem"><span class="step-circle">5</span></div>
-          <div class="step" role="listitem"><span class="step-circle">6</span></div>
-          <div class="step" role="listitem"><span class="step-circle">7</span></div>
-          <div class="step" role="listitem"><span class="step-circle">8</span></div>
-          <div class="step" role="listitem"><span class="step-circle">9</span></div>
+
+          <div class="stepper-steps" role="list">
+            <div
+              *ngFor="let step of statusSteps; let i = index"
+              class="stepper-step"
+              role="listitem"
+              [class.completed]="i < activeStepIndex"
+              [class.current]="i === activeStepIndex"
+              [class.upcoming]="i > activeStepIndex"
+              [attr.aria-current]="i === activeStepIndex ? 'step' : null"
+            >
+              <span class="step-circle">{{ i + 1 }}</span>
+            </div>
+          </div>
         </div>
-        <div class="stepper-labels">
-          <span class="step-label">Scheduled</span>
-          <span class="step-label" aria-hidden="true"></span>
-          <span class="step-label" aria-hidden="true"></span>
-          <span class="step-label" aria-hidden="true"></span>
-          <span class="step-label" aria-hidden="true"></span>
-          <span class="step-label" aria-hidden="true"></span>
-          <span class="step-label" aria-hidden="true"></span>
-          <span class="step-label" aria-hidden="true"></span>
-          <span class="step-label" aria-hidden="true"></span>
+
+        <div class="stepper-label-row">
+          <span
+            *ngFor="let step of statusSteps; let i = index"
+            class="stepper-label-slot"
+          >
+            <span *ngIf="i === activeStepIndex" class="stepper-status">{{ activeStatusLabel }}</span>
+          </span>
         </div>
       </div>
     </div>
 
-    <!-- Scheduled financial details -->
     <div class="scheduled-section">
       <div class="finance-card">
         <div class="finance-row">
           <span class="finance-label">Start Time</span>
-          <span class="finance-value">8:00 AM 17/August/2026</span>
+          <span class="finance-value">{{ formatDateTime(detail.startTime) }}</span>
+          <!-- Edit start time — skipped for now
           <button type="button" class="edit-btn" aria-label="Edit start time">
             <img src="/ui-icons/edit-icon.png" alt="" />
           </button>
+          -->
+          <span class="edit-spacer" aria-hidden="true"></span>
         </div>
         <div class="finance-row">
           <span class="finance-label">End Time</span>
-          <span class="finance-value">1:00 PM 17/August/2026</span>
+          <span class="finance-value">{{ formatDateTime(detail.endTime) }}</span>
+          <!-- Edit end time — skipped for now
           <button type="button" class="edit-btn" aria-label="Edit end time">
             <img src="/ui-icons/edit-icon.png" alt="" />
           </button>
+          -->
+          <span class="edit-spacer" aria-hidden="true"></span>
         </div>
         <div class="finance-row">
           <span class="finance-label">Standard Hours Earned</span>
-          <span class="finance-value">3</span>
-          <button type="button" class="edit-btn" aria-label="Edit standard hours">
-            <img src="/ui-icons/edit-icon.png" alt="" />
-          </button>
+          <span class="finance-value">{{ formatHours(detail.standardHoursEarned) }}</span>
+<!--          <button type="button" class="edit-btn" aria-label="Edit standard hours">-->
+<!--            <img src="/ui-icons/edit-icon.png" alt="" />-->
+<!--          </button>-->
         </div>
         <div class="finance-row">
           <span class="finance-label">Extra Hours Earned</span>
-          <span class="finance-value">1</span>
-          <button type="button" class="edit-btn" aria-label="Edit extra hours">
-            <img src="/ui-icons/edit-icon.png" alt="" />
-          </button>
+          <span class="finance-value">{{ formatHours(detail.extraHoursEarned) }}</span>
+<!--          <button type="button" class="edit-btn" aria-label="Edit extra hours">-->
+<!--            <img src="/ui-icons/edit-icon.png" alt="" />-->
+<!--          </button>-->
         </div>
         <div class="finance-row">
           <span class="finance-label">Tour Hours Earned</span>
-          <span class="finance-value">4</span>
-          <button type="button" class="edit-btn" aria-label="Edit tour hours">
-            <img src="/ui-icons/edit-icon.png" alt="" />
-          </button>
+          <span class="finance-value">{{ formatHours(detail.tourHoursEarned) }}</span>
+<!--          <button type="button" class="edit-btn" aria-label="Edit tour hours">-->
+<!--            <img src="/ui-icons/edit-icon.png" alt="" />-->
+<!--          </button>-->
         </div>
         <div class="finance-row">
           <span class="finance-label">Guide's Hourly Salary</span>
-          <span class="finance-value">$ 1000</span>
-          <button type="button" class="edit-btn" aria-label="Edit hourly salary">
-            <img src="/ui-icons/edit-icon.png" alt="" />
-          </button>
+          <span class="finance-value">{{ formatMoney(detail.hourlySalary) }}</span>
+<!--          <button type="button" class="edit-btn" aria-label="Edit hourly salary">-->
+<!--            <img src="/ui-icons/edit-icon.png" alt="" />-->
+<!--          </button>-->
         </div>
+        <!-- Allowance claims — skipped for now
         <div class="finance-row">
           <span class="finance-label">Allowance Claims</span>
           <span class="finance-value">$ 2000</span>
           <button type="button" class="claims-link">2 Claims <span aria-hidden="true">&gt;</span></button>
         </div>
+        -->
         <div class="finance-row">
           <span class="finance-label">Taxable Salary Earned</span>
-          <span class="finance-value">$ 8000</span>
+          <span class="finance-value">{{ formatMoney(detail.taxableSalaryEarned) }}</span>
           <span class="edit-spacer" aria-hidden="true"></span>
         </div>
         <div class="finance-row">
           <span class="finance-label">Travel Expenses</span>
-          <span class="finance-value">$ 100</span>
+          <span class="finance-value">{{ formatMoney(detail.travelExpenses) }}</span>
           <span class="edit-spacer" aria-hidden="true"></span>
         </div>
         <div class="finance-row">
           <span class="finance-label">Tour Receipts</span>
-          <span class="finance-value">$ 2000</span>
+          <span class="finance-value">{{ formatMoney(detail.tourReceipts) }}</span>
           <span class="edit-spacer" aria-hidden="true"></span>
         </div>
       </div>
     </div>
   </div>
 
+  <!-- Calendar + Orders in Period — skipped for now
   <aside class="review-side">
-    <!-- Calendar -->
-    <div class="calendar-card">
-      <div class="calendar-nav">
-        <div class="nav-group">
-          <button type="button" class="nav-chevron" aria-label="Previous month">&lt;</button>
-          <span class="nav-label">Aug</span>
-          <button type="button" class="nav-chevron" aria-label="Next month">&gt;</button>
-        </div>
-        <div class="nav-group">
-          <button type="button" class="nav-chevron" aria-label="Previous year">&lt;</button>
-          <span class="nav-label">2025</span>
-          <button type="button" class="nav-chevron" aria-label="Next year">&gt;</button>
-        </div>
-      </div>
-
-      <div class="calendar-weekdays" aria-hidden="true">
-        <span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span><span>Sun</span>
-      </div>
-
-      <div class="calendar-grid" role="grid" aria-label="August 2025">
-        <span class="day outside">28</span>
-        <span class="day outside">29</span>
-        <span class="day outside">30</span>
-        <span class="day outside">31</span>
-        <span class="day">1</span>
-        <span class="day">2</span>
-        <span class="day">3</span>
-        <span class="day">4</span>
-        <span class="day">5</span>
-        <span class="day">6</span>
-        <span class="day">7</span>
-        <span class="day">8</span>
-        <span class="day">9</span>
-        <span class="day">10</span>
-        <span class="day">11</span>
-        <span class="day">12</span>
-        <span class="day">13</span>
-        <span class="day">14</span>
-        <span class="day">15</span>
-        <span class="day">16</span>
-        <span class="day selected">17</span>
-        <span class="day">18</span>
-        <span class="day">19</span>
-        <span class="day">20</span>
-        <span class="day">21</span>
-        <span class="day">22</span>
-        <span class="day">23</span>
-        <span class="day">24</span>
-        <span class="day">25</span>
-        <span class="day">26</span>
-        <span class="day">27</span>
-        <span class="day">28</span>
-        <span class="day">29</span>
-        <span class="day">30</span>
-        <span class="day">31</span>
-        <span class="day outside">1</span>
-        <span class="day outside">2</span>
-        <span class="day outside">3</span>
-        <span class="day outside">4</span>
-        <span class="day outside">5</span>
-        <span class="day outside">6</span>
-        <span class="day outside">7</span>
-      </div>
-    </div>
-
-    <!-- Orders in Period -->
-    <div class="orders-section">
-      <h3>Orders in Period:</h3>
-      <div class="orders-grid">
-        <article class="order-card">
-          <div class="order-top">
-            <strong>Big Smoke BBQ</strong>
-            <span>Guests: 1</span>
-          </div>
-          <time>17:00 14/04/2026</time>
-        </article>
-        <article class="order-card">
-          <div class="order-top">
-            <strong>Route 66</strong>
-            <span>Guests: 1</span>
-          </div>
-          <time>17:00 14/04/2026</time>
-        </article>
-        <article class="order-card">
-          <div class="order-top">
-            <strong>Liberty Steakhouse</strong>
-            <span>Guests: 1</span>
-          </div>
-          <time>17:00 14/04/2026</time>
-        </article>
-        <article class="order-card">
-          <div class="order-top">
-            <strong>Golden State Burgers</strong>
-            <span>Guests: 1</span>
-          </div>
-          <time>17:00 14/04/2026</time>
-        </article>
-        <article class="order-card">
-          <div class="order-top">
-            <strong>Uncle Sam</strong>
-            <span>Guests: 1</span>
-          </div>
-          <time>17:00 14/04/2026</time>
-        </article>
-      </div>
-    </div>
+    <div class="calendar-card">...</div>
+    <div class="orders-section">...</div>
   </aside>
+  -->
 </section>

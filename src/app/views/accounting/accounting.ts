@@ -1,11 +1,14 @@
 import { CommonModule } from '@angular/common';
 import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { catchError, forkJoin, of, switchMap } from 'rxjs';
 import {
   AccountingService,
   AccountingItem,
   AccountingFilter,
+  AssignmentAccountingDetail,
 } from '../../services/accounting.service';
+import { WorkService } from '../../services/work.service';
 import { AccountingReview } from './accounting-review/accounting-review';
 
 type AccountingTabId = 'all' | 'urgent' | 'guide-allowances' | 'pass-through';
@@ -18,6 +21,7 @@ interface AccountingTab {
 
 /** Flat view-model row consumed by the template */
 interface AccountingRow {
+  workId: number;
   guides: { name: string }[];
   reseller: string;
   ref1: string;
@@ -97,9 +101,14 @@ export class AccountingView implements OnInit {
   protected totalElements = 0;
 
   protected showReviewModal = false;
+  protected reviewLoading = false;
+  protected reviewError: string | null = null;
+  protected reviewDetail: AssignmentAccountingDetail | null = null;
+  protected reviewOrderStatus = '';
 
   constructor(
     private accountingService: AccountingService,
+    private workService: WorkService,
     private cdr: ChangeDetectorRef
   ) {}
 
@@ -164,6 +173,7 @@ export class AccountingView implements OnInit {
     const statusTone = this.getStatusTone(item.status);
 
     return {
+      workId: item.workId,
       guides: (item.guideNames ?? []).map((name) => ({ name })),
       reseller,
       ref1,
@@ -234,12 +244,49 @@ export class AccountingView implements OnInit {
     this.activeTab = tab;
   }
 
-  protected openReview(_row: AccountingRow): void {
+  protected openReview(row: AccountingRow): void {
     this.showReviewModal = true;
+    this.reviewLoading = true;
+    this.reviewError = null;
+    this.reviewDetail = null;
+    this.reviewOrderStatus = '';
+
+    this.workService.getWorkGuides(row.workId).pipe(
+      switchMap((guides) => {
+        const guide = guides[0];
+        if (!guide) {
+          throw new Error('No guide assigned to this work.');
+        }
+
+        return forkJoin({
+          detail: this.accountingService.getAccountingDetail(row.workId, guide.guideId),
+          orders: this.workService.getWorkOrders(row.workId, 'all').pipe(
+            catchError(() => of([])),
+          ),
+        });
+      }),
+    ).subscribe({
+      next: ({ detail, orders }) => {
+        this.reviewDetail = detail;
+        this.reviewOrderStatus = orders[0]?.status ?? '';
+        this.reviewLoading = false;
+        this.cdr.detectChanges();
+      },
+      error: (err) => {
+        console.error('Failed to load accounting review', err);
+        this.reviewError = err?.message ?? 'Failed to load accounting review.';
+        this.reviewLoading = false;
+        this.cdr.detectChanges();
+      },
+    });
   }
 
   protected closeReview(): void {
     this.showReviewModal = false;
+    this.reviewLoading = false;
+    this.reviewError = null;
+    this.reviewDetail = null;
+    this.reviewOrderStatus = '';
   }
 
   protected togglePrivate(): void {

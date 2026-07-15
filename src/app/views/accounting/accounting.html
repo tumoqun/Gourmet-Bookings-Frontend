@@ -218,7 +218,12 @@
         (click)="closeReview()"
       >&times;</button>
       <div class="review-modal-body">
-        <app-accounting-review />
+        <app-accounting-review
+          [detail]="reviewDetail"
+          [loading]="reviewLoading"
+          [error]="reviewError"
+          [orderStatus]="reviewOrderStatus"
+        />
       </div>
     </div>
   </div>

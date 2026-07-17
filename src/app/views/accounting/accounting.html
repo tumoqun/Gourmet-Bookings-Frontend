@@ -29,9 +29,9 @@
       <div class="filter-grid top">
         <label>
           <span>Reseller</span>
-          <select aria-label="Reseller" [(ngModel)]="reseller">
-            <option value="">Reseller</option>
-            <option *ngFor="let option of resellerOptions" [value]="option">{{ option }}</option>
+          <select aria-label="Reseller" [(ngModel)]="resellerId">
+            <option [ngValue]="null">Reseller</option>
+            <option *ngFor="let option of resellerOptions" [ngValue]="option.id">{{ option.name }}</option>
           </select>
         </label>
 
@@ -44,7 +44,7 @@
           <span>Guide Name</span>
           <select aria-label="Guide Name" [(ngModel)]="guideName">
             <option value="">Guide Name</option>
-            <option *ngFor="let option of guideOptions" [value]="option">{{ option }}</option>
+            <option *ngFor="let option of guideOptions" [value]="option.fullName">{{ option.fullName }}</option>
           </select>
         </label>
 
@@ -64,20 +64,27 @@
         <label>
           <span>Status</span>
           <select aria-label="Status" [(ngModel)]="status">
-            <option *ngFor="let option of statusOptions" [value]="option">{{ option }}</option>
+            <option *ngFor="let option of statusOptions" [value]="option.value">{{ option.label }}</option>
           </select>
         </label>
 
         <div class="filter-toggles">
-          <button
-            class="private-toggle"
-            type="button"
-            [class.active]="privateOnly"
-            [attr.aria-pressed]="privateOnly"
-            (click)="togglePrivate()"
-          >
-            Private
-          </button>
+          <div class="type-switch">
+            <button
+              type="button"
+              [class.active]="filterPrivateOnly"
+              (click)="togglePrivateFilter()"
+            >
+              Private
+            </button>
+            <button
+              type="button"
+              [class.active]="filterSharedOnly"
+              (click)="toggleSharedFilter()"
+            >
+              Shared
+            </button>
+          </div>
           <button class="apply" type="button" (click)="applyFilters()">Apply</button>
           <button class="clear" type="button" (click)="clearFilters()">Clear Filters</button>
           <button class="topup" type="button" (click)="topUpRequests()">

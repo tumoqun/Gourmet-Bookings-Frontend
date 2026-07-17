@@ -110,9 +110,9 @@ export class AccountingService {
     if (filter.tourDate?.trim()) {
       params = params.set('tourDate', filter.tourDate.trim());
     }
-    if (filter.status && filter.status !== 'All Statuses') {
-      // Backend compares case-insensitively, but send uppercase for clarity
-      params = params.set('status', filter.status.toUpperCase().replace(/ /g, '_'));
+    if (filter.status?.trim()) {
+      // Backend compares case-insensitively; send uppercase with underscores
+      params = params.set('status', filter.status.trim().toUpperCase().replace(/ /g, '_'));
     }
     if (filter.isPrivate != null) {
       params = params.set('isPrivate', filter.isPrivate.toString());

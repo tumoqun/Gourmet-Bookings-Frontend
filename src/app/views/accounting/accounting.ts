@@ -8,7 +8,9 @@ import {
   AccountingFilter,
   AssignmentAccountingDetail,
 } from '../../services/accounting.service';
-import { WorkService } from '../../services/work.service';
+import { WorkService, WorkStatuses } from '../../services/work.service';
+import { ApiService, Reseller } from '../../services/api.service';
+import { Guide, GuideService } from '../../services/guide.service';
 import { AccountingReview } from './accounting-review/accounting-review';
 
 type AccountingTabId = 'all' | 'urgent' | 'guide-allowances' | 'pass-through';
@@ -74,21 +76,24 @@ export class AccountingView implements OnInit {
 
   protected activeTab: AccountingTabId = 'all';
 
-  // ── filter state (kept for wiring later) ──────────────────────────────────
-  protected readonly resellerOptions: string[] = [];
-  protected readonly guideOptions: string[] = [];
-  protected readonly statusOptions = [
-    'All Statuses', 'Scheduled', 'Offered', 'Accepted',
-    'In Prep', 'Ready', 'Started', 'Ended', 'Closed', 'Cancelled',
+  // ── filter options ────────────────────────────────────────────────────────
+  protected resellerOptions: Reseller[] = [];
+  protected guideOptions: Guide[] = [];
+  protected readonly statusOptions: { label: string; value: string }[] = [
+    { label: 'All Statuses', value: '' },
+    ...WorkStatuses,
+    { label: 'Cancelled', value: 'CANCELLED' },
   ];
 
-  protected reseller = '';
+  // ── filter state ──────────────────────────────────────────────────────────
+  protected resellerId: number | null = null;
   protected ref = '';
   protected guideName = '';
   protected serviceName = '';
   protected tourDate = '';
-  protected status = 'All Statuses';
-  protected privateOnly = true;
+  protected status = '';
+  protected filterPrivateOnly = false;
+  protected filterSharedOnly = false;
 
   // ── table state ───────────────────────────────────────────────────────────
   protected rows: AccountingRow[] = [];
@@ -109,11 +114,45 @@ export class AccountingView implements OnInit {
   constructor(
     private accountingService: AccountingService,
     private workService: WorkService,
+    private apiService: ApiService,
+    private guideService: GuideService,
     private cdr: ChangeDetectorRef
   ) {}
 
   ngOnInit(): void {
+    this.loadFilterOptions();
     this.loadWorks();
+  }
+
+  // ── filter options ────────────────────────────────────────────────────────
+
+  private loadFilterOptions(): void {
+    this.apiService.getResellers().subscribe({
+      next: (resellers) => {
+        this.resellerOptions = [...resellers].sort((a, b) =>
+          (a.name || '').localeCompare(b.name || ''),
+        );
+        this.cdr.detectChanges();
+      },
+      error: (err) => console.error('Failed to load resellers', err),
+    });
+
+    forkJoin({
+      available: this.guideService.getAvailableGuides('').pipe(catchError(() => of([] as Guide[]))),
+      unavailable: this.guideService.getUnavailableGuides('').pipe(catchError(() => of([] as Guide[]))),
+    }).subscribe({
+      next: ({ available, unavailable }) => {
+        const byId = new Map<number, Guide>();
+        [...available, ...unavailable].forEach((guide) => {
+          if (guide?.id != null) byId.set(guide.id, guide);
+        });
+        this.guideOptions = [...byId.values()].sort((a, b) =>
+          (a.fullName || '').localeCompare(b.fullName || ''),
+        );
+        this.cdr.detectChanges();
+      },
+      error: (err) => console.error('Failed to load guides', err),
+    });
   }
 
   // ── data loading ──────────────────────────────────────────────────────────
@@ -123,12 +162,13 @@ export class AccountingView implements OnInit {
     this.errorMessage = '';
 
     const filter: AccountingFilter = {
+      resellerId: this.resellerId ?? undefined,
       ref: this.ref,
       guideName: this.guideName,
       serviceName: this.serviceName,
       tourDate: this.tourDate,
-      status: this.status,
-      isPrivate: this.privateOnly,
+      status: this.status || undefined,
+      isPrivate: this.resolveIsPrivateFilter(),
     };
 
     this.accountingService
@@ -289,8 +329,22 @@ export class AccountingView implements OnInit {
     this.reviewOrderStatus = '';
   }
 
-  protected togglePrivate(): void {
-    this.privateOnly = !this.privateOnly;
+  protected togglePrivateFilter(): void {
+    this.filterPrivateOnly = !this.filterPrivateOnly;
+    if (this.filterPrivateOnly) this.filterSharedOnly = false;
+    this.applyFilters();
+  }
+
+  protected toggleSharedFilter(): void {
+    this.filterSharedOnly = !this.filterSharedOnly;
+    if (this.filterSharedOnly) this.filterPrivateOnly = false;
+    this.applyFilters();
+  }
+
+  private resolveIsPrivateFilter(): boolean | undefined {
+    if (this.filterPrivateOnly && !this.filterSharedOnly) return true;
+    if (this.filterSharedOnly && !this.filterPrivateOnly) return false;
+    return undefined;
   }
 
   protected applyFilters(): void {
@@ -299,13 +353,14 @@ export class AccountingView implements OnInit {
   }
 
   protected clearFilters(): void {
-    this.reseller = '';
+    this.resellerId = null;
     this.ref = '';
     this.guideName = '';
     this.serviceName = '';
     this.tourDate = '';
-    this.status = 'All Statuses';
-    this.privateOnly = true;
+    this.status = '';
+    this.filterPrivateOnly = false;
+    this.filterSharedOnly = false;
     this.currentPage = 1;
     this.loadWorks();
   }
